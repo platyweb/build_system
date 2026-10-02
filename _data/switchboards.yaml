@@ -1,0 +1,128 @@
+# Switchboard diagrams — consumed by _build/build_switchboards.py
+#
+# Each board is defined by its incomer meter id. The "ways" drawn on the
+# busbar are EVERY meter whose parent_id == incomer_id in METER_REGISTRY
+# (pulled live at build time — add a meter to the registry and it appears
+# here automatically). The only things the registry can't supply are the
+# gauge `rating` (full-scale kW for the segmented gauge) and the `ct` label,
+# so those live here, keyed by meter id.
+
+defaults:
+  default_rating: 150          # gauge full-scale (kW) when a way has none below
+  layout:
+    box:        { w: 190, h: 64 }
+    gap:        30             # min horizontal gap between box columns
+    row_top:    110            # y of the top of the ways grid
+    # rows:     1               # boxes stacked per column (grid, column-major
+    #                            fill) before wrapping to a new column — unset
+    #                            here so a board must opt in explicitly; 1
+    #                            (the implicit default) reproduces the
+    #                            original single-row layout exactly.
+    # row_gap:  (= gap)         # vertical gap between stacked boxes in a
+    #                            column; falls back to `gap` when unset.
+    # busbar_y: (computed)      # y of the busbar — computed from row_top +
+    #                            the tallest column's stack height + riser_gap
+    #                            unless a board pins it explicitly.
+    # riser_gap: (= incomer_gap) # gap from the bottom of the box stack down
+    #                            to the busbar; falls back to incomer_gap.
+    incomer_gap: 90            # vertical gap from busbar down to the incomer box
+    margin:     100            # left/right inset (also sets canvas padding)
+    min_width:  1580
+    busbar:     { color: "#6d28d9", width: 6 }    # dual-theme purple
+    conn:       { color: "#6d28d9", width: 3 }
+    # tie_margin:    200        # canvas space reserved on the bus_tie side
+    # tie_arrow_len: 70         # how far the arrow extends past the busbar end
+    # tie_arrow_head: 26        # arrowhead triangle size
+
+# A board may declare `bus_tie: { side: left|right, to: <board key> }` to draw
+# an arrow off one end of its busbar linking to another board's page (e.g. a
+# bus-section/interconnector tie between two LV switchboards) — the arrow is
+# drawn in the SVG, the clickable label next to it (defaulting to the target
+# board's `heading`, or set explicitly with `label:`) is an HTML overlay like
+# every other label here. Not bidirectional automatically — declare it on
+# both boards if the tie should show from either side.
+boards:
+  # LV01/LV02: previously pointed at incomer_id 1/9 (HV incomers) with a
+  # hand-annotated way-list (Chiller No1, MSCP 4, Retail Units, …) left over
+  # from meter IDs that predate a registry renumber — meter 1 now has just 2
+  # children (neither in that list) and meter 9 has none. Repointed to each
+  # board's actual "LVnn - TXn LV INCOMER" meter, same as LV03–08 below; the
+  # stale rating/ct overrides were dropped along with it (no live schedule
+  # data to salvage from them — start from default_rating like the others).
+  swb_lv01:
+    heading:    "LV-01 Switchboard"
+    page_title: "LV-01 Switchboard - {{ building.name }}"
+    incomer_id: 39
+    incomer:    {}
+    ways: {}
+    bus_tie:    { side: right, to: swb_lv02 }
+
+  swb_lv02:
+    heading:    "LV-02 Switchboard"
+    page_title: "LV-02 Switchboard - {{ building.name }}"
+    incomer_id: 40
+    incomer:    {}
+    ways: {}                    # ratings fall back to default_rating until filled in
+    bus_tie:    { side: left, to: swb_lv01 }
+
+  # LV03–LV08: the TX-fed LV sub-boards (distinct from LV-01/02 above, which
+  # key off the HV incomers). incomer_id is each board's "LVnn - TXn LV
+  # INCOMER" meter; ways are pulled live from METER_REGISTRY same as above.
+  # rating/ct per way and a real incomer rating aren't in the registry — these
+  # are placeholders (default_rating fallback) until sourced from the
+  # switchboard schedules. `layout.rows` wraps the wider boards into a grid
+  # instead of one very wide row; tune per board once the panel motif (still
+  # TBD) settles.
+  swb_lv03:
+    heading:    "LV-03 Switchboard"
+    page_title: "LV-03 Switchboard - {{ building.name }}"
+    incomer_id: 49
+    incomer:    {}
+    ways: {}
+    layout:     { rows: 4 }      # 18 ways -> 5 columns
+    bus_tie:    { side: right, to: swb_lv04 }
+
+  swb_lv04:
+    heading:    "LV-04 Switchboard"
+    page_title: "LV-04 Switchboard - {{ building.name }}"
+    incomer_id: 66
+    incomer:    {}
+    ways: {}
+    layout:     { rows: 4 }      # 12 ways -> 3 columns
+    bus_tie:    { side: left, to: swb_lv03 }
+
+  swb_lv05:
+    heading:    "LV-05 Switchboard"
+    page_title: "LV-05 Switchboard - {{ building.name }}"
+    incomer_id: 12
+    incomer:    {}
+    ways: {}
+    layout:     { rows: 4 }      # 12 ways -> 3 columns
+    bus_tie:    { side: right, to: swb_lv06 }
+
+  swb_lv06:
+    heading:    "LV-06 Switchboard"
+    page_title: "LV-06 Switchboard - {{ building.name }}"
+    incomer_id: 26
+    incomer:    {}
+    ways: {}
+    layout:     { rows: 4 }      # 12 ways -> 3 columns
+    bus_tie:    { side: left, to: swb_lv05 }
+
+  swb_lv07:
+    heading:    "LV-07 Switchboard"
+    page_title: "LV-07 Switchboard - {{ building.name }}"
+    incomer_id: 79
+    incomer:    {}
+    ways: {}
+    layout:     { rows: 4 }      # 12 ways -> 3 columns
+    bus_tie:    { side: right, to: swb_lv08 }
+
+  swb_lv08:
+    heading:    "LV-08 Switchboard"
+    page_title: "LV-08 Switchboard - {{ building.name }}"
+    incomer_id: 92
+    incomer:    {}
+    ways: {}
+    layout:     { rows: 4 }      # 19 ways -> 5 columns
+    bus_tie:    { side: left, to: swb_lv07 }

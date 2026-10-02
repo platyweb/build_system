@@ -1,0 +1,160 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Tenant pages (tenants/<slug>/...). Floors-occupied and meter placement
+# are derived from METER_REGISTRY: a tenant page shows meters where the
+# tenant's registry name is in the meter's `tenant` field AND `floor` matches.
+#
+# This file carries only what the registry can't express:
+#   - display_name             → "Tenant" card value + sidebar header
+#   - registry_tenant          → the exact tenant string(s) as they appear in
+#                                 METER_REGISTRY's `tenant:` field (e.g. "MS
+#                                 Amlin", "Aegon / Draft Kings"). Defaults to
+#                                 the YAML key itself if omitted — but registry
+#                                 tenant values are free-text display strings,
+#                                 not slugs, and rarely match a clean key, so
+#                                 set this explicitly for every real tenant.
+#                                 Accepts a single string or a list (a tenant
+#                                 spelled more than one way across rows).
+#                                 NOTE: the YAML key doubles as the output
+#                                 folder name (tenants/<key>/...), which is
+#                                 why it must stay a clean slug rather than
+#                                 the raw registry string (some of which
+#                                 contain "/", which would break path
+#                                 construction).
+#   - index: {}                → enables the index.htm page for this tenant
+#   - extra_floors: [<key>, …] → floor keys with no METER_REGISTRY rows for
+#                                 this tenant yet, added to floors_occupied
+#                                 by hand (e.g. a Basement level). Renders an
+#                                 "N/A" page like any other not-yet-wired
+#                                 floor; ordering/labelling (incl. "Basement"
+#                                 for basementN keys) follows the same rules
+#                                 as registry-derived floors, so it's placed
+#                                 correctly without extra config.
+#   - exclude_floors: [<key>]  → the reverse of extra_floors: drop a floor a
+#                                 registry row tags this tenant onto (e.g. a
+#                                 calc meter added ahead of its
+#                                 tenant_display wiring) so it doesn't get
+#                                 its own page yet. Applied after
+#                                 extra_floors, so the two can't fight.
+#   - floors.<key>.heading     → optional per-floor heading override
+#   - floors.<key>.floorplan_tab_label → optional first-tab label override
+#
+# Derived automatically (override hooks exist for each):
+#   index.reports                       → REPORT_REGISTRY where
+#                                          page=tenant_index, tenant=<slug>, slot=main
+#   floors.<key>.electricity_reports    → REPORT_REGISTRY where
+#                                          page=tenant_floor, tenant=<slug>, floor=<key>, slot=electricity
+#   floors.<key>.heat_reports           → REPORT_REGISTRY where
+#                                          page=tenant_floor, tenant=<slug>, floor=<key>, slot=heat
+#   floors.<key>.cooling_reports        → REPORT_REGISTRY where
+#                                          page=tenant_floor, tenant=<slug>, floor=<key>, slot=cooling
+#   floors.<key>.ventilation_reports    → REPORT_REGISTRY where
+#                                          page=tenant_floor, tenant=<slug>, floor=<key>, slot=ventilation
+#
+# Every tenant floor page now renders the same 5 tabs as floor.html.j2
+# (Summary + Electricity/Heat/Cooling/Ventilation Report) — slots with no
+# registry/YAML data just render empty ("N/A" summary cards, no reports),
+# same as an unwired floor.
+#
+# Tenants without an `index:` block render only floor_*.htm pages.
+# Heat tab on a floor page is emitted only when heat reports exist (registry
+# or YAML override).
+#
+# Roster reconciled against "tenants/List of tennants.xlsx" + METER_REGISTRY.
+# build_tenants() is still NOT called from main() (see build.py) pending
+# further reconciliation — this file is data-only until that's re-enabled.
+# Landlords / Main Reception (floor_2nd) are building common-area, not
+# tenant companies, so they have no entry here.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Single-floor tenants ──────────────────────────────────────────────────────
+bob-bob-restaurant:
+  display_name: "Bob Bob Restaurant"
+  registry_tenant: "Bob Bob Restaurant"
+
+# Access limitation (per xlsx): COMS riser and AHU access is through the tenant.
+rsh-p:
+  display_name: "RSH&P"
+  registry_tenant: "RSH&P"
+
+# Access limitation (per xlsx): COMS riser and AHU access is through the tenant.
+virgin-money:
+  display_name: "Virgin Money"
+  registry_tenant: "Virgin Money"
+
+ki-group-services:
+  display_name: "KI Group Services"
+  registry_tenant: "KI Group Services"
+
+uib:
+  display_name: "UIB"
+  registry_tenant: "UIB"
+
+aegon-draftkings:
+  display_name: "Aegon / Draft Kings"
+  registry_tenant: "Aegon / Draft Kings"
+
+servcorp:
+  display_name: "Serve corp"
+  registry_tenant: "Serve corp"
+
+xcite:
+  display_name: "Xcite/ Landing 42"
+  registry_tenant: "Xcite"
+
+petredec:
+  display_name: "Petredec"
+  registry_tenant: "Petredec"
+
+affinity-shipping:
+  display_name: "Affinity Shipping"
+  registry_tenant: "Affinity Shipping"
+
+dtek:
+  display_name: "D-Tek"
+  registry_tenant: "D-Tek"
+
+# Ground-floor retail unit (folded into floor_ground.htm — see floors.yaml).
+black-sheep:
+  display_name: "Black Sheep"
+  registry_tenant: "Black Sheep"
+
+# ── Multi-floor tenants ────────────────────────────────────────────────────────
+aon:
+  display_name: "AON"
+  registry_tenant: "AON"
+  index: {}                              # presence enables index.htm
+  # B1 (id 641, "Aon Basement Electricity") is AON's real basement floor —
+  # no exclude_floors/extra_floors needed, it's a normal registry-derived
+  # floor like any other.
+
+# Floors 17th/18th/39th + a ground-floor retail unit.
+brit-insurance:
+  display_name: "Brit Insurance"
+  registry_tenant: "Brit Insurance"
+  index: {}
+
+ms-amlin:
+  display_name: "MS Amlin"
+  registry_tenant: "MS Amlin"
+  index: {}
+
+# Floors 25th + 35th-38th (non-contiguous block).
+drw:
+  display_name: "DRW"
+  registry_tenant: "DRW"
+  index: {}
+
+omers:
+  display_name: "OMERS"
+  registry_tenant: "OMERS"
+  index: {}
+
+quadrature:
+  display_name: "Quadrature"
+  registry_tenant: "Quadrature"
+  index: {}
+
+fm-global:
+  display_name: "FM Global"
+  registry_tenant: "FM Global"
+  index: {}

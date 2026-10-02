@@ -1,0 +1,32 @@
+{% extends 'base.html.j2' %}
+{%- from 'partials/macros.j2' import live_dial -%}
+
+{#- ────────────────────────────────────────────────────────────────────────
+    dials.html.j2 — live KPI dials page.
+
+    Renders a responsive row of segmented gauges, each bound to a live Optergy
+    BACnet point. Drawn client-side by js/project/2.0/energy-dials.js, which
+    wraps EnergyCharts.segmentedDial (js/d3/7/energy-charts.js) and feeds it
+    from live-points.js. D3 + the chart lib are self-hosted (offline).
+
+    Driven by `_data/dials.yaml`.
+   ──────────────────────────────────────────────────────────────────────── -#}
+
+{% block extra_styles %}
+    <link rel="stylesheet" href="{{ path_prefix|default('') }}css/project/2.0/dials.css">
+{%- endblock %}
+
+{% block content %}
+                    <div class="dial-row">
+{%- for d in dials %}
+{{ live_dial(d) }}
+{%- endfor %}
+                    </div>
+{% endblock %}
+
+{% block tail_scripts %}
+    <!-- Live segmented dials: self-hosted D3 + chart lib (offline) + glue -->
+    <script src="{{ path_prefix|default('') }}js/d3/7/d3.v7.min.js"></script>
+    <script src="{{ path_prefix|default('') }}js/d3/7/energy-charts.js"></script>
+    <script src="{{ path_prefix|default('') }}js/project/2.0/energy-dials.js"></script>
+{%- endblock %}

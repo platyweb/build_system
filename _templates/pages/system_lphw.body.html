@@ -1,0 +1,186 @@
+                    <!-- Tab Content -->
+                    <div id="floorplan-tab" class="tab-content active">
+                        <!-- Summary Cards -->
+                        <div class="summary-cards">
+                            <div class="summary-card">
+                                <div class="summary-card-title">CoP</div>
+                                <div class="summary-card-value">
+                                    <div class="info-item-value">
+                                        <div id="live-lphw_system-cop" class="info-item-value"
+                                            data-bacnet="300|2|191|85|-1" data-format="number" data-refresh="10">
+                                            Loading...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-title">Heating Energy Demand</div>
+                                <div class="summary-card-value">
+                                    <div class="info-item-value">
+                                        <div id="live-lphw-heating-consumption" class="info-item-value"
+                                            data-bacnet="300|0|23140|85|-1" data-format="power" data-refresh="10">
+                                            Loading...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-title">Heating Electricity Demand</div>
+                                <div class="summary-card-value">
+                                    <div class="info-item-value">
+                                        <div id="live-lphw-heating-demand" class="info-item-value"
+                                            data-bacnet="300|0|20782|85|-1" data-format="power" data-refresh="10">
+                                            Loading...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-title">O/A Temp.</div>
+                                <div class="summary-card-value">
+                                    <div class="info-item-value">
+                                        <div id="live-lphw-oa-temp" class="info-item-value" data-bacnet="10010|0|0|85|-1"
+                                            data-format="temperature" data-refresh="10">Loading...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2x2 Grid: Left cell spans both rows, two cells stacked on the right -->
+                        <div class="custom-grid">
+                            <!-- Merged cell: row 1 + row 2, column 1 -->
+                            <div class="grid-cell grid-cell-merged">
+                                <div class="grid-cell-title">LPHW System</div>
+                                <div class="grid-cell-content">
+                                    <div class="floorplan-viewer">
+                                        <div class="floorplan-placeholder">
+                                            <img src="img/lphw_system.svg" alt="LPHW System"
+                                                style="height: 600px; display: block;">
+                                            <a href="#">
+                                                <div id="live-lphw-temp1"
+                                                    class="info-item-value data-overlay power loading"
+                                                    data-position="565,100" data-bacnet="10010|0|2|85|-1"
+                                                    data-format="temperature" data-refresh="10">Loading...
+                                                </div>
+                                            </a>
+                                            <a href="#">
+                                                <div id="live-lphw-temp2"
+                                                    class="info-item-value data-overlay power loading"
+                                                    data-position="565,170" data-bacnet="10010|0|3|85|-1"
+                                                    data-format="temperature" data-refresh="10">Loading...
+                                                </div>
+                                            </a>
+                                            <div id="live-status-lphw1" class="info-item-value data-overlay"
+                                                data-position="310,90" data-bacnet="10010|3|0|85|-1"
+                                                data-format="status" data-refresh="10"
+                                                data-status-online-svg="img/online-indicator.svg"
+                                                data-status-offline-svg="img/offline-indicator.svg"
+                                                data-status-online-text="Running" data-status-offline-text="Stopped"
+                                                style="font-size: 10px;">
+                                            </div>
+                                            <div id="live-status-lphw2" class="info-item-value data-overlay"
+                                                data-position="310,240" data-bacnet="10010|3|1|85|-1"
+                                                data-format="status" data-refresh="10"
+                                                data-status-online-svg="img/online-indicator.svg"
+                                                data-status-offline-svg="img/offline-indicator.svg"
+                                                data-status-online-text="Running" data-status-offline-text="Stopped"
+                                                style="font-size: 10px;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Top-right cell: row 1, column 2 -->
+                            <div class="grid-cell grid-cell-top-right">
+                                <div class="grid-cell-title">Annual Electricity Consumption</div>
+                                <div class="grid-cell-content">
+                                    <a href="/utilityReports/UtilityReports.html?libraryItemId=160" target="_blank"
+                                        rel="noopener noreferrer" class="floor-card">
+                                        <div class="floorplan-viewer">
+                                            <div class="floorplan-placeholder">
+                                                <div class="report-content">
+                                                    <img data-image-ref="reports.lphw_elec_annual"
+                                                        alt="LPHW Electricity Consumption"
+                                                        style="max-width: 100%; height: auto; display: block;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Bottom-right cell: row 2, column 2 -->
+                            <div class="grid-cell grid-cell-bottom-right">
+                                <div class="grid-cell-title">Annual Heating Energy Consumption</div>
+                                <div class="grid-cell-content">
+                                    <a href="/utilityReports/UtilityReports.html?libraryItemId=159" target="_blank"
+                                        rel="noopener noreferrer" class="floor-card">
+                                        <div class="floorplan-viewer">
+                                            <div class="floorplan-placeholder">
+                                                <div class="report-content">
+                                                    <img data-image-ref="reports.lphw_energy_annual"
+                                                        alt="LPHW Heating Energy Consumption"
+                                                        style="max-width: 100%; height: auto; display: block;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Bottom row left: row 3, column 1 -->
+                            <div class="grid-cell grid-cell-bottom-left">
+                                <div class="grid-cell-content">
+                                    <a href="/trendlogs/TrendViewer.html?manager.id=2&hideup" target="_blank"
+                                        rel="noopener noreferrer" class="floor-card">
+                                        <div class="floorplan-viewer">
+                                            <div class="floorplan-placeholder">
+                                                <div class="report-content">
+                                                    <img data-image-ref="reports.lphw_cop" alt="LPHW System COP"
+                                                        style="max-width: 100%; height: auto; display: block;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Bottom row right: row 3, column 2 -->
+                            <div class="grid-cell grid-cell-bottom-right-2">
+                                <div class="grid-cell-content">
+                                    <a href="/utilityReports/UtilityReports.html?libraryItemId=161" target="_blank"
+                                        rel="noopener noreferrer" class="floor-card">
+                                        <div class="floorplan-viewer">
+                                            <div class="floorplan-placeholder">
+                                                <div class="report-content">
+                                                    <img data-image-ref="reports.lphw_demand"
+                                                        alt="LPHW Electricity Demand"
+                                                        style="max-width: 100%; height: auto; display: block;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid-cell grid-cell-bottom-right-2">
+                            <div class="grid-cell-content">
+                                <a href="/utilityReports/UtilityReports.html?libraryItemId=162" target="_blank"
+                                    rel="noopener noreferrer" class="floor-card">
+                                    <div class="floorplan-viewer">
+                                        <div class="floorplan-placeholder">
+                                            <div class="report-content">
+                                                <img data-image-ref="reports.lphw_monthly_occupancy"
+                                                    alt="LPHW Monthly Occupancy"
+                                                    style="max-width: 100%; height: auto; display: block;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>

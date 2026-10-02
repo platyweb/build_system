@@ -1,0 +1,249 @@
+{% extends 'base.html.j2' %}
+{%- from 'partials/macros.j2' import summary_card, report_card, report_card_headed -%}
+
+{#- ────────────────────────────────────────────────────────────────────────
+    incomer_electricity.html.j2 — the rich electricity main-incomer page.
+
+    Bespoke layout (floor-grid of TX demand/consumption/cost/GHG cards +
+    transformer-grid of TX1/TX2 power-quality cards) kept literal, since those
+    are electricity-specific BMS points. Summary cards come from
+    _data/incomers.yaml; report cards from REPORT_REGISTRY (page=incomer,
+    incomer=electricity).
+   ──────────────────────────────────────────────────────────────────────── -#}
+{% block content %}
+                    <!-- Floorplan Tab Content -->
+                    <div id="floorplan-tab" class="tab-content active">
+                        <div class="summary-cards">
+{%- for card in summary_cards %}
+{{ summary_card(card) }}
+{%- endfor %}
+                        </div>
+
+                        <div class="floor-grid">
+                            <!-- Riser 1 -->
+                            <a href="#" class="floor-card">
+                                <div class="floor-header">
+                                    <div class="floor-info">
+                                        <div class="floor-title">Demand</div>
+                                    </div>
+                                </div>
+                                <div class="floor-stats">
+                                    <div class="stat-box">
+                                        <div class="stat-label">TX1</div>
+                                        <div class="stat-value">
+                                            <div id="live-tx1-demand" class="info-item-value-small"
+                                                data-bacnet="300|0|10040|85|-1" data-format="power" data-refresh="10">
+                                                Loading...</div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-label">TX2</div>
+                                        <div class="stat-value">
+                                            <div id="live-tx2-demand" class="info-item-value-small"
+                                                data-bacnet="300|0|10840|85|-1" data-format="power" data-refresh="10">
+                                                Loading...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <!-- Zone 2 -->
+                            <a href="#" class="floor-card">
+                                <div class="floor-header">
+                                    <div class="floor-info">
+                                        <div class="floor-title">Consumption</div>
+                                    </div>
+                                </div>
+                                <div class="floor-stats">
+                                    <div class="stat-box">
+                                        <div class="stat-label">TX1 Today</div>
+                                        <div class="stat-value">
+                                            <span>
+                                                <div id="live-tx1-consumption-today" class="info-item-value-small"
+                                                    data-bacnet="300|0|2000001|85|-1" data-format="energy"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-label">TX2 Today</div>
+                                        <div class="stat-value">
+                                            <span>
+                                                <div id="live-tx2-consumption-today" class="info-item-value-small"
+                                                    data-bacnet="300|0|2000004|85|-1" data-format="energy"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <!-- Zone 3 -->
+                            <a href="#" class="floor-card">
+                                <div class="floor-header">
+                                    <div class="floor-info">
+                                        <div class="floor-title">Costs</div>
+                                    </div>
+                                </div>
+                                <div class="floor-stats">
+                                    <div class="stat-box">
+                                        <div class="stat-label">TX1 Monthly</div>
+                                        <div class="stat-value">
+                                            <span>
+                                                <div id="live-tx1-consumption-monthly" class="info-item-value-small"
+                                                    data-bacnet="300|2|135|85|-1" data-format="cost" data-refresh="10">
+                                                    Loading...</div>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-label">TX2 Monthly</div>
+                                        <div class="stat-value">
+                                            <span>
+                                                <div id="live-tx2-consumption-monthly" class="info-item-value-small"
+                                                    data-bacnet="300|2|136|85|-1" data-format="cost" data-refresh="10">
+                                                    Loading...</div>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <!-- Zone 4 -->
+                            <a href="#" class="floor-card">
+                                <div class="floor-header">
+                                    <div class="floor-info">
+                                        <div class="floor-title">Greenhouse Gas</div>
+                                    </div>
+                                </div>
+                                <div class="floor-stats">
+                                    <div class="stat-box">
+                                        <div class="stat-label">Scope 1</div>
+                                        <div class="stat-value">
+                                            <span>
+                                                <div id="live-ghg-scope1-consumption" class="info-item-value-small"
+                                                    data-bacnet="300|2|133|85|-1" data-format="weight" data-refresh="10">
+                                                    Loading...</div>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-label">Scope 2</div>
+                                        <div class="stat-value">
+                                            <span>
+                                                <div id="live-ghg-scope2-consumption" class="info-item-value-small"
+                                                    data-bacnet="300|2|134|85|-1" data-format="weight" data-refresh="10">
+                                                    Loading...</div>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+
+
+                        <div class="transformer-grid">
+                            <!-- Riser 1 -->
+                            <a href="/meters/MeterDisplay.html?meter.id=1" target="_blank" rel="noopener noreferrer"
+                                class="floor-card">
+                                <div class="floor-header">
+                                    <div class="floor-info">
+                                        <div class="floor-title">TX1 Electricity Quality</div>
+                                        <div class="floor-location">feeds LV-01</div>
+
+                                    </div>
+                                </div>
+                                <div class="floor-stats">
+                                    <div class="stat-box">
+                                        <div class="stat-label">Average Phase Voltage</div>
+                                        <div class="stat-value">
+                                            <div id="live-incomer-tx1-voltage" class="info-item-value-small"
+                                                data-bacnet="300|2|40|85|-1" data-format="voltage" data-refresh="10">
+                                                Loading...</div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-label">Neutral Current</div>
+                                        <div class="stat-value">
+                                            <div id="live-incomer-tx1-neutral-current" class="info-item-value-small"
+                                                data-bacnet="300|0|10034|85|-1" data-format="current" data-refresh="10">
+                                                Loading...</div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-label">Average Current THD</div>
+                                        <div class="stat-value">
+                                            <div id="live-incomer-tx1-voltage-thd" class="info-item-value-small"
+                                                data-bacnet="300|2|42|85|-1" data-format="percentage" data-refresh="10">
+                                                Loading...</div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-label">Average Power Factor</div>
+                                        <div class="stat-value">
+                                            <div id="live-incomer-tx1-power-factor" class="info-item-value-small"
+                                                data-bacnet="300|0|10060|85|-1" data-format="number"
+                                                data-decimal-places="2" data-refresh="10">
+                                                Loading...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <!-- Zone 2 -->
+                            <a href="/meters/MeterDisplay.html?meter.id=9" target="_blank" rel="noopener noreferrer"
+                                class="floor-card">
+                                <div class="floor-header">
+                                    <div class="floor-info">
+                                        <div class="floor-title">TX2 Electricity Quality</div>
+                                        <div class="floor-location">feeds LV-02</div>
+                                    </div>
+                                </div>
+                                <div class="floor-stats">
+                                    <div class="stat-box">
+                                        <div class="stat-label">Average Phase Voltage</div>
+                                        <div class="stat-value">
+                                            <div id="live-incomer-tx2-voltage" class="info-item-value-small"
+                                                data-bacnet="300|2|41|85|-1" data-format="voltage" data-refresh="10">
+                                                Loading...</div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-label">Neutral Current</div>
+                                        <div class="stat-value">
+                                            <div id="live-incomer-tx2-neutral-current" class="info-item-value-small"
+                                                data-bacnet="300|0|10834|85|-1" data-format="current" data-refresh="10">
+                                                Loading...</div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-label">Average Current THD</div>
+                                        <div class="stat-value">
+                                            <div id="live-incomer-tx2-voltage-thd" class="info-item-value-small"
+                                                data-bacnet="300|2|43|85|-1" data-format="percentage" data-refresh="10">
+                                                Loading...</div>
+                                        </div>
+                                    </div>
+                                    <div class="stat-box">
+                                        <div class="stat-label">Average Power Factor</div>
+                                        <div class="stat-value">
+                                            <div id="live-incomer-tx2-power-factor" class="info-item-value-small"
+                                                data-bacnet="300|0|10860|85|-1" data-format="number"
+                                                data-decimal-places="2" data-refresh="10">
+                                                Loading...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+{%- for report in reports %}
+
+{% if report.kind == 'headed' %}{{ report_card_headed(report) }}{% else %}{{ report_card(report) }}{% endif %}
+{%- endfor %}
+
+
+                    </div>
+{% endblock %}

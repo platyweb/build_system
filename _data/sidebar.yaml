@@ -1,0 +1,113 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Main sidebar navigation → SIDEBAR_HTML in js/project/2.0/sidebar-template.js
+# (between the BEGIN/END GENERATED SIDEBAR_HTML markers). The runtime behaviour
+# below the END marker (theme toggle, active-page highlight) is hand-maintained.
+#
+# Item shapes:  { label, href, icon?, target?, rel?, class? }   — leaf
+#               { label, icon, children: [ … ] }                — sub-menu
+#               { auto: floors|incomers|switchboards|tenants }  — derived list
+#               { auto: …, only: [key, …] }                     — filter + reorder the derived list
+#               { auto: …, groups: [{label, from, to}, …] }     — bucket the derived list into
+#                                                                  labelled range sub-menus (e.g.
+#                                                                  "Floors 37th - 47th") instead of
+#                                                                  one flat list. from/to are the
+#                                                                  derived list's own keys (e.g. floor
+#                                                                  ordinals), inclusive; a boundary
+#                                                                  key this site doesn't have drops
+#                                                                  that whole group rather than
+#                                                                  emitting a dead link. Omit `groups`
+#                                                                  for sites that just want every item
+#                                                                  listed flat — it's opt-in per site.
+#               { kind: theme_toggle }                          — theme switcher
+# brand + footer come from _data/building.yaml.
+# ─────────────────────────────────────────────────────────────────────────────
+
+top_items: []
+
+bottom_items:
+  - { label: Logout, icon: bxs-user, href: "/Login.html?logout", class: menu-logout }
+
+sections:
+  - header: METERING
+    items:
+      - label: Floors
+        icon: bxs-building
+        children:
+          - auto: floors
+            groups:
+              - { label: "Floors 37th - 47th",         from: 47th,   to: 37th }
+              - { label: "Floors 25th - 36th",         from: 36th,   to: 25th }
+              - { label: "Floors 13th - 24th",         from: 24th,   to: 13th }
+              - { label: "Floors 1st - 12th",          from: 12th,   to: 1st }
+              - { label: "Basements & Ground Floor",   from: ground, to: ground }
+      - label: Incomers
+        icon: bxs-building-house
+        children:
+          - { auto: incomers, only: [electricity, gas, water, lthw, chw] }
+      - label: Meters
+        icon: bx-tachometer
+        children:
+          - { label: "Hierarchy tree",  href: meters_hierarchy.htm }
+          - { label: "Meter Displays",  href: "/meters/MeterDisplayManager.html?hideup", target: _blank, rel: noopener }
+      - label: LV Switchboards
+        icon: bx-sidebar
+        children:
+          - { label: Overview, href: swb_overview.htm }
+          - { auto: switchboards }
+      - label: Risers
+        icon: bx-objects-horizontal-center
+        children:
+          - { label: Overview,      href: riser_overview.htm }
+          - { label: "Floor B4 - 3rd",    href: riser_electricity.htm }
+          - { label: "Floor B4 - 3rd", href: riser_heat.htm }
+
+  - header: INSIGHTS
+    items:
+      - label: Reports
+        icon: bx-bar-chart
+        children:
+          - { label: "Baseline Reporting", href: "report_template.htm?title=Baseline Report&href=/utilityReports/UtilityReports.html?libraryItemId=143&imageSrc=baseline", target: _blank }
+          - { label: "Occupancy Analysis", href: "report_template.htm?title=Occupancy Analysis&href0=/utilityReports/UtilityReports.html?libraryItemId=144&imageSrc0=occupancyAnalysis_elec&label0=Electricity Occupancy&href1=/utilityReports/UtilityReports.html?libraryItemId=164&imageSrc1=occupancyAnalysis_gas&label1=Gas Occupancy&href2=/utilityReports/UtilityReports.html?libraryItemId=158&imageSrc2=occupancyAnalysis_chw&label2=CHW Occupancy&href3=/utilityReports/UtilityReports.html?libraryItemId=162&imageSrc3=occupancyAnalysis_lphw&label3=LPHW Occupancy", target: _blank }
+          - { label: "Annual Overview",    href: "report_template.htm?title=Annual Overview&href=/utilityReports/UtilityReports.html?libraryItemId=127&imageSrc=annualOverview", target: _blank }
+          - { label: "Degree Days",        href: "report_template.htm?title=Degree Days&href=/utilityReports/UtilityReports.html?libraryItemId=170&imageSrc=degreeDays", target: _blank }
+          - { label: "Report Wizard",      href: "/utilityReports/UtilityReports.html?hideup", target: _blank, rel: noopener }
+      - label: Performance
+        icon: bx-star
+        children:
+          - { label: "Building Performance", href: building_performance.htm }
+          - { label: "Calculation",          href: building_performance_calc.htm }
+      - label: Services
+        icon: bx-podcast
+        children:
+          - { label: "Landlord vs. Tenants", href: landlord_tenant.htm }
+          - { label: "Landlord Services",    href: landlords.htm }
+          - { label: "CHW Performance",      href: system_chw.htm }
+          - { label: "LPHW Performance",     href: system_lphw.htm }
+
+  - header: BILLING
+    items:
+      - label: Tenants
+        icon: bxs-user-badge
+        children:
+          - { label: "Tenants Summary",      href: tenants.htm }
+          - { auto: tenants }
+      - label: Tariffs
+        icon: bx-calendar
+        children:
+          - { label: "LPHW Rate Calc", href: tariff_lphw.htm }
+          - { label: "CHW Rate Calc",  href: tariff_chw.htm }
+
+  - header: MISC
+    items:
+      - { label: Alarms, icon: bxs-bell-ring, href: "/alarmNotifications/?hideup", target: _blank, rel: noopener }
+      - label: Docs
+        icon: bxs-file-doc
+        children:
+          - { label: "Meter Manuals",    href: docs_meters.htm }
+          - { label: "Network",          href: "/docs/manuals/network_schedule.pdf",         target: _blank, rel: noopener }
+          - { label: "Optergy",          href: "/docs/manuals/optergy_doo.pdf",              target: _blank, rel: noopener }
+          - { label: "Tariff Structure", href: "/docs/manuals/tenant_billing_schematic.pdf", target: _blank, rel: noopener }
+
+  - header: SETTINGS
+    items:
+      - { kind: theme_toggle }

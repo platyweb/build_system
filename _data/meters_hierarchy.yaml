@@ -1,0 +1,10 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Data for meters_hierarchy.htm. The tree itself is derived from METER_REGISTRY
+# (parent_id field). Only chrome and the root entry point live here.
+# ─────────────────────────────────────────────────────────────────────────────
+
+page_title: "Meters Hierarchy"
+heading: "Meters Hierarchy"
+subtitle: "Click on meters to expand/collapse child connections"
+search_placeholder: "Search for a meter (e.g., Chiller, Lighting)..."
+root_meter_ids: [629, 631, 632]  # Electricity / CHW / LTHW top-level meters

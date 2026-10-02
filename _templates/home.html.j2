@@ -1,0 +1,55 @@
+{% extends 'base.html.j2' %}
+{%- from 'partials/macros.j2' import info_bar_item, report_card_headed -%}
+
+{#- ────────────────────────────────────────────────────────────────────────
+    home.html.j2 — landing page.
+
+    Layout (top → bottom):
+      info_bar         : 6 KPI tiles (O/A temp, humidity, demands, link to
+                         building_performance)
+      welcome text-box : title + bullet list (the system's elevator pitch)
+      top_reports      : 2 headed reports inside the 3-column row
+      reports          : N more headed reports stacked below
+
+    Driven by `_data/home.yaml`.
+   ──────────────────────────────────────────────────────────────────────── -#}
+
+{% block content %}
+                    <!-- Info Bar - Full Width (layout via .info-bar in style.css) -->
+                    <div class="info-bar">
+{%- for item in info_bar %}
+{{ info_bar_item(item) }}
+{%- endfor %}
+                    </div>
+
+                    <div class="home-reports">
+
+                        <!-- Three Column Layout: 40% + 40% + 20% -->
+                        <div class="three-column-reports">
+                            <!-- Column 1: Text Box (20%) -->
+                            <div class="text-box">
+                                <div class="text-box-header">
+                                    <div class="text-box-title">{{ welcome_title }}</div>
+                                </div>
+                                <div class="text-box-content">
+                                    <ul
+                                        style="margin-left: 5px; margin-bottom: 10px; padding-inline-start: 10px !important;">
+{%- for bullet in bullet_points %}
+                                        <li>{{ bullet }}</li>
+{%- endfor %}
+                                    </ul>
+
+                                </div>
+                            </div>
+{%- for report in top_reports %}
+{{ report_card_headed(report) }}
+{%- endfor %}
+
+                        </div>
+
+{%- for report in reports %}
+
+{{ report_card_headed(report) }}
+{%- endfor %}
+                    </div>
+{% endblock %}

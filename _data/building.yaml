@@ -1,0 +1,43 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SITE / BUILDING FACTS — the single source of truth for building identity.
+#
+# Available to every template as the `building` global (set in make_env), and
+# consumed by:
+#   - build_sidebar      → brand + footer (sidebar.yaml may still override)
+#   - building_performance → name, postcode, net_internal_area
+#
+# Add a fact here once; reference it as {{ building.<field> }} anywhere. Live
+# BMS values (NABERS rating, HDD/CDD, …) are NOT here — those are named BACnet
+# points in the POINTS registry (js/project/2.0/meter-templates.js).
+# ─────────────────────────────────────────────────────────────────────────────
+
+# slug: the output directory name — project/<slug>/ — and the tenant-pages
+# relative-path prefix derives from it too (see build.py's TENANT_PATH_PREFIX).
+# This is the ONE thing to change first when porting the build system to a
+# new site (rename project/<old-slug>/ to project/<slug>/ to match).
+slug: "st-peters"
+
+# TODO: placeholder values — this is a new site (formerly the Leadenhall
+# build system, ported across). Replace with the real building facts.
+name: "St Peters"
+short_name: "SP"
+postcode: "TBD"
+net_internal_area: "--- m²"
+
+# Short branding suffix for browser-tab titles, e.g. "Floor 12 · SP EMS".
+# Referenced from _data/pages.yaml page_title fields and the page_title
+# fallbacks computed in _build/build.py (build_floors, build_incomers,
+# build_schematics, build_building_performance).
+ems_name: "SP EMS"
+
+# Sidebar brand block (logo + label, links home).
+brand:
+  href: home.htm
+  label: "St Peters"
+  logo_src: img/favicon.png
+
+# Sidebar footer (facilities-management contact).
+footer:
+  logo: img/knight_logo.svg
+  logo_alt: KCL
+  email: service@knightcontrols.co.uk

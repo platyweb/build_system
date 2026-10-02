@@ -1,0 +1,83 @@
+                <script>
+        // Position data overlay coordinates display
+        let coordDisplay = null;
+
+        // Create coordinate display element
+        function createCoordDisplay() {
+            if (!coordDisplay) {
+                coordDisplay = document.createElement('div');
+                coordDisplay.id = 'coord-display';
+                coordDisplay.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    background: rgba(0, 0, 0, 0.8);
+                    color: #00ff00;
+                    padding: 10px 15px;
+                    border-radius: 5px;
+                    font-family: monospace;
+                    font-size: 14px;
+                    z-index: 10000;
+                    pointer-events: none;
+                `;
+                document.body.appendChild(coordDisplay);
+            }
+            return coordDisplay;
+        }
+
+        // Handle SVG clicks to get coordinates
+        function setupClickTracking() {
+            const svgImages = document.querySelectorAll('.floorplan-placeholder img');
+
+            svgImages.forEach(img => {
+                img.addEventListener('click', (e) => {
+                    const rect = img.getBoundingClientRect();
+                    const x = Math.round(e.clientX - rect.left);
+                    const y = Math.round(e.clientY - rect.top);
+
+                    // Log to console for easy copying
+                    console.log(`Position: ${x},${y}`);
+
+                    // Display on page
+                    const display = createCoordDisplay();
+                    display.textContent = `Clicked: ${x},${y}`;
+
+                    // Optional: Copy to clipboard
+                    navigator.clipboard.writeText(`${x},${y}`).catch(err => {
+                        console.log('Could not copy to clipboard:', err);
+                    });
+                });
+
+                // Change cursor to indicate clickability
+                img.style.cursor = 'crosshair';
+            });
+        }
+
+        // Position data overlays on the SVG
+        function positionDataOverlays() {
+            const containers = document.querySelectorAll('.floorplan-placeholder');
+
+            containers.forEach(container => {
+                const overlays = container.querySelectorAll('.data-overlay');
+
+                overlays.forEach(overlay => {
+                    const position = overlay.getAttribute('data-position');
+                    if (position) {
+                        const [x, y] = position.split(',').map(Number);
+                        // Position relative to container
+                        overlay.style.left = `${x}px`;
+                        overlay.style.top = `${y}px`;
+                    }
+                });
+            });
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            positionDataOverlays();
+            setupClickTracking();
+        });
+
+        // Reposition overlays on window resize
+        window.addEventListener('resize', positionDataOverlays);
+    </script>

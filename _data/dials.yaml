@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────────────────────────────────
+# dials.htm — live KPI dials (segmented gauges).
+#
+# Rendered by _templates/dials.html.j2 (live_dial macro) +
+# js/project/2.0/energy-dials.js, wrapping EnergyCharts.segmentedDial. D3 +
+# the chart lib are self-hosted (js/d3/7/) — offline, no CDN.
+#
+# Each dial binds a live Optergy BACnet point. Fields:
+#   bacnet   (required) — the live point address (deviceInstance|objType|inst|prop|arr)
+#   label               — caption under the value
+#   format              — power→kW, energy→kWh, temperature→°C, percentage→% …
+#   min / max           — gauge full-scale (set to the point's real range so the
+#                         fill + zone colours are meaningful)
+#   suffix              — override the unit shown (else derived from format)
+#   decimals            — value decimal places (default 0)
+#   refresh             — poll seconds (default 10)
+#   width / height      — SVG canvas size (default 600×200; scales to the card)
+# ─────────────────────────────────────────────────────────────────────────
+
+page_title: "Live KPI Dials"
+heading: "Live KPI Dials"
+
+dials:
+  - { label: "Electricity Demand", bacnet: "300|0|19682|85|-1", format: power, min: 0, max: 1000 }
+  - { label: "Cooling Demand",     bacnet: "300|2|71|85|-1",    format: power, min: 0, max: 500 }
+  - { label: "LPHW Demand",        bacnet: "300|0|23140|85|-1", format: power, min: 0, max: 300 }
+  - { label: "O/A Temperature",    bacnet: "10010|0|0|85|-1",   format: temperature, min: -5, max: 40, decimals: 1 }
+  - { label: "Humidity",           bacnet: "10010|0|1|85|-1",   format: percentage,  min: 0,  max: 100 }

@@ -1,0 +1,67 @@
+{%- set _pp = path_prefix|default('') -%}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="Optergy Energy Management System" content="DMAdash">
+    <title>{{ page_title }}</title>
+
+    <link rel="shortcut icon" type="image/png" href="{{ _pp }}img/favicon.png">
+    <link rel="stylesheet" href="{{ _pp }}css/bootstrap/5.3.1/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ _pp }}css/project/2.0/style.css">
+    <link rel="stylesheet" href="{{ _pp }}css/boxicons/2.1.4/boxicons.min.css">
+{% block extra_styles %}{% endblock %}
+{% block optergy_scripts %}    <!-- Optergy Libraries for Live Data -->
+    <script type="text/javascript" src="/js/ScriptResources_en.js"></script>
+    <script type="text/javascript" src="/js/liveDisplayAndDashboard.js?v=260228085300"></script>
+    <script type="text/javascript" src="/js/jquery-2.2.4.js?v=260228085300"></script>
+    <script type="text/javascript" src="/js/jquery-migrate-1.4.1.js?v=260228085300"></script>
+    <script type="text/javascript" src="/js/jquery-ui-1.8.24.custom.js?v=260228085300"></script>
+    <script type="text/javascript" src="/js/optergy-dialogs.js?v=260228085300"></script>
+    <script type="text/javascript" src="/js/optergy-forms.js?v=260228085300"></script>
+    <script type="text/javascript" src="/js/setup.js?v=260228085300"></script>
+    <script type="text/javascript" src="/js/jquery.ui.touch.js?v=260228085300"></script>
+    <script type="text/javascript" src="/js/jquery.optergy-functions-2.js?v=260228085300"></script>
+{% endblock %}</head>
+
+<body{% if layout_mode %} data-layout-mode="{{ layout_mode }}"{% endif %}>
+    <div class="layout has-sidebar fixed-sidebar fixed-header">
+        <!-- Sidebar will be loaded here -->
+        <div id="sidebar-container"></div>
+
+        <div class="layout">
+            <main class="content">
+                <div>
+                    <a id="btn-toggle" aria-label="Open navigation menu" href="#" class="sidebar-toggler break-point-lg">
+                        <i class="bx bx-md bx-menu"></i>
+                    </a>
+                </div>
+
+                <div class="container{% if container_class %} {{ container_class }}{% endif %}"{% if container_style %} style="{{ container_style }}"{% elif not container_class %} style="display: flex; flex-direction: column; gap: 15px;"{% endif %}>
+                    <!-- Row 1: Title Bar -->
+                    <div class="title-bar">
+                        <h1>{{ heading }}</h1>
+                    </div>
+
+{% block content %}{% endblock %}
+
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script src="{{ _pp }}js/bootstrap/5.3.1/bootstrap.bundle.min.js"></script>
+    <!-- Load image configuration -->
+    <script src="{{ _pp }}js/project/2.0/reports.js"></script>
+    <!-- Load live points widget system -->
+    <script src="{{ _pp }}js/project/2.0/live-points.js"></script>
+{% block extra_scripts %}{% endblock %}
+    <!-- Load sidebar template dynamically -->
+    <script src="{{ sidebar_src|default(_pp + 'js/project/2.0/sidebar-template.js') }}"></script>
+{% block tail_scripts %}{% endblock %}
+</body>
+
+</html>

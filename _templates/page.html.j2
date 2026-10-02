@@ -1,0 +1,21 @@
+{#- ────────────────────────────────────────────────────────────────────────
+    page.html.j2 — generic singleton page wrapper.
+
+    Renders a hand-authored page body through the shared base shell. The body
+    and any head/script extras are supplied as raw HTML fragments living in
+    _templates/pages/<key>.{body,styles,extra_scripts,tail_scripts}.html and
+    loaded by build_pages() in build.py. Per-page metadata (title, heading,
+    container class/style, whether the Optergy live-data libs are needed) comes
+    from _data/pages.yaml.
+
+    This is the catch-all for one-off pages that aren't driven by a data
+    registry (building performance, landlord services, docs, the legacy
+    verde-template floors 6–11, the report viewer scaffold, …). To edit one of
+    these pages, edit its body fragment and rebuild — the shell stays central.
+   ──────────────────────────────────────────────────────────────────────── -#}
+{% extends "base.html.j2" %}
+{% block extra_styles %}{{ extra_styles_html|default('') }}{% endblock %}
+{% block optergy_scripts %}{% if no_optergy|default(false) %}{% else %}{{ super() }}{% endif %}{% endblock %}
+{% block content %}{{ body|default('') }}{% endblock %}
+{% block extra_scripts %}{{ extra_scripts_html|default('') }}{% endblock %}
+{% block tail_scripts %}{{ tail_scripts_html|default('') }}{% endblock %}

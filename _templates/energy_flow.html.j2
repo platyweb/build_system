@@ -1,0 +1,60 @@
+{% extends 'base.html.j2' %}
+
+{#- ────────────────────────────────────────────────────────────────────────
+    energy_flow.html.j2 — building energy-flow Sankey diagram.
+
+    Renders a D3 Sankey of how incoming energy (electricity / gas) splits
+    across landlord plant and tenant floors down to end uses. The diagram
+    is drawn client-side by js/project/2.0/energy-sankey.js from the
+    `nodes` / `links` emitted below as inline JSON.
+
+    D3 is self-hosted (js/d3/7/) — no CDN, works fully offline.
+
+    Driven by `_data/energy_flow.yaml`.
+   ──────────────────────────────────────────────────────────────────────── -#}
+
+{% block extra_styles %}
+    <link rel="stylesheet" href="{{ path_prefix|default('') }}css/project/2.0/sankey.css">
+{%- endblock %}
+
+{% block content %}
+                    <p class="sankey-sub">{{ subtitle|default('Annual energy (' ~ unit ~ '). Hover a flow to highlight it; drag a node to reposition.') }}</p>
+                    <div class="sankey-card">
+                        <svg id="sankey" width="1180" height="720" viewBox="0 0 1180 720" preserveAspectRatio="xMidYMid meet"></svg>
+                    </div>
+
+                    <script type="application/json" id="sankey-data">{{ sankey_data | tojson }}</script>
+
+{%- if live_meters or live_points %}
+                    <!-- Live sources. One hidden element per unique source;
+                         energy-sankey.js reads the value Optergy writes here
+                         (data-sankey-meter = the token) and sums each source
+                         into every flow that references it (see sankey-data). -->
+                    <div class="sankey-live-points" hidden aria-hidden="true">
+{%- for m in live_meters %}
+                        <!-- registry meter (resolved to BACnet by meter-templates.js) -->
+                        <div class="sankey-live" id="sankey-meter-{{ m.meter_id }}" data-sankey-meter="{{ m.meter_id }}"
+                             data-meter-id="{{ m.meter_id }}" data-meter-field="{{ m.meter_field }}"
+                             data-refresh="{{ m.refresh|default(10) }}">Loading...</div>
+{%- endfor %}
+{%- for p in live_points %}
+                        <!-- raw BACnet point (bound directly by live-points.js) -->
+                        <div class="sankey-live" id="sankey-point-{{ p.key }}" data-sankey-meter="{{ p.key }}"
+                             data-bacnet="{{ p.bacnet }}" data-format="{{ p.format|default('power') }}"
+                             data-refresh="{{ p.refresh|default(10) }}">Loading...</div>
+{%- endfor %}
+                    </div>
+{%- endif %}
+{% endblock %}
+
+{% block tail_scripts %}
+    <!-- Self-hosted D3 (offline) — d3 core, then the sankey plugin -->
+    <script src="{{ path_prefix|default('') }}js/d3/7/d3.v7.min.js"></script>
+    <script src="{{ path_prefix|default('') }}js/d3/7/d3-sankey.min.js"></script>
+{%- if live_meters %}
+    <!-- Resolves data-meter-id → live data-bacnet (live-points.js loaded by base) -->
+    <script src="{{ path_prefix|default('') }}js/project/2.0/meter-templates.js"></script>
+{%- endif %}
+    <!-- Sankey renderer — reads #sankey-data and draws into #sankey -->
+    <script src="{{ path_prefix|default('') }}js/project/2.0/energy-sankey.js"></script>
+{%- endblock %}

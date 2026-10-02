@@ -1,0 +1,43 @@
+{% extends 'base.html.j2' %}
+{%- from 'partials/macros.j2' import schematic_overlay -%}
+
+{#- ────────────────────────────────────────────────────────────────────────
+    schematic.html.j2 — riser & tariff pages.
+
+    Renders a fixed SVG background (img/<bg>.svg) with positioned live
+    data widgets overlaid on top. Position coordinates align to features
+    drawn in the SVG. Overlay records come from _data/schematics.yaml; the
+    `kind` field selects the macro variant:
+
+        link    : clickable navigation rectangle
+        meter   : live data, registry-driven (data-meter-id)
+        status  : online/offline indicator
+        raw     : explicit BACnet (tariff / aggregate points)
+
+    The data-position handler (js/project/2.0/position-handler.js) centres
+    each overlay on its (x,y) coordinate at runtime.
+   ──────────────────────────────────────────────────────────────────────── -#}
+
+{% block extra_styles %}
+    <link rel="stylesheet" href="css/project/2.0/switchboard.css">
+    <link rel="stylesheet" href="css/project/2.0/diagrams.css">
+{%- endblock %}
+
+{% block content %}
+                    <div class="switchboard-card-no-animation primary">
+                        <div class="floorplan-viewer">
+                            <div class="floorplan-placeholder">
+                                <img src="{{ background }}" alt="{{ heading }}" style="height: auto; display: block;">
+
+{%- for o in overlays %}
+{{ schematic_overlay(o) }}
+{%- endfor %}
+                            </div>
+                        </div>
+                    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <!-- Load position handler for data-position attributes -->
+    <script src="js/project/2.0/position-handler.js"></script>
+{%- endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html.j2' %}
+{%- from 'partials/macros.j2' import report_card -%}
+
+{#- ────────────────────────────────────────────────────────────────────────
+    tenant_index.html.j2 — per-tenant summary page.
+
+    Lives at tenants/<tenant>/index.htm. Two summary cards (Tenant +
+    Floors Occupied) followed by a vertical stack of report image cards.
+    "Floors Occupied" is derived in build_tenants from the floors that
+    have meters assigned to the tenant.
+   ──────────────────────────────────────────────────────────────────────── -#}
+
+{% block content %}
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <div class="summary-card-title">Tenant</div>
+                            <div class="summary-card-value">{{ tenant_name }}</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">Floors Occupied</div>
+                            <div class="summary-card-value">{{ floors_occupied }}</div>
+                        </div>
+                    </div>
+
+                    <div class="grid-cols-1">
+{%- for report in reports %}
+
+{{ report_card(report) }}
+{%- endfor %}
+                    </div>
+{% endblock %}

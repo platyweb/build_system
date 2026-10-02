@@ -1,0 +1,424 @@
+                    <!-- Floorplan Tab Content -->
+                    <div id="floorplan-tab">
+                        <div class="tenant-grid">
+                            <!-- Cooling Card -->
+                            <div class="floor-card-no-animation"
+                                style="display: flex; flex-direction: column; gap: 15px; padding: 20px;">
+                                <!-- Header: 100% Width -->
+                                <div class="floor-header">
+                                    <div class="floor-info">
+                                        <div class="floor-title">Cooling</div>
+                                        <div class="floor-location"></div>
+                                    </div>
+                                </div>
+
+                                <!-- 3 Column Layout -->
+                                <div style="display: flex; gap: 15px;">
+                                    <!-- Column 1: 20% - Stats -->
+                                    <div style="flex: 0 0 20%; display: flex; flex-direction: column; gap: 10px;">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Total Demand</div>
+                                            <div class="stat-value">
+                                                <div id="live-chs-total-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|40782|85|-1" data-format="power"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">Chiller No. 1 Demand</div>
+                                            <div class="stat-value">
+                                                <div id="live-ch1-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|10440|85|-1" data-format="power"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">Chiller No. 2 Demand</div>
+                                            <div class="stat-value">
+                                                <div id="live-ch2-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|13140|85|-1" data-format="power"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">Chiller No. 3 Demand</div>
+                                            <div class="stat-value">
+                                                <div id="live-ch3-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|13240|85|-1" data-format="power"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">Chiller No. 4 Demand</div>
+                                            <div class="stat-value">
+                                                <div id="live-ch4-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|10540|85|-1" data-format="power"
+                                                    data-decimal-places="2" data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Column 2: 40% - Report Content 1 -->
+                                    <div style="flex: 0 0 40%;">
+                                        <a href="/utilityReports/UtilityReports.html?libraryItemId=133" target="_blank"
+                                            rel="noopener noreferrer" class="floor-card">
+                                            <div class="floorplan-viewer">
+                                                <div class="floorplan-placeholder">
+                                                    <div class="report-content">
+                                                        <img data-image-ref="reports.chillers_demand"
+                                                            alt="Electricity Consumption"
+                                                            style="max-width: 100%; height: auto; display: block;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+
+                                    <!-- Column 3: 40% - Report Content 2 -->
+                                    <div style="flex: 0 0 40%;">
+                                        <a href="/utilityReports/UtilityReports.html?libraryItemId=132" target="_blank"
+                                            rel="noopener noreferrer" class="floor-card">
+                                            <div class="floorplan-viewer">
+                                                <div class="floorplan-placeholder">
+                                                    <div class="report-content">
+                                                        <img data-image-ref="reports.chillers_annual"
+                                                            alt="Electricity Consumption"
+                                                            style="max-width: 100%; height: auto; display: block;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tenant-grid">
+                            <!-- Ventillation Card -->
+                            <div class="floor-card-no-animation"
+                                style="display: flex; flex-direction: column; gap: 15px; padding: 20px;">
+                                <!-- Header: 100% Width -->
+                                <div class="floor-header">
+                                    <div class="floor-info">
+                                        <div class="floor-title">Ventillation</div>
+                                        <div class="floor-location"></div>
+                                    </div>
+                                </div>
+
+                                <!-- 3 Column Layout -->
+                                <div style="display: flex; gap: 15px;">
+                                    <!-- Column 1: 20% - Stats -->
+                                    <div style="flex: 0 0 20%; display: flex; flex-direction: column; gap: 10px;">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Total Demand</div>
+                                            <div class="stat-value">
+                                                <div id="live-ventilation-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|41082|85|-1" data-format="power"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">MCCP-BE-01</div>
+                                            <div class="stat-value">
+                                                <div id="live-mccp1-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|16040|85|-1" data-format="power"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">MCCP-BE-02</div>
+                                            <div class="stat-value">
+                                                <div id="live-mccp2-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|10340|85|-1" data-format="power"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">MCCP-BE-03</div>
+                                            <div class="stat-value">
+                                                <div id="live-mccp3-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|11240|85|-1" data-format="power"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">MCCP-BW-01</div>
+                                            <div class="stat-value">
+                                                <div id="live-mccp4-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|26440|85|-1" data-format="power"
+                                                    data-decimal-places="2" data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">MCCP-L1-01</div>
+                                            <div class="stat-value">
+                                                <div id="live-mccp5-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|26340|85|-1" data-format="power"
+                                                    data-decimal-places="2" data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">MCCP-L11-01</div>
+                                            <div class="stat-value">
+                                                <div id="live-mccp6-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|10240|85|-1" data-format="power"
+                                                    data-decimal-places="2" data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Column 2: 40% - Report Content 1 -->
+                                    <div style="flex: 0 0 40%;">
+                                        <a href="/utilityReports/UtilityReports.html?libraryItemId=143" target="_blank"
+                                            rel="noopener noreferrer" class="floor-card">
+                                            <div class="floorplan-viewer">
+                                                <div class="floorplan-placeholder">
+                                                    <div class="report-content">
+                                                        <img data-image-ref="reports.ventilation_demand"
+                                                            alt="Electricity Consumption"
+                                                            style="max-width: 100%; height: auto; display: block;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+
+                                    <!-- Column 3: 40% - Report Content 2 -->
+                                    <div style="flex: 0 0 40%;">
+                                        <a href="/utilityReports/UtilityReports.html?libraryItemId=144" target="_blank"
+                                            rel="noopener noreferrer" class="floor-card">
+                                            <div class="floorplan-viewer">
+                                                <div class="floorplan-placeholder">
+                                                    <div class="report-content">
+                                                        <img data-image-ref="reports.ventilation_annual"
+                                                            alt="Electricity Consumption"
+                                                            style="max-width: 100%; height: auto; display: block;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tenant-grid">
+                            <!-- Heating Card -->
+                            <div class="floor-card-no-animation"
+                                style="display: flex; flex-direction: column; gap: 15px; padding: 20px;">
+                                <!-- Header: 100% Width -->
+                                <div class="floor-header">
+                                    <div class="floor-info">
+                                        <div class="floor-title">Heating</div>
+                                        <div class="floor-location"></div>
+                                    </div>
+                                </div>
+
+                                <!-- 3 Column Layout -->
+                                <div style="display: flex; gap: 15px;">
+                                    <!-- Column 1: 20% - Stats -->
+                                    <div style="flex: 0 0 20%; display: flex; flex-direction: column; gap: 10px;">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Monthly consumption</div>
+                                            <div class="stat-value">
+                                                <div id="live-gas-consumption" class="info-item-value-small"
+                                                    data-bacnet="300|0|2000000|85|-1" data-format="gas"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Column 2: 40% - Report Content 1 -->
+                                    <div style="flex: 0 0 40%;">
+                                        <a href="/utilityReports/UtilityReports.html?libraryItemId=100" target="_blank"
+                                            rel="noopener noreferrer" class="floor-card">
+                                            <div class="floorplan-viewer">
+                                                <div class="floorplan-placeholder">
+                                                    <div class="report-content">
+                                                        <img data-image-ref="reports.heating_demand"
+                                                            alt="Electricity Consumption"
+                                                            style="max-width: 100%; height: auto; display: block;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+
+                                    <!-- Column 3: 40% - Report Content 2 -->
+                                    <div style="flex: 0 0 40%;">
+                                        <a href="/utilityReports/UtilityReports.html?libraryItemId=134" target="_blank"
+                                            rel="noopener noreferrer" class="floor-card">
+                                            <div class="floorplan-viewer">
+                                                <div class="floorplan-placeholder">
+                                                    <div class="report-content">
+                                                        <img data-image-ref="reports.heating_annual"
+                                                            alt="Electricity Consumption"
+                                                            style="max-width: 100%; height: auto; display: block;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="tenant-grid">
+                            <!-- Lifts Card -->
+                            <div class="floor-card-no-animation"
+                                style="display: flex; flex-direction: column; gap: 15px; padding: 20px;">
+                                <!-- Header: 100% Width -->
+                                <div class="floor-header">
+                                    <div class="floor-info">
+                                        <div class="floor-title">Lifts</div>
+                                        <div class="floor-location"></div>
+                                    </div>
+                                </div>
+
+                                <!-- 3 Column Layout -->
+                                <div style="display: flex; gap: 15px;">
+                                    <!-- Column 1: 20% - Stats -->
+                                    <div style="flex: 0 0 20%; display: flex; flex-direction: column; gap: 10px;">
+                                        <div class="stat-box">
+                                            <div class="stat-label">Total Demand</div>
+                                            <div class="stat-value">
+                                                <div id="live-lifts-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|12940|85|-1" data-format="power"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">Lift-1 D</div>
+                                            <div class="stat-value">
+                                                <div id="live-lift1-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|16640|85|-1" data-format="power"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">Lift-2 C</div>
+                                            <div class="stat-value">
+                                                <div id="live-lift2-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|16740|85|-1" data-format="power"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">Lift-3 B</div>
+                                            <div class="stat-value">
+                                                <div id="live-lift3-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|16840|85|-1" data-format="power"
+                                                    data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">Lift-4 A</div>
+                                            <div class="stat-value">
+                                                <div id="live-lift4-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|16940|85|-1" data-format="power"
+                                                    ="2data-decimal-places" data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">Lift-5 H</div>
+                                            <div class="stat-value">
+                                                <div id="live-lift5-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|17040|85|-1" data-format="power"
+                                                    data-decimal-places="2" data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">Lift-6 G</div>
+                                            <div class="stat-value">
+                                                <div id="live-lift6-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|17140|85|-1" data-format="power"
+                                                    data-decimal-places="2" data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">Lift-7 F</div>
+                                            <div class="stat-value">
+                                                <div id="live-lift7-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|17240|85|-1" data-format="power"
+                                                    data-decimal-places="2" data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">Lift-8 E</div>
+                                            <div class="stat-value">
+                                                <div id="live-lift8-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|17340|85|-1" data-format="power"
+                                                    data-decimal-places="2" data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-label">Goods-Lifts</div>
+                                            <div class="stat-value">
+                                                <div id="live-goodslift-demand" class="info-item-value-small"
+                                                    data-bacnet="300|0|25940|85|-1" data-format="power"
+                                                    data-decimal-places="2" data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <!-- Column 2: 40% - Report Content 1 -->
+                                    <div style="flex: 0 0 40%;">
+                                        <a href="/utilityReports/UtilityReports.html?libraryItemId=140" target="_blank"
+                                            rel="noopener noreferrer" class="floor-card">
+                                            <div class="floorplan-viewer">
+                                                <div class="floorplan-placeholder">
+                                                    <div class="report-content">
+                                                        <img data-image-ref="reports.lifts_demand"
+                                                            alt="Electricity Consumption"
+                                                            style="max-width: 100%; height: auto; display: block;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+
+                                    <!-- Column 3: 40% - Report Content 2 -->
+                                    <div style="flex: 0 0 40%;">
+                                        <a href="/utilityReports/UtilityReports.html?libraryItemId=141" target="_blank"
+                                            rel="noopener noreferrer" class="floor-card">
+                                            <div class="floorplan-viewer">
+                                                <div class="floorplan-placeholder">
+                                                    <div class="report-content">
+                                                        <img data-image-ref="reports.lifts_annual"
+                                                            alt="Electricity Consumption"
+                                                            style="max-width: 100%; height: auto; display: block;">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>

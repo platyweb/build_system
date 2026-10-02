@@ -1,0 +1,137 @@
+                    <!-- Info Bar - Full Width -->
+                    <div class="info-bar"
+                        style="margin-bottom: 15px; display: grid !important; grid-template-columns: repeat(6, 1fr) !important; grid-template-rows: auto !important; gap: 10px !important; width: 100%;">
+                        <a href="/trendlogs/TrendViewer.html?trends%5B%5D=300.0&hideup" target="_blank" rel="noopener noreferrer"
+                            class="floor-header-link">
+                            <div class="info-item">
+                                <div class="info-item-label">O/A Temperature</div>
+                                <div id="live-temp" class="info-item-value" data-bacnet="10010|0|0|85|-1"
+                                    data-format="temperature" data-refresh="10">Loading...</div>
+                            </div>
+                        </a>
+                        <a href="/trendlogs/TrendViewer.html?trends%5B%5D=300.1&hideup" target="_blank" rel="noopener noreferrer"
+                            class="floor-header-link">
+                            <div class="info-item">
+                                <div class="info-item-label">Humidity</div>
+                                <div id="live-humidity" class="info-item-value" data-bacnet="10010|0|1|85|-1"
+                                    data-format="percentage" data-refresh="10">Loading...</div>
+                            </div>
+                        </a>
+                        <a href="/meters/MeterDisplay.html?meter.id=97" target="_blank" rel="noopener noreferrer"
+                            class="floor-header-link">
+                            <div class="info-item">
+                                <div class="info-item-label">Electricity Demand</div>
+                                <div id="live-total-demand" class="info-item-value" data-bacnet="300|0|19682|85|-1"
+                                    data-format="power" data-refresh="10">Loading...</div>
+                            </div>
+                        </a>
+                        <a href="/meters/MeterDisplay.html?meter.id=132" target="_blank" rel="noopener noreferrer"
+                            class="floor-header-link">
+                            <div class="info-item">
+                                <div class="info-item-label">LPHW Demand</div>
+                                <div id="live-lphw-demand" class="info-item-value" data-bacnet="300|0|23140|85|-1"
+                                    data-format="power" data-refresh="10">Loading...</div>
+                            </div>
+                        </a>
+                        <a href="/meters/MeterDisplay.html?meter.id=127" target="_blank" rel="noopener noreferrer"
+                            class="floor-header-link">
+                            <div class="info-item">
+                                <div class="info-item-label">CHW Demand</div>
+                                <div id="live-chw-demand" class="info-item-value" data-bacnet="300|0|22640|85|-1"
+                                    data-format="power" data-refresh="10">
+                                    Loading...</div>
+                            </div>
+                        </a>
+                        <a href="building_performance.htm" target="_blank" rel="noopener noreferrer"
+                            class="floor-header-link">
+                            <div class="info-item">
+                                <div class="info-item-label">Building Performance</div>
+                                <div class="info-item-value">N/A</div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="home-reports">
+
+                        <!-- Three Column Layout: 40% + 40% + 20% -->
+                        <div class="three-column-reports">
+                            <!-- Column 1: Text Box (20%) -->
+                            <div class="text-box">
+                                <div class="text-box-header">
+                                    <div class="text-box-title">Welcome to {{ building.name }}<br>Real-time Energy Monitoring System</div>
+                                </div>
+                                <div class="text-box-content">
+                                    <ul
+                                        style="margin-left: 5px; margin-bottom: 10px; padding-inline-start: 10px !important;">
+                                        <li>98 active Electricity meters across 5 floors</li>
+                                        <li>19 active Heat Energy meters across 5 floors</li>
+                                        <li>Real-time energy consumption tracking</li>
+                                        <li>Switchboards and Risers consumption tracking</li>
+                                        <li>Comprehensive Tenant Billing and cost allocation</li>
+                                        <li>Environmental impact monitoring and carbon reporting</li>
+                                        <li>Building Performance reporting</li>
+                                    </ul>
+
+                                </div>
+                            </div>
+                            <!-- Column 1: Report (40%) -->
+                            <a href="/utilityReports/UtilityReports.html?libraryItemId=127" target="_blank"
+                                rel="noopener noreferrer" class="floor-stats-group-link">
+                                <div class="report-placeholder">
+                                    <div class="report-header">
+                                        <div class="floor-title">Annual Electricity Consumption</div>
+                                    </div>
+                                    <div class="report-content">
+                                        <img data-image-ref="reports.home_elec_annual"
+                                            alt="Total Electricity Annual Consumption"
+                                            style="max-width: 100%; height: auto; display: block;">
+                                    </div>
+                                </div>
+                            </a>
+
+                            <!-- Column 3: Report (40%) -->
+                            <a href="/utilityReports/UtilityReports.html?libraryItemId=130" target="_blank"
+                                rel="noopener noreferrer" class="floor-stats-group-link">
+                                <div class="report-placeholder">
+                                    <div class="report-header">
+                                        <div class="floor-title">Annual Heat Energy Consumption</div>
+                                    </div>
+                                    <div class="report-content">
+                                        <img data-image-ref="reports.home_heat_annual"
+                                            alt="Total Heat Energy Annual Consumption"
+                                            style="max-width: 100%; height: auto; display: block;">
+                                    </div>
+                                </div>
+                            </a>
+
+
+                        </div>
+
+                        <div class="transformer-grid">
+                        <a href="/utilityReports/UtilityReports.html?libraryItemId=154" target="_blank"
+                            rel="noopener noreferrer" class="floor-stats-group-link">
+                            <div class="report-placeholder">
+                                <div class="report-header">
+                                    <div class="floor-title">Weekly Electricity Demand</div>
+                                </div>
+                                <div class="report-content">
+                                    <img data-image-ref="reports.home_elec_demand" alt="Total Electricity Demand"
+                                        style="max-width: 100%; height: auto; display: block;">
+                                </div>
+                            </div>
+                        </a>
+
+                        <a href="/utilityReports/UtilityReports.html?libraryItemId=131" target="_blank"
+                            rel="noopener noreferrer" class="floor-stats-group-link">
+                            <div class="report-placeholder">
+                                <div class="report-header">
+                                    <div class="floor-title">Weekly Heat Energy Demand</div>
+                                </div>
+                                <div class="report-content">
+                                    <img data-image-ref="reports.home_heat_demand" alt="Total Heat Energy Demand"
+                                        style="max-width: 100%; height: auto; display: block;">
+                                </div>
+                            </div>
+                        </a>
+                        </div>
+                    </div>

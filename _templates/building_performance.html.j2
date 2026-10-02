@@ -1,0 +1,149 @@
+{#- ────────────────────────────────────────────────────────────────────────
+    building_performance.html.j2 — NABERS-style base-building performance page.
+
+    Building facts (postcode, net internal area) come from _data/building.yaml
+    via the `building` global; the three report cards come from REPORT_REGISTRY
+    rows (page=building_performance, slots pie/right) passed in as pie_reports /
+    right_reports. The NABERS/degree-day live values are page-specific BMS
+    calculation points, kept as literal data-bacnet here (the POINTS registry
+    mirrors them for any page that prefers data-point).
+   ──────────────────────────────────────────────────────────────────────── -#}
+{% extends "base.html.j2" %}
+{% block content %}
+                    <!-- Columns Section with Grid Layout -->
+                    <div class="performance-columns">
+                        <!-- Left Column (30%) - Full Height Text Box -->
+                        <div class="column-left" style="height: 100%;">
+                            <div class="text-box" style="height: 100%;">
+                                <div class="text-box-header">
+                                    <div class="text-box-title">Building Performance Summary</div>
+                                    <div class="text-box-subtitle">NABERS UK based calculation methodology</div>
+                                </div>
+                                <div class="text-box-content">
+                                    <p>
+                                        This building performance report has been prepared using calculation
+                                        methodologies based on the NABERS UK rating framework for <strong>BASE
+                                            BUILDING</strong>, continuously assessing the last 12 months of live data
+                                        from the meters connected to the Optergy Energy Management System.
+                                        For more information on the calculation methodology, read <a
+                                            href="https://www.nabers.gov.au/about-nabers/what-nabers" target="_blank"
+                                            rel="noopener noreferrer">about NABERS UK here</a>.
+                                    </p>
+                                    <p style="margin-bottom: 10px;">
+                                        The following data is used for the performance rating calculation:
+                                    </p>
+
+                                    <h4 style="margin-bottom: 8px; margin-top: 20px; color: #0c1e35;">Building Data</h4>
+                                    <ul style="margin-left: 20px; margin-bottom: 15px;">
+                                        <li style="margin-bottom: 5px;">Building Postcode: {{ building.postcode }}</li>
+                                        <li style="margin-bottom: 5px;">HDD@15.5: <div id="live-hdd"
+                                                class="info-item-value-small" data-bacnet="300|2|89|85|-1"
+                                                data-format="number" data-refresh="10">Loading...</div>
+                                        </li>
+                                        <li style="margin-bottom: 5px;">CDD@15.5: <div id="live-cdd"
+                                                class="info-item-value-small" data-bacnet="300|2|90|85|-1"
+                                                data-format="number" data-refresh="10">Loading...</div>
+                                        </li>
+                                        <li style="margin-bottom: 5px;">Weekly Hours Occupancy is above 20% : <div
+                                                id="live-floor-occ" class="info-item-value-small"
+                                                data-bacnet="300|2|91|85|-1" data-format="number" data-refresh="10">
+                                                Loading...</div>
+                                        </li>
+                                        <li style="margin-bottom: 5px;">Net Internal Building Area: <strong>{{ building.net_internal_area }}</strong></li>
+                                    </ul>
+
+                                    <h4 style="margin-bottom: 8px; margin-top: 20px; color: #0c1e35;">Last 12 Month
+                                        Rolling Energy Data</h4>
+                                    <ul style="margin-left: 20px; margin-bottom: 15px;">
+                                        <li style="margin-bottom: 5px;">Electricity consumption: <div id="live-elec"
+                                                class="info-item-value-small" data-bacnet="300|2|87|85|-1"
+                                                data-format="energy" data-refresh="10">Loading...</div>
+                                        </li>
+                                        <li style="margin-bottom: 5px;">Gas consumption: <div id="live-gas"
+                                                class="info-item-value-small" data-bacnet="300|2|88|85|-1"
+                                                data-format="energy" data-refresh="10">Loading...</div>
+                                        </li>
+                                        <li style="margin-bottom: 5px;">District Heating: <strong>N/A</strong></li>
+                                        <li style="margin-bottom: 5px;">District Cooling: <strong>N/A</strong></li>
+                                    </ul>
+
+                                    <h4 style="margin-bottom: 8px; margin-top: 20px; color: #0c1e35;">Performance
+                                        Metrics</h4>
+                                    <p style="margin-bottom: 10px;">
+                                        <strong>Energy Intensity (kWh/m²):</strong>
+                                    <div id="live-energy-intensity" class="info-item-value-small"
+                                        data-bacnet="300|2|84|85|-1" data-format="number" data-refresh="10">Loading...
+                                    </div><br>
+                                    <strong>Water Usage:</strong> <strong>N/A</strong>
+                                    </p>
+
+                                    <p
+                                        style="padding: 15px; background-color: #e8f4f8; border-radius: 6px; border-left: 4px solid #27B4E8; margin-top: 60px; width: 100%; font-size: 13px; color: #3f4750;">
+                                        <i><strong>Note:</strong>The findings and calculations presented in this report
+                                            are for informational and benchmarking purposes only and do not constitute
+                                            an official NABERS UK rating. Only ratings issued through the official
+                                            NABERS UK certification process are recognized as valid NABERS UK ratings
+                                            and may be used for regulatory compliance, public disclosure, or marketing
+                                            purposes.</i>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Middle Column (30%) -->
+                        <div class="column-middle" style="height: 100%;">
+                            <!-- Performance Indicator (Top 50%) -->
+                            <div class="performance-indicator">
+                                <div class="performance-header">
+                                    <div class="performance-title">Building Performance Rating</div>
+                                    <div class="performance-subtitle">Rating Method: Base Building</div>
+                                </div>
+                                <div class="performance-content">
+                                    <div class="performance-circle">
+                                        <div id="live-rating" class="info-item-value-xlarge" data-bacnet="300|2|86|85|-1"
+                                            data-format="nabers" data-refresh="10" style="font-size: 32px;">Loading...</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pie Chart Report (Bottom 50%) -->
+{%- for r in pie_reports %}
+                            <a href="/utilityReports/UtilityReports.html?libraryItemId={{ r.library_item_id }}" target="_blank"
+                                rel="noopener noreferrer" class="floor-card">
+                                <div class="report-placeholder">
+                                    <div class="report-header">
+                                        <div class="report-title">{{ r.title }}</div>
+                                        <div class="report-subtitle">{{ r.subtitle }}</div>
+                                    </div>
+                                    <div class="report-content">
+                                        <img data-image-ref="{{ r.image_ref }}"
+                                            alt="{{ r.alt }}"
+                                            style="max-width: 100%; height: auto; display: block;">
+                                    </div>
+                                </div>
+                            </a>
+{% endfor %}
+                        </div>
+
+                        <!-- Right Column (40%) - Two Report Placeholders -->
+                        <div class="column-right" style="height: 100%;">
+                            <!-- Top Report (50%) -->
+{%- for r in right_reports %}
+                            <a href="/utilityReports/UtilityReports.html?libraryItemId={{ r.library_item_id }}" target="_blank"
+                                rel="noopener noreferrer" class="floor-card">
+                                <div class="report-placeholder">
+                                    <div class="report-header">
+                                        <div class="report-title">{{ r.title }}</div>
+                                        <div class="report-subtitle">{{ r.subtitle }}</div>
+                                    </div>
+                                    <div class="report-content">
+                                        <img data-image-ref="{{ r.image_ref }}"
+                                            alt="{{ r.alt }}"
+                                            style="max-width: 100%; height: auto; display: block;">
+                                    </div>
+                                </div>
+                            </a>
+{% endfor %}
+                        </div>
+                    </div>
+{% endblock %}

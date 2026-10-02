@@ -1,0 +1,147 @@
+{% extends 'base.html.j2' %}
+{%- from 'partials/macros.j2' import summary_card, floor_summary_card, riser_card, report_card -%}
+
+{#- ────────────────────────────────────────────────────────────────────────
+    floor.html.j2 — generic floor page.
+
+    Layout mirrors floor_23rd.htm, the hand-built reference for the current
+    design: a 4-tile demand strip, a Floor Summary section (Total
+    Electricity / Tenants / Landlords cards + the floorplan image), a Riser
+    Meters section (East/North/West columns built from `data-floor-meter`
+    auto-widgets), and 4 report tabs (Electricity/Heat/Cooling/Ventilation).
+
+    `floorplan_tab.layout` is an ordered list of column descriptors driven by
+    the meter registry (see `derive_layout` in build.py):
+        - { type: cards, cards: [ { title, location, meters: [...] }, ... ] }
+    One entry per populated column (0=East, 1=North, 2=West by convention).
+    The North column is the landlord/mechanical riser and renders with the
+    "top card" styling; East/West are tenant risers.
+   ──────────────────────────────────────────────────────────────────────── -#}
+
+{% block content %}
+                    <!-- Tab Buttons -->
+                    <div class="tab-buttons" role="tablist" aria-label="Floor overview sections">
+{%- for tab in tabs %}
+                        <button class="tab-button{% if loop.first %} active{% endif %}" role="tab" type="button" id="tab-{{ tab.id }}"
+                            aria-selected="{{ 'true' if loop.first else 'false' }}" aria-controls="{{ tab.id }}-tab"
+                            onclick="switchTab('{{ tab.id }}')">
+                            {{ tab.label }}
+                        </button>
+{%- endfor %}
+                    </div>
+
+                    <!-- Floorplan Tab Content -->
+                    <div id="floorplan-tab" class="tab-content active" role="tabpanel"
+                        aria-labelledby="tab-floorplan" tabindex="0">
+                        <!-- Section 1: Floor Summary -->
+                        <div class="floor-section floor-section-summary">
+                            <div class="floor-summary-section">
+                                <!-- Line 1: Total Electricity block + Floorplan image -->
+                                <div class="floor-summary-row">
+
+{{ floor_summary_card(floorplan_tab.total_card) }}
+
+                                    <div class="floor-summary-image">
+                                        <img src="{{ floorplan_tab.image }}" alt="Floor Plan" class="floor-summary-img">
+                                    </div>
+                                </div>
+
+                                <!-- Line 2: Floor Tenants Electricity & Floor Landlords Electricity -->
+                                <div class="floor-summary-row">
+
+                                    <div class="floor-summary-dual-block">
+{{ floor_summary_card(floorplan_tab.tenants_card) }}
+
+{{ floor_summary_card(floorplan_tab.landlords_card) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 2: Riser Meters -->
+                        <div class="floor-section floor-section-risers">
+                            <div class="floor-summary-subtitle">Physical Riser Meters</div>
+                            <!-- 3 Column Layout: Left | Center (top card) | Right -->
+                            <div class="floor-three-column-grid">
+{%- for col in floorplan_tab.layout if col.type == 'cards' %}
+{%- set is_center = col.cards and col.cards[0].title == 'North' %}
+                                <div class="{{ 'center-column' if is_center else 'riser-column' }}">
+{%- for card in col.cards %}
+{%- set suffix = 'Landlord' if card.title == 'North' else 'Tenants' %}
+
+{{ riser_card({'title': card.title ~ ' - ' ~ suffix, 'location': card.location, 'meters': card.meters, 'header_link': card.header_link}, 'center' if is_center else 'side') }}
+{%- endfor %}
+                                </div>
+{%- endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Electricity Report Tab Content -->
+                    <div id="electricity-report-tab" class="tab-content" role="tabpanel"
+                        aria-labelledby="tab-electricity-report" tabindex="0">
+                        <div class="summary-cards">
+{%- for card in electricity_tab.summary_cards %}
+{{ summary_card(card) }}
+{%- endfor %}
+                        </div>
+{%- for report in electricity_tab.reports %}
+
+{{ report_card(report) }}
+{%- endfor %}
+                    </div>
+
+                    <!-- Heat Energy Report Tab Content -->
+                    <div id="heat-report-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-heat-report"
+                        tabindex="0">
+                        <div class="summary-cards">
+{%- for card in heat_tab.summary_cards %}
+{{ summary_card(card) }}
+{%- endfor %}
+                        </div>
+{%- for report in heat_tab.reports %}
+
+{{ report_card(report) }}
+{%- endfor %}
+                    </div>
+
+                    <!-- Cooling Energy Report Tab Content -->
+                    <div id="cooling-report-tab" class="tab-content" role="tabpanel"
+                        aria-labelledby="tab-cooling-report" tabindex="0">
+                        <div class="summary-cards">
+{%- for card in cooling_tab.summary_cards %}
+{{ summary_card(card) }}
+{%- endfor %}
+                        </div>
+{%- for report in cooling_tab.reports %}
+
+{{ report_card(report) }}
+{%- endfor %}
+                    </div>
+
+                    <!-- Building Ventilation Report Tab Content -->
+                    <div id="ventilation-report-tab" class="tab-content" role="tabpanel"
+                        aria-labelledby="tab-ventilation-report" tabindex="0">
+                        <div class="summary-cards">
+{%- for card in ventilation_tab.summary_cards %}
+{{ summary_card(card) }}
+{%- endfor %}
+                        </div>
+{%- for report in ventilation_tab.reports %}
+
+{{ report_card(report) }}
+{%- endfor %}
+                    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <!-- Load position handler for data-position attributes -->
+    <script src="js/project/2.0/position-handler.js"></script>
+{%- endblock %}
+
+{% block tail_scripts %}
+    <!-- Load floor tab switching and meter styling -->
+    <script src="js/project/2.0/floor-tabs.js"></script>
+    <!-- Load meter templating -->
+    <script src="js/project/2.0/meter-templates.js"></script>
+{%- endblock %}

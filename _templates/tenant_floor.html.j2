@@ -1,0 +1,118 @@
+{% extends 'base.html.j2' %}
+{%- from 'partials/macros.j2' import summary_card, floor_summary_card, riser_card, report_card -%}
+
+{#- ────────────────────────────────────────────────────────────────────────
+    tenant_floor.html.j2 — per-tenant floor view.
+
+    Lives at project/tenants/<tenant>/floor_<key>.htm — a sibling of
+    project/<slug>/ (see building.yaml), not nested inside it. Asset paths
+    resolve via `path_prefix` (defaults to "../../<slug>//" from build_tenants).
+    Structurally identical to floor.html.j2 (same Floor Summary + Riser
+    Meters layout) except the Building Ventilation Report tab is dropped —
+    mirrors it line for line otherwise so the two page types render the
+    same. Floor layout is
+    derived from METER_REGISTRY meters where the tenant slug is in
+    `tenant` and `floor == <key>`, plus any floor meter with no tenant tag
+    at all (landlord/common-area riser meters), i.e. floor.html.j2's set
+    with other tenants' meters filtered out.
+
+    Differences from floor.html.j2:
+      - Riser/floor cards use header_link="#" (no riser_overview link)
+      - Report cards use href="#" (no library item)
+      - Local sidebar-template.js
+      - All asset paths prefixed
+   ──────────────────────────────────────────────────────────────────────── -#}
+
+{% block content %}
+                    <!-- Tab Buttons -->
+                    <div class="tab-buttons" role="tablist" aria-label="Floor overview sections">
+{%- for tab in tabs %}
+                        <button class="tab-button{% if loop.first %} active{% endif %}" role="tab" type="button" id="tab-{{ tab.id }}"
+                            aria-selected="{{ 'true' if loop.first else 'false' }}" aria-controls="{{ tab.id }}-tab"
+                            onclick="switchTab('{{ tab.id }}')">
+                            {{ tab.label }}
+                        </button>
+{%- endfor %}
+                    </div>
+
+                    <!-- Floorplan Tab Content -->
+                    <div id="floorplan-tab" class="tab-content active" role="tabpanel"
+                        aria-labelledby="tab-floorplan" tabindex="0">
+                        <!-- Section 1: Floor Summary — only Total Electricity + the
+                             floorplan image on tenant pages; Floor Tenants/Landlords
+                             Electricity (floor.html.j2's Line 2) are intentionally
+                             omitted here. `floor-section-summary--single-row` gives the
+                             row a min-height (style.css) so the floorplan image — sized
+                             to fit a 2-row summary on floor.html.j2 — doesn't overhang
+                             this shorter, 1-row tenant version. -->
+                        <div class="floor-section floor-section-summary floor-section-summary--single-row">
+                            <div class="floor-summary-section">
+                                <div class="floor-summary-row">
+
+{{ floor_summary_card(floorplan_tab.total_card) }}
+
+                                    <div class="floor-summary-image">
+                                        <img src="{{ floorplan_tab.image }}" alt="Floor Plan" class="floor-summary-img">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 2: Riser Meters -->
+                        <div class="floor-section floor-section-risers">
+                            <div class="floor-summary-subtitle">Physical Riser Meters</div>
+                            <!-- 3 Column Layout: Left | Center (top card) | Right -->
+                            <div class="floor-three-column-grid">
+{%- for col in floorplan_tab.layout if col.type == 'cards' %}
+{%- set is_center = col.cards and col.cards[0].title == 'North' %}
+                                <div class="{{ 'center-column' if is_center else 'riser-column' }}">
+{%- for card in col.cards %}
+{%- set suffix = 'Landlord' if card.title == 'North' else 'Tenants' %}
+
+{{ riser_card({'title': card.title ~ ' - ' ~ suffix, 'location': card.location, 'meters': card.meters, 'header_link': card.header_link}, 'center' if is_center else 'side') }}
+{%- endfor %}
+                                </div>
+{%- endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Electricity Report Tab Content -->
+                    <div id="electricity-report-tab" class="tab-content" role="tabpanel"
+                        aria-labelledby="tab-electricity-report" tabindex="0">
+{%- for report in electricity_tab.reports %}
+
+{{ report_card(report) }}
+{%- endfor %}
+                    </div>
+
+                    <!-- Heat Energy Report Tab Content -->
+                    <div id="heat-report-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-heat-report"
+                        tabindex="0">
+{%- for report in heat_tab.reports %}
+
+{{ report_card(report) }}
+{%- endfor %}
+                    </div>
+
+                    <!-- Cooling Energy Report Tab Content -->
+                    <div id="cooling-report-tab" class="tab-content" role="tabpanel"
+                        aria-labelledby="tab-cooling-report" tabindex="0">
+{%- for report in cooling_tab.reports %}
+
+{{ report_card(report) }}
+{%- endfor %}
+                    </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <!-- Load position handler for data-position attributes -->
+    <script src="{{ _pp }}js/project/2.0/position-handler.js"></script>
+{%- endblock %}
+
+{% block tail_scripts %}
+    <!-- Load floor tab switching and meter styling -->
+    <script src="{{ _pp }}js/project/2.0/floor-tabs.js"></script>
+    <!-- Load meter templating -->
+    <script src="{{ _pp }}js/project/2.0/meter-templates.js"></script>
+{%- endblock %}

@@ -1,0 +1,185 @@
+                    <!-- Tab Content -->
+                    <div id="floorplan-tab" class="tab-content active">
+                        <!-- Summary Cards -->
+                        <div class="summary-cards">
+                            <div class="summary-card">
+                                <div class="summary-card-title">CoP</div>
+                                <div class="summary-card-value">
+                                    <div class="info-item-value">
+                                        <div id="live-chw_system-cop" class="info-item-value"
+                                            data-bacnet="300|2|190|85|-1" data-format="number" data-refresh="10">
+                                            Loading...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-title">Cooling Energy Demand</div>
+                                <div class="summary-card-value">
+                                    <div class="info-item-value">
+                                        <div id="live-chw-cooling-consumption" class="info-item-value"
+                                            data-bacnet="300|0|22640|85|-1" data-format="power" data-refresh="10">
+                                            Loading...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-title">Cooling Electricity Demand</div>
+                                <div class="summary-card-value">
+                                    <div class="info-item-value">
+                                        <div id="live-chw-cooling-demand" class="info-item-value"
+                                            data-bacnet="300|0|23982|85|-1" data-format="power" data-refresh="10">
+                                            Loading...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-title">O/A Temp.</div>
+                                <div class="summary-card-value">
+                                    <div class="info-item-value">
+                                        <div id="live-chw-oa-temp" class="info-item-value" data-bacnet="10010|0|0|85|-1"
+                                            data-format="temperature" data-refresh="10">Loading...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2x2 Grid: Left cell spans both rows, two cells stacked on the right -->
+                        <div class="custom-grid">
+                            <!-- Merged cell: row 1 + row 2, column 1 -->
+                            <div class="grid-cell grid-cell-merged">
+                                <div class="grid-cell-title">CHW System</div>
+                                <div class="grid-cell-content">
+                                    <div class="floorplan-viewer">
+                                        <div class="floorplan-placeholder">
+                                            <img src="img/chw_system.svg" alt="CHW System"
+                                                style="height: 600px; display: block;">
+                                            <a href="#">
+                                                <div id="live-chw-temp1"
+                                                    class="info-item-value data-overlay power loading"
+                                                    data-position="565,100" data-bacnet="10010|0|4|85|-1"
+                                                    data-format="temperature" data-refresh="10">Loading...
+                                                </div>
+                                            </a>
+                                            <a href="#">
+                                                <div id="live-chw-temp2"
+                                                    class="info-item-value data-overlay power loading"
+                                                    data-position="565,170" data-bacnet="10010|0|5|85|-1"
+                                                    data-format="temperature" data-refresh="10">Loading...
+                                                </div>
+                                            </a>
+                                            <div id="live-status-chiller1" class="info-item-value data-overlay"
+                                                data-position="310,90" data-bacnet="10010|3|2|85|-1"
+                                                data-format="status" data-refresh="10"
+                                                data-status-online-svg="img/online-indicator.svg"
+                                                data-status-offline-svg="img/offline-indicator.svg"
+                                                data-status-online-text="Running" data-status-offline-text="Stopped"
+                                                style="font-size: 10px;">
+                                            </div>
+                                            <div id="live-status-chiller2" class="info-item-value data-overlay"
+                                                data-position="310,240" data-bacnet="10010|3|3|85|-1"
+                                                data-format="status" data-refresh="10"
+                                                data-status-online-svg="img/online-indicator.svg"
+                                                data-status-offline-svg="img/offline-indicator.svg"
+                                                data-status-online-text="Running" data-status-offline-text="Stopped"
+                                                style="font-size: 10px;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Top-right cell: row 1, column 2 -->
+                            <div class="grid-cell grid-cell-top-right">
+                                <div class="grid-cell-title">Annual Electricity Consumption</div>
+                                <div class="grid-cell-content">
+                                    <a href="/utilityReports/UtilityReports.html?libraryItemId=149" target="_blank"
+                                        rel="noopener noreferrer" class="floor-card">
+                                        <div class="floorplan-viewer">
+                                            <div class="floorplan-placeholder">
+                                                <div class="report-content">
+                                                    <img data-image-ref="reports.chw_elec_annual"
+                                                        alt="CHW Electricity Consumption"
+                                                        style="max-width: 100%; height: auto; display: block;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Bottom-right cell: row 2, column 2 -->
+                            <div class="grid-cell grid-cell-bottom-right">
+                                <div class="grid-cell-title">Annual Cooling Energy Consumption</div>
+                                <div class="grid-cell-content">
+                                    <a href="/utilityReports/UtilityReports.html?libraryItemId=150" target="_blank"
+                                        rel="noopener noreferrer" class="floor-card">
+                                        <div class="floorplan-viewer">
+                                            <div class="floorplan-placeholder">
+                                                <div class="report-content">
+                                                    <img data-image-ref="reports.chw_energy_annual"
+                                                        alt="CHW Cooling Energy Consumption"
+                                                        style="max-width: 100%; height: auto; display: block;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Bottom row left: row 3, column 1 -->
+                            <div class="grid-cell grid-cell-bottom-left">
+                                <div class="grid-cell-content">
+                                    <a href="/trendlogs/TrendViewer.html?manager.id=1&hideup" target="_blank"
+                                        rel="noopener noreferrer" class="floor-card">
+                                        <div class="floorplan-viewer">
+                                            <div class="floorplan-placeholder">
+                                                <div class="report-content">
+                                                    <img data-image-ref="reports.chw_cop" alt="CHW System COP"
+                                                        style="max-width: 100%; height: auto; display: block;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Bottom row right: row 3, column 2 -->
+                            <div class="grid-cell grid-cell-bottom-right-2">
+                                <div class="grid-cell-content">
+                                    <a href="/utilityReports/UtilityReports.html?libraryItemId=148" target="_blank"
+                                        rel="noopener noreferrer" class="floor-card">
+                                        <div class="floorplan-viewer">
+                                            <div class="floorplan-placeholder">
+                                                <div class="report-content">
+                                                    <img data-image-ref="reports.chw_demand"
+                                                        alt="CHW Electricity Demand"
+                                                        style="max-width: 100%; height: auto; display: block;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid-cell grid-cell-bottom-right-2">
+                            <div class="grid-cell-content">
+                                <a href="/utilityReports/UtilityReports.html?libraryItemId=158" target="_blank"
+                                    rel="noopener noreferrer" class="floor-card">
+                                    <div class="floorplan-viewer">
+                                        <div class="floorplan-placeholder">
+                                            <div class="report-content">
+                                                <img data-image-ref="reports.chw_monthly_occupancy"
+                                                    alt="CHW Monthly Occupancy"
+                                                    style="max-width: 100%; height: auto; display: block;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>

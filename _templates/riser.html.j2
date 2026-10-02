@@ -1,0 +1,48 @@
+{% extends "base.html.j2" %}
+{# Riser diagram — the vertical counterpart of switchboard.html.j2. Generated
+   by _build/build_risers.py from METER_REGISTRY + _data/risers.yaml. The
+   busbar is a generated SVG background; each floor tap is a live HTML
+   widget overlay, identical markup/widget system to the switchboard pages
+   (same swb-box/swb-gauge, same switchboard-gauge.js) — only the background
+   geometry and the top/bottom continuation arrows (instead of left/right)
+   differ. #}
+{% block extra_styles %}    <link rel="stylesheet" href="css/project/2.0/diagrams.css">
+    <link rel="stylesheet" href="css/project/2.0/switchboard.css">
+    <link rel="stylesheet" href="css/project/2.0/switchboard-widget.css">
+{% endblock %}
+{% block content %}
+                <div class="switchboard-card-no-animation primary">
+                    <div class="floorplan-viewer">
+                        <div class="floorplan-placeholder">
+                            <img src="{{ svg_path }}" alt="{{ heading }}" style="display: block;">
+{% for b in boxes %}
+                            <a href="/meters/MeterDisplay.html?meter.id={{ b.meter_id }}" target="_blank" rel="noopener noreferrer">
+                                <div class="data-overlay swb-box{% if b.is_incomer %} swb-incomer{% endif %}" data-position="{{ b.cx }},{{ b.cy }}" style="width: {{ b.w }}px; height: {{ b.h }}px;">
+                                    <div class="swb-head"><span class="swb-dot"></span><span class="swb-title" title="{{ b.title }}">{{ b.title }}</span></div>
+                                    <div class="swb-valrow">
+                                        <span class="swb-value" data-bacnet="{{ b.bacnet }}" data-format="power" data-refresh="10">Loading...</span>
+{% if b.ct %}                                        <span class="swb-ct">CT {{ b.ct }}</span>
+{% endif %}                                    </div>
+                                    <div class="swb-gauge" data-max="{{ b.rating }}"></div>
+                                </div>
+                            </a>
+{% endfor %}
+{% if tie_top %}
+                            <a href="{{ tie_top.href }}">
+                                <div class="data-overlay swb-tie" data-position="{{ tie_top.label_cx }},{{ tie_top.label_cy }}">{{ tie_top.label }}</div>
+                            </a>
+{% endif %}
+{% if tie_bottom %}
+                            <a href="{{ tie_bottom.href }}">
+                                <div class="data-overlay swb-tie" data-position="{{ tie_bottom.label_cx }},{{ tie_bottom.label_cy }}">{{ tie_bottom.label }}</div>
+                            </a>
+{% endif %}
+                        </div>
+                    </div>
+                </div>
+{% endblock %}
+{% block tail_scripts %}    <!-- Position the overlays from their data-position attributes -->
+    <script src="js/project/2.0/position-handler.js"></script>
+    <!-- Render + live-update the segmented gauges -->
+    <script src="js/project/2.0/switchboard-gauge.js"></script>
+{% endblock %}

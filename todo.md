@@ -1,0 +1,1 @@
+meter generator can't handle n/a - it doesnt put it in quotes and js fails on it 

@@ -1,0 +1,56 @@
+                    <!-- Floorplan Tab Content -->
+                    <div id="floorplan-tab" class="tab-content active">
+                        <div class="summary-cards">
+                            <div class="summary-card">
+                                <div class="summary-card-title">Total Electricity Demand</div>
+                                <div class="summary-card-value">
+                                    <div id="live-total-electricity-demand" class="info-item-value"
+                                        data-bacnet="300|0|19682|85|-1" data-format="power" data-decimal-places="0"
+                                        data-refresh="10">Loading...</div>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-title">Landlords Electricity Demand</div>
+                                <div class="summary-card-value">
+                                    <div id="live-landlord-electricity-demand" class="info-item-value"
+                                        data-bacnet="300|0|31482|85|-1" data-format="power" data-decimal-places="0"
+                                        data-refresh="10">Loading...</div>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-title">Tenants Electricity Demand</div>
+                                <div class="summary-card-value">
+                                    <div id="live-tenants-electricity-demand" class="info-item-value"
+                                        data-bacnet="300|0|31582|85|-1" data-format="power" data-decimal-places="0"
+                                        data-refresh="10">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <a href="/utilityReports/UtilityReports.html?libraryItemId=165" target="_blank"
+                            rel="noopener noreferrer" class="floor-card">
+                            <div class="floorplan-viewer">
+                                <div class="floorplan-placeholder">
+                                    <div class="report-content">
+                                        <img data-image-ref="reports.ll_tenant_demand_elec" alt="Electricity Demand Report"
+                                            style="max-width: 100%; height: auto; display: block;">
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a href="/utilityReports/UtilityReports.html?libraryItemId=166" target="_blank"
+                            rel="noopener noreferrer" class="floor-card">
+                            <div class="floorplan-viewer">
+                                <div class="floorplan-placeholder">
+                                    <div class="report-content">
+                                        <img data-image-ref="reports.ll_tenant_consumption_elec" alt="Electricity Consumption Report"
+                                            style="max-width: 100%; height: auto; display: block;">
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                    </div>

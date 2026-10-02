@@ -1,0 +1,205 @@
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <div class="summary-card-title">Total Switchboards</div>
+                            <div class="summary-card-value">2</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">Total Physical Electricity Meters</div>
+                            <div class="summary-card-value">98</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">Total Demand</div>
+                            <div class="summary-card-value">
+                                <div id="live-total-demand" class="info-item-value-small"
+                                    data-bacnet="300|0|19682|85|-1" data-format="power" data-refresh="10">Loading...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="switchboards-grid">
+                        <!-- Switchboard 1: LV-01 -->
+                        <a href="/docs/1sr/swb_lv01.htm" target="_blank" rel="noopener noreferrer"
+                            class="switchboard-card primary color-a">
+                            <div class="status-indicator">
+                                <div id="live-status-lv01" class="info-item-value" data-bacnet="300|3|10000|85|-1"
+                                    data-format="status" data-refresh="10"
+                                    data-status-online-svg="img/online-indicator.svg"
+                                    data-status-offline-svg="img/offline-indicator.svg" data-status-online-text=" "
+                                    data-status-offline-text=" " style="font-size: 20px;"></div>
+                            </div>
+                            <div class="switchboard-header">
+                                <div class="switchboard-info">
+                                    <div class="switchboard-title">LV-01</div>
+                                    <div class="switchboard-location">Incomer from TX1</div>
+                                </div>
+                            </div>
+
+                            <div class="switchboard-stats">
+                                <div class="stat-box">
+                                    <div class="stat-label">Location</div>
+                                    <div class="stat-value">
+                                        <span class="stat-icon"><i class="bx bx-map"></i></span>
+                                        <span>Basement</span>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Fed by</div>
+                                    <div class="stat-value">
+                                        <span class="stat-icon"><i class="bx bxs-bolt"></i></span>
+                                        <span>TX1</span>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Total Demand</div>
+                                    <div class="stat-value">
+                                        <span>
+                                            <div id="live-lv01" class="info-item-value-small"
+                                                data-bacnet="300|0|10040|85|-1" data-format="power" data-refresh="10">
+                                                Loading...</div>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Meters</div>
+                                    <div class="stat-value">
+                                        <span class="stat-icon"><i class="bx bx-tachometer"></i></span>
+                                        <span>11 Units</span>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Voltage</div>
+                                    <div class="stat-value">
+                                        <span>
+                                            <div id="live-lv01-voltage" class="info-item-value-small"
+                                                data-bacnet="300|0|10022|85|-1" data-format="voltage" data-refresh="10">
+                                                Loading...</div>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Neutral Current</div>
+                                    <div class="stat-value">
+                                        <span>
+                                            <div id="live-lv01-current" class="info-item-value-small"
+                                                data-bacnet="300|0|10034|85|-1" data-format="current" data-refresh="10">
+                                                Loading...</div>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">THD</div>
+                                    <div class="stat-value">
+                                        <span>
+                                            <div id="live-lv01-thd" class="info-item-value-small"
+                                                data-bacnet="300|0|10076|85|-1" data-format="percentage" data-refresh="10">
+                                                Loading...</div>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Power Factor</div>
+                                    <div class="stat-value">
+                                        <span>
+                                            <div id="live-lv01-power-factor" class="info-item-value-small"
+                                                data-bacnet="300|0|10060|85|-1" data-format="number" data-decimal-places="2" data-refresh="10">
+                                                Loading...</div>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <!-- Switchboard 2: LV-02 -->
+                        <a href="/docs/1sr/swb_lv02.htm" target="_blank" rel="noopener noreferrer"
+                            class="switchboard-card primary">
+                            <div class="status-indicator">
+                                <div id="live-status-lv02" class="info-item-value" data-bacnet="300|3|10800|85|-1"
+                                    data-format="status" data-refresh="10"
+                                    data-status-online-svg="img/online-indicator.svg"
+                                    data-status-offline-svg="img/offline-indicator.svg" data-status-online-text=" "
+                                    data-status-offline-text=" " style="font-size: 20px;"></div>
+                            </div>
+                            <div class="switchboard-header">
+                                <div class="switchboard-info">
+                                    <div class="switchboard-title">LV-02</div>
+                                    <div class="switchboard-location">Incomer from TX2</div>
+                                </div>
+                            </div>
+
+                            <div class="switchboard-stats">
+                                <div class="stat-box">
+                                    <div class="stat-label">Location</div>
+                                    <div class="stat-value">
+                                        <span class="stat-icon"><i class="bx bx-map"></i></span>
+                                        <span>Basement</span>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Fed by</div>
+                                    <div class="stat-value">
+                                        <span class="stat-icon"><i class="bx bxs-bolt"></i></span>
+                                        <span>TX2</span>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Total Demand</div>
+                                    <div class="stat-value">
+                                        <span>
+                                            <div id="live-lv02" class="info-item-value-small"
+                                                data-bacnet="300|0|10840|85|-1" data-format="power" data-refresh="10">
+                                                Loading...</div>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Meters</div>
+                                    <div class="stat-value">
+                                        <span class="stat-icon"><i class="bx bx-tachometer"></i></span>
+                                        <span>15 Units</span>
+                                    </div>
+                                </div>
+                                 <div class="stat-box">
+                                    <div class="stat-label">Voltage</div>
+                                    <div class="stat-value">
+                                        <span>
+                                            <div id="live-lv02-voltage" class="info-item-value-small"
+                                                data-bacnet="300|0|10822|85|-1" data-format="voltage" data-refresh="10">
+                                                Loading...</div>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Neutral Current</div>
+                                    <div class="stat-value">
+                                        <span>
+                                            <div id="live-lv02-current" class="info-item-value-small"
+                                                data-bacnet="300|0|10834|85|-1" data-format="current" data-refresh="10">
+                                                Loading...</div>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">THD</div>
+                                    <div class="stat-value">
+                                        <span>
+                                            <div id="live-lv02-thd" class="info-item-value-small"
+                                                data-bacnet="300|0|10876|85|-1" data-format="percentage" data-refresh="10">
+                                                Loading...</div>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Power Factor</div>
+                                    <div class="stat-value">
+                                        <span>
+                                            <div id="live-lv02-power-factor" class="info-item-value-small"
+                                                data-bacnet="300|0|10860|85|-1" data-format="number" data-decimal-places="2" data-refresh="10">
+                                                Loading...</div>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </a>
+                    </div>

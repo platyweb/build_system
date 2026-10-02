@@ -1,0 +1,238 @@
+                    <!-- Intro -->
+                    <div class="text-box">
+                        <div class="text-box-header">
+                            <div class="text-box-title">Where to save energy &amp; cost</div>
+                            <div class="text-box-subtitle">
+                                Prioritised opportunities for the base building (landlord services) and tenant areas.
+                                Live figures are evidence; each card links to the report that quantifies the saving.
+                            </div>
+                        </div>
+                        <div class="text-box-content">
+                            Opportunities are ranked by typical £ impact for a UK multi-tenant office. Items marked
+                            <strong>Set target</strong> or <strong>Not yet configured</strong> need a one-off input
+                            (annual target, agreed supply capacity) before they can show a number — see
+                            <code>SAVINGS_OPPORTUNITIES.md</code>.
+                        </div>
+                    </div>
+
+                    <!-- Headline scorecard -->
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <div class="summary-card-title">Building Rating (NABERS)</div>
+                            <div class="summary-card-value">
+                                <div id="live-so-nabers" class="info-item-value-small" data-bacnet="300|2|99|85|-1"
+                                    data-format="nabers" data-refresh="10">Loading...</div>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">Energy Intensity</div>
+                            <div class="summary-card-value">
+                                <div id="live-so-intensity" class="info-item-value-small" data-bacnet="300|2|84|85|-1"
+                                    data-format="number" data-post-text=" kWh/m²" data-refresh="10">Loading...</div>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">Energy vs Target (YTD)</div>
+                            <div class="summary-card-value">Set target</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">Baseload (out-of-hours) share</div>
+                            <div class="summary-card-value">Not yet configured</div>
+                        </div>
+                    </div>
+
+                    <!-- Opportunity cards -->
+                    <div class="grid-cols-3">
+
+                        <!-- 1. Out-of-hours / baseload -->
+                        <a href="/utilityReports/UtilityReports.html?libraryItemId=144" target="_blank"
+                            rel="noopener noreferrer" class="floor-card">
+                            <div class="floor-header">
+                                <div class="floor-info">
+                                    <div class="floor-title">Out-of-Hours Baseload</div>
+                                    <div class="floor-location">Tier 1 · Landlord + Tenant</div>
+                                </div>
+                            </div>
+                            <div class="floor-stats">
+                                <div class="stat-box">
+                                    <div class="stat-label">Whole-building demand now</div>
+                                    <div class="stat-value">
+                                        <div id="live-so-total-demand" class="info-item-value-small"
+                                            data-bacnet="300|0|19682|85|-1" data-format="power" data-refresh="10">
+                                            Loading...</div>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Weekly hours occupancy &gt;20%</div>
+                                    <div class="stat-value">
+                                        <div id="live-so-occ" class="info-item-value-small" data-bacnet="300|2|91|85|-1"
+                                            data-format="number" data-refresh="10">Loading...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-12" style="margin-top: 8px;">
+                                Plant &amp; lighting left on overnight/weekends is the biggest quick win (typ. 5–15%).
+                                Opens the Occupancy Analysis report.
+                            </div>
+                        </a>
+
+                        <!-- 2. Peak demand vs capacity -->
+                        <a href="incomer_electricity.htm" class="floor-card">
+                            <div class="floor-header">
+                                <div class="floor-info">
+                                    <div class="floor-title">Peak Demand &amp; Capacity</div>
+                                    <div class="floor-location">Tier 1 · Landlord</div>
+                                </div>
+                            </div>
+                            <div class="floor-stats">
+                                <div class="stat-box">
+                                    <div class="stat-label">TX1 demand</div>
+                                    <div class="stat-value">
+                                        <div id="live-so-tx1" class="info-item-value-small" data-bacnet="300|0|10040|85|-1"
+                                            data-format="power" data-refresh="10">Loading...</div>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">TX2 demand</div>
+                                    <div class="stat-value">
+                                        <div id="live-so-tx2" class="info-item-value-small" data-bacnet="300|0|10840|85|-1"
+                                            data-format="power" data-refresh="10">Loading...</div>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Agreed capacity (kVA)</div>
+                                    <div class="stat-value">Not yet configured</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Load factor</div>
+                                    <div class="stat-value">Not yet configured</div>
+                                </div>
+                            </div>
+                            <div class="text-12" style="margin-top: 8px;">
+                                Compare monthly peak vs agreed capacity to cut DUoS/capacity charges or right-size the
+                                supply.
+                            </div>
+                        </a>
+
+                        <!-- 3. Power factor -->
+                        <a href="swb_overview.htm" class="floor-card">
+                            <div class="floor-header">
+                                <div class="floor-info">
+                                    <div class="floor-title">Power Factor</div>
+                                    <div class="floor-location">Tier 3 · Landlord</div>
+                                </div>
+                            </div>
+                            <div class="floor-stats">
+                                <div class="stat-box">
+                                    <div class="stat-label">LV-01 PF</div>
+                                    <div class="stat-value">
+                                        <div id="live-so-pf-lv01" class="info-item-value-small"
+                                            data-bacnet="300|0|10060|85|-1" data-format="number" data-decimal-places="2"
+                                            data-warn-below="0.95" data-danger-below="0.9"
+                                            data-refresh="10">Loading...</div>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">LV-02 PF</div>
+                                    <div class="stat-value">
+                                        <div id="live-so-pf-lv02" class="info-item-value-small"
+                                            data-bacnet="300|0|10860|85|-1" data-format="number" data-decimal-places="2"
+                                            data-warn-below="0.95" data-danger-below="0.9"
+                                            data-refresh="10">Loading...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-12" style="margin-top: 8px;">
+                                PF below ~0.95 incurs reactive-power charges. Trend it to size a capacitor bank and check
+                                payback.
+                            </div>
+                        </a>
+
+                        <!-- 4. Simultaneous heating & cooling -->
+                        <a href="riser_heat.htm" class="floor-card">
+                            <div class="floor-header">
+                                <div class="floor-info">
+                                    <div class="floor-title">Simultaneous Heating &amp; Cooling</div>
+                                    <div class="floor-location">Tier 2 · Landlord</div>
+                                </div>
+                            </div>
+                            <div class="floor-stats">
+                                <div class="stat-box">
+                                    <div class="stat-label">LPHW primary demand</div>
+                                    <div class="stat-value">
+                                        <div id="live-so-lphw" class="info-item-value-small"
+                                            data-bacnet="300|0|23140|85|-1" data-format="power" data-refresh="10">
+                                            Loading...</div>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">CHW primary demand</div>
+                                    <div class="stat-value">
+                                        <div id="live-so-chw" class="info-item-value-small"
+                                            data-bacnet="300|0|22640|85|-1" data-format="power" data-refresh="10">
+                                            Loading...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-12" style="margin-top: 8px;">
+                                Boilers and chillers running hard at the same time means controls are fighting — a
+                                no-capex fix.
+                            </div>
+                        </a>
+
+                        <!-- 5. Weather-normalised drift -->
+                        <a href="/utilityReports/UtilityReports.html?libraryItemId=145" target="_blank"
+                            rel="noopener noreferrer" class="floor-card">
+                            <div class="floor-header">
+                                <div class="floor-info">
+                                    <div class="floor-title">Weather-Normalised Drift</div>
+                                    <div class="floor-location">Tier 2 · Landlord</div>
+                                </div>
+                            </div>
+                            <div class="floor-stats">
+                                <div class="stat-box">
+                                    <div class="stat-label">Heating Degree Days</div>
+                                    <div class="stat-value">
+                                        <div id="live-so-hdd" class="info-item-value-small" data-bacnet="300|2|89|85|-1"
+                                            data-format="number" data-refresh="10">Loading...</div>
+                                    </div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Cooling Degree Days</div>
+                                    <div class="stat-value">
+                                        <div id="live-so-cdd" class="info-item-value-small" data-bacnet="300|2|90|85|-1"
+                                            data-format="number" data-refresh="10">Loading...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-12" style="margin-top: 8px;">
+                                If consumption rises faster than degree days, efficiency is drifting. Opens the Degree
+                                Days report.
+                            </div>
+                        </a>
+
+                        <!-- 6. Tenant benchmark -->
+                        <a href="tenants.htm" class="floor-card">
+                            <div class="floor-header">
+                                <div class="floor-info">
+                                    <div class="floor-title">Tenant Benchmark (kWh/m²)</div>
+                                    <div class="floor-location">Tier 3 · Tenant</div>
+                                </div>
+                            </div>
+                            <div class="floor-stats">
+                                <div class="stat-box">
+                                    <div class="stat-label">Ranking by intensity</div>
+                                    <div class="stat-value">Not yet configured</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Out-of-hours share</div>
+                                    <div class="stat-value">Not yet configured</div>
+                                </div>
+                            </div>
+                            <div class="text-12" style="margin-top: 8px;">
+                                Rank tenants against the building median to drive behavioural savings and service-charge
+                                transparency. Opens the Tenants summary.
+                            </div>
+                        </a>
+
+                    </div>

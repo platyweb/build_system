@@ -1,0 +1,55 @@
+{% extends 'base.html.j2' %}
+{%- from 'partials/macros.j2' import meter_node -%}
+
+{#- ────────────────────────────────────────────────────────────────────────
+    meters_hierarchy.html.j2 — electrical meters tree page.
+
+    Reads the meter registry and walks the parent_id → children adjacency
+    map from one or more roots (meters with no parent_id of their own) —
+    e.g. one root per utility (electricity / CHW / LTHW). Each root renders
+    as its own top-level tree via meter_node (recursive).
+
+    YAML data lives in `_data/meters_hierarchy.yaml`:
+      heading            : page <h1>
+      subtitle           : line under the title
+      search_placeholder : input placeholder text
+      root_meter_ids     : list of root node ids, one tree per id
+      root_meter_id      : single root node id (used if root_meter_ids absent)
+   ──────────────────────────────────────────────────────────────────────── -#}
+
+{% block extra_styles %}    <link rel="stylesheet" href="css/project/2.0/meters-hierarchy.css">
+{% endblock %}
+
+{% block content %}
+                    <!-- Main Content Container -->
+                    <div class="meters-hierarchy-container">
+                        <div class="meters-header-section">
+                            <div class="meters-title-area">
+                                <p class="meters-subtitle">{{ subtitle }}</p>
+                            </div>
+                            <div class="search-container">
+                                <div class="search-wrapper">
+                                    <span class="search-icon">🔍</span>
+                                    <input type="text" id="searchBox" class="search-box"
+                                        placeholder="{{ search_placeholder }}"
+                                        autocomplete="off">
+                                    <div id="searchDropdown" class="search-dropdown"></div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="tree">
+                            <ul>
+{% for root_meter in root_meters %}
+{{ meter_node(root_meter, children_map) }}
+{% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+{% endblock %}
+
+{% block tail_scripts %}
+    <!-- Meters Hierarchy JavaScript -->
+    <script src="js/project/2.0/meter-hierarchy.js"></script>
+{%- endblock %}

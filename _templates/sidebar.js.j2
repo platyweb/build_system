@@ -1,0 +1,110 @@
+{#- ────────────────────────────────────────────────────────────────────────
+    sidebar.js.j2 — main sidebar HTML constant.
+
+    Renders only the contents of the SIDEBAR_HTML template literal, between
+    the BEGIN/END markers in js/project/2.0/sidebar-template.js. The runtime
+    behaviour code (theme toggle, active-page highlight, …) below the END
+    marker is hand-maintained.
+
+    Item kinds the template handles:
+      - kind: "theme_toggle"   → inline dark/light mode switcher
+      - leaf  (has href)       → simple <li><a>
+      - sub-menu (has children) → wrapper <li> with nested <ul>
+   ──────────────────────────────────────────────────────────────────────── -#}
+{#- recursive menu_item macro: renders one <li> (with possible nested <ul>). -#}
+{%- macro menu_item(item, indent=16) -%}
+{%- set pad = ' ' * indent -%}
+{%- if item.kind == 'theme_toggle' -%}
+{{ pad }}<li class="menu-item" id="theme-toggle-item">
+{{ pad }}    <a href="#"
+{{ pad }}        onclick="event.preventDefault(); (function(){ var t = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-bs-theme', t); localStorage.setItem('theme', t); document.getElementById('theme-icon').className = t === 'dark' ? 'bx bxs-sun' : 'bx bxs-moon'; document.getElementById('theme-label').textContent = t === 'dark' ? 'Light Mode' : 'Dark Mode'; })();">
+{{ pad }}        <span class="menu-icon">
+{{ pad }}            <i id="theme-icon" class="bx bxs-moon"></i>
+{{ pad }}        </span>
+{{ pad }}        <span class="menu-title" id="theme-label">Dark Mode</span>
+{{ pad }}    </a>
+{{ pad }}</li>
+{%- elif item.children is defined -%}
+{{ pad }}<li class="menu-item sub-menu">
+{{ pad }}    <a href="#">
+{%- if item.icon %}
+{{ pad }}        <span class="menu-icon">
+{{ pad }}            <i class="bx {{ item.icon }}"></i>
+{{ pad }}        </span>
+{%- endif %}
+{{ pad }}        <span class="menu-title">{{ item.label }}</span>
+{{ pad }}    </a>
+{{ pad }}    <div class="sub-menu-list">
+{{ pad }}        <ul>
+{%- for child in item.children %}
+{{ menu_item(child, indent + 12) }}
+{%- endfor %}
+{{ pad }}        </ul>
+{{ pad }}    </div>
+{{ pad }}</li>
+{%- else -%}
+{%- set cls = 'menu-item' + (' ' + item.class if item.class else '') -%}
+{{ pad }}<li class="{{ cls }}">
+{{ pad }}    <a href="{{ item.href }}"{% if item.target %} target="{{ item.target }}"{% endif %}{% if item.rel %} rel="{{ 'noopener noreferrer' if item.rel == 'noopener' else item.rel }}"{% endif %}>
+{%- if item.icon %}
+{{ pad }}        <span class="menu-icon">
+{{ pad }}            <i class="bx {{ item.icon }}"></i>
+{{ pad }}        </span>
+{%- endif %}
+{{ pad }}        <span class="menu-title">{{ item.label }}</span>
+{{ pad }}    </a>
+{{ pad }}</li>
+{%- endif -%}
+{%- endmacro -%}
+const SIDEBAR_HTML = `
+<aside id="sidebar" class="sidebar break-point-lg has-bg-image">
+  <a id="btn-collapse" class="sidebar-collapser" role="button" aria-label="Collapse sidebar"><i class="bx bx-md bx-chevron-left"></i></a>
+  <div class="image-wrapper">
+    <img src="img/sidebar-bg.png" alt="sidebar background">
+  </div>
+  <div class="sidebar-layout">
+    <a href="{{ brand.href }}">
+        <div class="sidebar-header">
+            <div class="pro-sidebar-logo">
+                <div><img src="{{ brand.logo_src }}" alt="Optergy"></div>
+                <h5><i>{{ brand.label }}</i></h5>
+            </div>
+        </div>
+    </a>
+    <div class="sidebar-content">
+                <nav class="menu open-current-submenu">
+            <ul>
+{%- for item in top_items|default([]) %}
+{{ menu_item(item, indent=16) }}
+{%- endfor %}
+{%- for section in sections %}
+{%- if not loop.first %}
+                <li class="menu-header" style="padding-top: 20px"><span> {{ section.header }} </span></li>
+{%- else %}
+                <li class="menu-header"><span> {{ section.header }} </span></li>
+{%- endif %}
+{%- for item in section['items'] %}
+{{ menu_item(item, indent=16) }}
+{%- endfor %}
+{%- endfor %}
+{%- for item in bottom_items|default([]) %}
+{{ menu_item(item, indent=16) }}
+{%- endfor %}
+            </ul>
+        </nav>
+    </div>
+    <div class="sidebar-footer">
+        <div class="footer-box">
+            <div>
+                <img class="react-logo" src="{{ footer.logo }}" alt="{{ footer.logo_alt }}">
+            </div>
+            <div style="padding: 0 10px">
+                <a href="mailto:{{ footer.email }}"><i>{{ footer.email }}</i></a>
+            </div>
+        </div>
+    </div>
+</div>
+</aside>
+
+<div id="overlay" class="overlay"></div>
+`;

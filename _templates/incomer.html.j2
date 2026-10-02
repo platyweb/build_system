@@ -1,0 +1,41 @@
+{% extends 'base.html.j2' %}
+{%- from 'partials/macros.j2' import summary_card, report_card, report_card_headed, mini_stat_card -%}
+
+{#- ────────────────────────────────────────────────────────────────────────
+    incomer.html.j2 — utility main-incomer pages.
+
+    Single tab. Summary cards across the top, then optional stat_grids
+    (rows of mini stat-cards used by incomer_electricity), then N report
+    cards stacked. Driven entirely by `_data/incomers.yaml`:
+
+        heading        : page <h1>
+        summary_cards  : list of { title, [id, bacnet, format, decimal_places] | value }
+        stat_grids     : optional, list of { columns, cards: [mini_stat_card] }
+        reports        : list of report rows. Each row is either
+                            { kind: headed, library_item_id, title, image_ref, alt }
+                         or { library_item_id, image_ref, alt }    (default kind)
+   ──────────────────────────────────────────────────────────────────────── -#}
+
+{% block content %}
+                    <!-- Floorplan Tab Content -->
+                    <div id="floorplan-tab" class="tab-content active">
+                        <div class="summary-cards">
+{%- for card in summary_cards %}
+{{ summary_card(card) }}
+{%- endfor %}
+                        </div>
+
+{%- for grid in stat_grids|default([]) %}
+                        <div class="grid-cols-{{ grid.columns }}">
+{%- for card in grid.cards %}
+{{ mini_stat_card(card) }}
+{%- endfor %}
+                        </div>
+{% endfor %}
+{%- for report in reports %}
+
+{% if report.kind == 'headed' %}{{ report_card_headed(report) }}{% else %}{{ report_card(report) }}{% endif %}
+{%- endfor %}
+
+                    </div>
+{% endblock %}

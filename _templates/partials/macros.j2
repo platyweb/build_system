@@ -1,0 +1,428 @@
+{#- ────────────────────────────────────────────────────────────────────────
+    Reusable building blocks shared by floor/incomer/etc. page templates.
+    All macros assume an indentation context of ~32 leading spaces (i.e. they
+    are emitted inside the .tab-content / .summary-cards / .page-layout-grid
+    blocks of a page). Indentation is intentional to mirror the existing
+    hand-written HTML so diffs stay reviewable.
+   ──────────────────────────────────────────────────────────────────────── -#}
+
+{# ── summary_card: title + value (static text OR live BACnet OR meter binding) ── #}
+{%- macro summary_card(card) %}                            <div class="summary-card">
+                                <div class="summary-card-title">{{ card.title }}</div>
+                                <div class="summary-card-value">
+{%- if card.value is defined -%}
+{{ card.value }}
+{%- elif card.meter_id is defined %}
+                                    <div data-meter-id="{{ card.meter_id }}" data-meter-field="{{ card.meter_field }}" data-refresh="{{ card.refresh|default(10) }}">Loading...</div>
+{%- else %}
+                                    <div{% if card.id %} id="{{ card.id }}"{% endif %} class="info-item-value"
+                                        data-bacnet="{{ card.bacnet }}" data-format="{{ card.format }}"{% if card.decimal_places is defined %} data-decimal-places="{{ card.decimal_places }}"{% endif %} data-refresh="{{ card.refresh|default(10) }}">
+                                        Loading...
+                                    </div>
+{%- endif %}
+                                </div>
+                            </div>
+{%- endmacro %}
+
+
+{# ── meter_stats_group: one stats block inside a floor-card ─────────────── #}
+{%- macro meter_stats_group(m, field_labels) -%}
+{%- set fields_to_show = m.fields|default(['demand', 'daily', 'monthly']) -%}
+{%- set link_target = m.link|default('/meters/MeterDisplay.html?meter.id=' ~ m.id) %}
+                                    <a href="{{ link_target }}" target="_blank"
+                                        rel="noopener noreferrer" class="floor-stats-group-link">
+                                        <div class="floor-stats-group">
+                                            <div class="floor-stats-subheader{% if m.utility %} meter-{{ m.utility }}{% endif %} floor-stats-subheader-flex">
+                                                <span>{{ m.label }}</span>
+                                                <div data-meter-id="{{ m.id }}" data-meter-field="status" data-refresh="10">
+                                                    Loading...</div>
+                                            </div>
+                                            <div class="floor-stats floor-stats-flex">
+{%- for field in fields_to_show %}
+                                                <div class="stat-box stat-box-flex">
+                                                    <span class="stat-label">{{ field_labels[field] }}</span>
+                                                    <span class="stat-value">
+                                                        <div data-meter-id="{{ m.id }}" data-meter-field="{{ field }}"
+                                                            data-refresh="10">Loading...</div>
+                                                    </span>
+                                                </div>
+{%- endfor %}
+                                            </div>
+                                        </div>
+                                    </a>
+{%- endmacro %}
+
+
+{# ── floor_summary_card: Total/Tenants/Landlords card in floor-section-summary ── #}
+{# Live when `card.meter_id` resolves from METER_REGISTRY (see                  #}
+{# find_floor_summary_meter/derive_floor_summary_cards in build.py — keyed by   #}
+{# (floor, function) with function one of "Floor Total Electricity"/"Floor      #}
+{# Tenants Electricity"/"Floor Landlords Electricity"); a static "N/A"          #}
+{# placeholder otherwise, so a floor never links to the wrong meter before its  #}
+{# registry row exists.                                                        #}
+{%- macro floor_summary_card(card) %}
+{%- set has_meter = card.meter_id is defined and card.meter_id is not none %}
+                                    <div class="{{ card.wrapper_class|default('floor-card') }}">
+{%- if has_meter %}
+                                        <a href="/meters/MeterDisplay.html?meter.id={{ card.meter_id }}" target="_blank"
+                                            rel="noopener noreferrer" class="floor-header-link">
+{%- endif %}
+                                            <div class="floor-header">
+                                                <div class="floor-info">
+                                                    <div class="floor-title">{{ card.title }}</div>
+                                                    <div class="floor-location">{{ card.location|default('Calculated') }}</div>
+                                                </div>
+                                            </div>
+{%- if has_meter %}
+                                            <div class="floor-stats-group">
+                                                <div data-floor-stats="{{ card.meter_id }}"></div>
+                                            </div>
+                                        </a>
+{%- else %}
+                                        <div class="floor-stats-group">
+                                            <div class="floor-stats floor-stats-flex">
+                                                <div class="stat-box stat-box-flex">
+                                                    <span class="stat-label">Demand:</span>
+                                                    <span class="stat-value">N/A</span>
+                                                </div>
+                                                <div class="stat-box stat-box-flex">
+                                                    <span class="stat-label">Current Month:</span>
+                                                    <span class="stat-value">N/A</span>
+                                                </div>
+                                                <div class="stat-box stat-box-flex">
+                                                    <span class="stat-label">Previous Month:</span>
+                                                    <span class="stat-value">N/A</span>
+                                                </div>
+                                            </div>
+                                        </div>
+{%- endif %}
+                                    </div>
+{%- endmacro %}
+
+
+{# ── riser_card: zone card built from data-floor-meter auto-widgets ────── #}
+{# Lighter-weight sibling of floor_card: each meter is a single              #}
+{# `data-floor-meter` placeholder that meter-templates.js expands client-    #}
+{# side into the full stats row, instead of the server-rendered stat spans   #}
+{# floor_card emits. variant="center" (the North/landlord riser) wraps the   #}
+{# meters in one .floor-stats-group and gets the "top card" class; the       #}
+{# default "side" variant (East/West tenant risers) lists them flat.        #}
+{%- macro riser_card(card, variant='side') %}
+{%- set link = card.header_link|default('/docs/tlb/riser_overview.htm') %}
+                                <div class="{{ 'riser-column-top-card floor-card' if variant == 'center' else 'floor-card' }}">
+                                    <a href="{{ link }}"{% if link != '#' %} target="_blank" rel="noopener noreferrer"{% endif %}
+                                        class="floor-header-link">
+                                        <div class="floor-header">
+                                            <div class="floor-info">
+                                                <div class="floor-title">{{ card.title }}</div>
+                                                <div class="floor-location">{{ card.location }}</div>
+                                            </div>
+                                        </div>
+                                    </a>
+{%- if variant == 'center' %}
+                                    <div class="floor-stats-group">
+{%- for m in card.meters %}
+                                        <div data-floor-meter="{{ m.id }}"></div>
+{%- endfor %}
+                                    </div>
+{%- else %}
+{%- for m in card.meters %}
+
+                                    <div data-floor-meter="{{ m.id }}"></div>
+{%- endfor %}
+{%- endif %}
+                                </div>
+{%- endmacro %}
+
+
+{# ── floor_card: header (zone/riser) + N stats groups ──────────────────── #}
+{# header_link="#" suppresses target/rel (matches tenant-page convention).  #}
+{%- macro floor_card(card, field_labels) %}
+{%- if card.comment is defined %}
+                                <!-- {{ card.comment }} -->
+{%- endif %}
+{%- set link = card.header_link|default('/docs/tlb/riser_overview.htm') %}
+                                <div class="floor-card">
+                                    <a href="{{ link }}"{% if link != '#' %} target="_blank" rel="noopener noreferrer"{% endif %}
+                                        class="floor-header-link">
+                                        <div class="floor-header">
+                                            <div class="floor-info">
+                                                <div class="floor-title">{{ card.title }}</div>
+                                                <div class="floor-location">{{ card.location }}</div>
+                                            </div>
+                                        </div>
+                                    </a>
+{%- for m in card.meters %}
+
+{{ meter_stats_group(m, field_labels) }}
+{%- endfor %}
+                                </div>
+{%- endmacro %}
+
+
+{# ── meter_node: one <li> in the meters_hierarchy tree, recursive ─────── #}
+{# Type "Calculation" renders as Virtual / .meter-virtual; everything else #}
+{# (Modbus / Bacnet) renders as Physical / .meter-electrical. Power point  #}
+{# offset: +82 for Calculation, +40 otherwise. The utility class stacks on #}
+{# top of that and carries its own virtual marker — a utility of           #}
+{# "lthw-virtual" gives .meter-lthw-virtual, which wins over .meter-virtual #}
+{# on source order and keeps the LTHW colours with a purple right edge.    #}
+{%- macro meter_node(m, children_map, depth=0) -%}
+{%- set ind = ' ' * (32 + 4 * depth) -%}
+{%- set has_children = children_map.get(m.id) -%}
+{%- set is_virtual = m.type == 'Calculation' -%}
+{%- set power_offset = 82 if is_virtual else 40 -%}
+{{ ind }}<li{% if not has_children %} class="no-children"{% endif %}>
+{{ ind }}    <span class="toggle-btn" onclick="toggleChildren(this)"></span>
+{{ ind }}    <a href="/meters/MeterDisplay.html?meter.id={{ m.id }}" target="_blank" rel="noopener noreferrer" class="meter meter-{{ 'virtual' if is_virtual else 'electrical' }}{% if m.utility %} meter-{{ m.utility }}{% endif %}">
+{{ ind }}        <div class="meter-info">
+{{ ind }}            <span class="meter-id">{{ m.tag }}</span>
+{{ ind }}            <span class="meter-type">{{ 'Virtual' if is_virtual else 'Physical' }}</span>
+{{ ind }}            <span class="meter-status">
+{{ ind }}                <div id="live-status-{{ m.id }}" class="info-item-value"
+{{ ind }}                    data-bacnet="300|3|{{ m.base }}|85|-1" data-format="status"
+{{ ind }}                    data-refresh="10" data-status-online-svg="img/online-indicator.svg"
+{{ ind }}                    data-status-offline-svg="img/offline-indicator.svg"
+{{ ind }}                    data-status-online-text=" " data-status-offline-text=" "
+{{ ind }}                    style="font-size: 12px;"></div>
+{{ ind }}            </span>
+{{ ind }}            <span class="meter-load">
+{{ ind }}                <div id="live-power-{{ m.id }}" class="info-item-value-small"
+{{ ind }}                    data-bacnet="300|0|{{ m.base + power_offset }}|85|-1" data-format="power"
+{{ ind }}                    data-refresh="10">Loading...</div>
+{{ ind }}            </span>
+{{ ind }}        </div>
+{{ ind }}    </a>
+{%- if has_children %}
+{{ ind }}    <ul>
+{%- for child in has_children %}
+{{ meter_node(child, children_map, depth + 1) }}
+{%- endfor %}
+{{ ind }}    </ul>
+{%- endif %}
+{{ ind }}</li>
+{%- endmacro %}
+
+
+{# ── info_bar_item: one tile in the home page's top KPI strip ─────────── #}
+{# Used by home.html.j2. Each tile is an anchor wrapping an info-item with #}
+{# a label and either a live BACnet binding or a static value.            #}
+{%- macro info_bar_item(item) %}                        <a href="{{ item.link }}" target="_blank" rel="noopener noreferrer"
+                            class="floor-header-link">
+                            <div class="info-item">
+                                <div class="info-item-label">{{ item.label }}</div>
+{%- if item.value is defined %}
+                                <div class="info-item-value">{{ item.value }}</div>
+{%- else %}
+                                <div id="{{ item.id }}" class="info-item-value" data-bacnet="{{ item.bacnet }}"
+                                    data-format="{{ item.format }}" data-refresh="{{ item.refresh|default(10) }}">Loading...</div>
+{%- endif %}
+                            </div>
+                        </a>
+{%- endmacro %}
+
+
+{# ── live_dial: a segmented gauge bound to a live BACnet point ───────────── #}
+{# Rendered by js/project/2.0/energy-dials.js (needs d3 + energy-charts.js +  #}
+{# dials.css). `d` fields: bacnet (required), label, format (power→kW), min,  #}
+{# max, suffix, decimals, refresh, width, height. Container uses              #}
+{# data-dial-bacnet so the generic live-points binder leaves it alone.        #}
+{%- macro live_dial(d) %}                        <div class="dial-card">
+                            <div class="energy-dial"
+                                data-dial-bacnet="{{ d.bacnet }}"
+{%- if d.format %} data-format="{{ d.format }}"{% endif %}
+                                data-label="{{ d.label|default('') }}"
+                                data-min="{{ d.min|default(0) }}" data-max="{{ d.max|default(100) }}"
+{%- if d.suffix is defined %} data-suffix="{{ d.suffix }}"{% endif %}
+{%- if d.decimals is defined %} data-decimals="{{ d.decimals }}"{% endif %}
+{%- if d.width %} data-width="{{ d.width }}"{% endif %}
+{%- if d.height %} data-height="{{ d.height }}"{% endif %}
+                                data-refresh="{{ d.refresh|default(10) }}"></div>
+                        </div>
+{%- endmacro %}
+
+
+{# ── mini_stat_card: slim floor-card with header + N stat-boxes ───────── #}
+{# Used by stat_grids on incomer_electricity. Each stat-box renders an     #}
+{# info-item-value-small binding (vs. summary_card's info-item-value).     #}
+{%- macro mini_stat_card(card) %}
+{%- if card.comment is defined %}
+                            <!-- {{ card.comment }} -->
+{%- endif %}
+{%- set link = card.link|default('#') %}
+                            <a href="{{ link }}"{% if link != '#' %} target="_blank" rel="noopener noreferrer"{% endif %} class="floor-card">
+                                <div class="floor-header">
+                                    <div class="floor-info">
+                                        <div class="floor-title">{{ card.title }}</div>
+{%- if card.location is defined %}
+                                        <div class="floor-location">{{ card.location }}</div>
+{%- endif %}
+                                    </div>
+                                </div>
+                                <div class="floor-stats">
+{%- for s in card.stats %}
+                                    <div class="stat-box">
+                                        <div class="stat-label">{{ s.label }}</div>
+                                        <div class="stat-value">
+{%- if s.wrap_span %}
+                                            <span>
+                                                <div id="{{ s.id }}" class="info-item-value-small"
+                                                    data-bacnet="{{ s.bacnet }}" data-format="{{ s.format }}"{% if s.decimal_places is defined %} data-decimal-places="{{ s.decimal_places }}"{% endif %} data-refresh="{{ s.refresh|default(10) }}">
+                                                    Loading...</div>
+                                            </span>
+{%- else %}
+                                            <div id="{{ s.id }}" class="info-item-value-small"
+                                                data-bacnet="{{ s.bacnet }}" data-format="{{ s.format }}"{% if s.decimal_places is defined %} data-decimal-places="{{ s.decimal_places }}"{% endif %} data-refresh="{{ s.refresh|default(10) }}">
+                                                Loading...</div>
+{%- endif %}
+                                        </div>
+                                    </div>
+{%- endfor %}
+                                </div>
+                            </a>
+{%- endmacro %}
+
+
+{# ── report_card_headed: report-placeholder variant with a header band ── #}
+{# Used by incomer_electricity for the Monthly Electricity Demand report. #}
+{%- macro report_card_headed(report) %}                        <a href="/utilityReports/UtilityReports.html?libraryItemId={{ report.library_item_id }}" target="_blank"
+                            rel="noopener noreferrer" class="floor-stats-group-link">
+                            <div class="report-placeholder">
+                                <div class="report-header">
+                                    <div class="floor-title">{{ report.title }}</div>
+                                </div>
+                                <div class="report-content">
+                                    <img data-image-ref="{{ report.image_ref }}" alt="{{ report.alt|default('Report') }}"
+                                        style="max-width: 100%; height: auto; display: block;">
+                                </div>
+                            </div>
+                        </a>
+{%- endmacro %}
+
+
+{# ── report_card: clickable image card linking to a UtilityReports page ── #}
+{# Without library_item_id (e.g. on tenant pages), the href is "#" and the  #}
+{# target/rel attrs are omitted. When report.title is set (e.g. "Demand" /  #}
+{# "Consumption" on floor report tabs), a header band is rendered above the #}
+{# image; omitted entirely for callers that don't pass a title.            #}
+{%- macro report_card(report) %}
+{%- if report.library_item_id is defined %}                        <a href="/utilityReports/UtilityReports.html?libraryItemId={{ report.library_item_id }}" target="_blank"
+                            rel="noopener noreferrer" class="floor-card">
+{%- else %}                        <a href="#" class="floor-card">
+{%- endif %}
+                            <div class="floorplan-viewer">
+                                <div class="floorplan-placeholder">
+{%- if report.title is defined %}
+                                    <div class="report-header">
+                                        <div class="floor-title">{{ report.title }}</div>
+                                    </div>
+{%- endif %}
+                                    <div class="report-content">
+                                        <img data-image-ref="{{ report.image_ref }}"
+                                            alt="{{ report.alt|default('Report') }}"
+                                            style="max-width: 100%; height: auto; display: block;">
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+{%- endmacro %}
+
+
+{# ── report_card_titled: clickable image card with a title + subtitle ──── #}
+{# Used where a report needs a two-line header (building_performance). The    #}
+{# report dict carries library_item_id, image_ref, title, subtitle, alt.     #}
+{%- macro report_card_titled(report) %}                            <a href="/utilityReports/UtilityReports.html?libraryItemId={{ report.library_item_id }}" target="_blank"
+                                rel="noopener noreferrer" class="floor-card">
+                                <div class="report-placeholder">
+                                    <div class="report-header">
+                                        <div class="report-title">{{ report.title }}</div>
+                                        <div class="report-subtitle">{{ report.subtitle }}</div>
+                                    </div>
+                                    <div class="report-content">
+                                        <img data-image-ref="{{ report.image_ref }}"
+                                            alt="{{ report.alt|default('Report') }}"
+                                            style="max-width: 100%; height: auto; display: block;">
+                                    </div>
+                                </div>
+                            </a>
+{%- endmacro %}
+
+
+{# ── floorplan_viewer: centre image in the layout ──────────────────────── #}
+{%- macro floorplan_viewer(image) %}                            <!-- CENTER COLUMN: Floorplan Image -->
+                            <div class="floorplan-viewer floorplan-viewer-constrained">
+                                <div class="floorplan-placeholder">
+                                    <img src="{{ image }}" alt="Floorplan" class="floorplan-image">
+                                </div>
+                            </div>
+{%- endmacro %}
+
+
+{# ── Schematic overlay macros (used by schematic.html.j2) ─────────────────  #}
+{# All four shapes share `position` and emit `<div class="data-overlay">`     #}
+{# at native SVG-aligned pixel coordinates. data-position is handled by       #}
+{# js/project/2.0/position-handler.js at runtime.                              #}
+
+{# Shape 1: link zone — clickable rectangle, no live data ──────────────── #}
+{%- macro data_overlay_link(o) %}                                <a href="{{ o.link }}" target="_blank" rel="noopener noreferrer"><div class="data-overlay" data-position="{{ o.position }}"{% if o.width or o.height %}  style="{% if o.width %}width: {{ o.width }}px;{% endif %}{% if o.height %} height: {{ o.height }}px;{% endif %}"{% endif %}></div></a>
+{%- endmacro %}
+
+
+{# Shape 2: meter overlay — live data bound via data-meter-id ─────────── #}
+{# Runtime (meter-templates.js) fills data-bacnet + data-format from the    #}
+{# meter's registry entry. The default field is `demand` (current power).   #}
+{%- macro data_overlay_meter(o) -%}
+{%- set field = o.field|default('demand') %}
+                                <a href="/meters/MeterDisplay.html?meter.id={{ o.meter_id }}" target="_blank"
+                                    rel="noopener noreferrer">
+                                    <div{% if o.id %} id="{{ o.id }}"{% endif %} class="info-item-value data-overlay power loading"
+                                        data-position="{{ o.position }}" data-meter-id="{{ o.meter_id }}" data-meter-field="{{ field }}"
+                                        data-refresh="{{ o.refresh|default(10) }}">Loading...</div>
+                                </a>
+{%- endmacro %}
+
+
+{# Shape 3: status indicator paired with a meter ──────────────────────── #}
+{%- macro data_overlay_status(o) -%}
+{%- set size = o.font_size|default(10) %}
+{%- if o.meter_id is defined %}
+                                <div{% if o.id %} id="{{ o.id }}"{% endif %} class="info-item-value data-overlay text-{{ size }}"
+                                    data-position="{{ o.position }}" data-meter-id="{{ o.meter_id }}" data-meter-field="status"
+                                    data-refresh="{{ o.refresh|default(10) }}"></div>
+{%- else %}
+                                <div{% if o.id %} id="{{ o.id }}"{% endif %} class="info-item-value data-overlay text-{{ size }}"
+                                    data-position="{{ o.position }}" data-bacnet="{{ o.bacnet }}" data-format="status"
+                                    data-refresh="{{ o.refresh|default(10) }}"
+                                    data-status-online-svg="img/online-indicator.svg"
+                                    data-status-offline-svg="img/offline-indicator.svg"
+                                    data-status-online-text=" " data-status-offline-text=" "></div>
+{%- endif %}
+{%- endmacro %}
+
+
+{# Shape 4: raw overlay — explicit BACnet (tariff / aggregate points) ── #}
+{# Optional `link` wraps in <a href=...>; otherwise emits href="#".       #}
+{# context_menu + override_hash support editable tariff values.           #}
+{%- macro data_overlay_raw(o) -%}
+{%- set href = o.link|default('#') -%}
+{%- set is_meter_link = href != '#' -%}
+{%- set styling = ' power' if o.format in ('power', 'energy', 'water') else '' -%}
+                                <a href="{{ href }}"{% if is_meter_link %} target="_blank"
+                                    rel="noopener noreferrer"{% endif %}>
+                                    <div{% if o.id %} id="{{ o.id }}"{% endif %} class="info-item-value data-overlay{{ styling }} loading"
+                                        data-position="{{ o.position }}" data-bacnet="{{ o.bacnet }}" data-format="{{ o.format }}"
+                                        data-refresh="{{ o.refresh|default(10) }}"
+                                        {%- if o.context_menu is defined %} data-context-menu="{{ o.context_menu }}"{% endif %}
+                                        {%- if o.override_hash is defined %} data-override-hash="{{ o.override_hash }}"{% endif %}>{{ o.text|default('Loading...') }}</div>
+                                </a>
+{%- endmacro %}
+
+
+{# Dispatch: one overlay record → the right shape based on `kind`. #}
+{%- macro schematic_overlay(o) -%}
+{%- if o.kind == 'link' %}{{ data_overlay_link(o) }}
+{%- elif o.kind == 'status' %}{{ data_overlay_status(o) }}
+{%- elif o.kind == 'raw' %}{{ data_overlay_raw(o) }}
+{%- else %}{{ data_overlay_meter(o) }}
+{%- endif %}
+{%- endmacro %}

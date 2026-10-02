@@ -1,0 +1,83 @@
+    <!-- Load report template system -->
+    <script src="js/project/2.0/report-template.js"></script>
+
+    <!-- Initialize report with URL parameters -->
+    <script>
+        // Function to resolve image source (lookup or direct URL)
+        function resolveImageSrc(imageSrc) {
+            // If imageSrc looks like a report name (no slashes or protocol), look it up
+            if (imageSrc && !imageSrc.includes('/') && !imageSrc.includes('\\') && !imageSrc.includes(':')) {
+                // Try to lookup in ReportUrls.reports
+                if (typeof ReportUrls !== 'undefined' && ReportUrls.reports && ReportUrls.reports[imageSrc]) {
+                    console.log('Resolved image "' + imageSrc + '" from ReportUrls');
+                    return ReportUrls.reports[imageSrc];
+                } else {
+                    console.warn('Image reference "' + imageSrc + '" not found in ReportUrls.reports');
+                }
+            }
+            // Return as-is if it's a path/URL or not found in config
+            return imageSrc;
+        }
+
+        /**
+         * Detect whether the URL contains multiple indexed report parameters.
+         * Multiple reports use indexed params: href0, imageSrc0, href1, imageSrc1, etc.
+         * Each report can also have: label0, imageAlt0, imageWidth0, etc.
+         *
+         * Example single report (backward compatible):
+         *   ?title=Baseline Report&href=/path&imageSrc=baseline
+         *
+         * Example multiple reports:
+         *   ?title=Reports&href0=/path1&imageSrc0=baseline&label0=Daily Baseline&href1=/path2&imageSrc1=occupancyAnalysis&label1=Occupancy
+         */
+        function getMultipleReports() {
+            const params = new URLSearchParams(window.location.search);
+            const reports = [];
+            var i = 0;
+
+            // Check for indexed parameters: href0, href1, href2, ...
+            while (params.has('href' + i) || params.has('imageSrc' + i) || params.has('img' + i)) {
+                var rawImg = params.get('imageSrc' + i) || params.get('img' + i) || 'img/placeholder.png';
+                reports.push({
+                    href: params.get('href' + i) || '#',
+                    imageSrc: resolveImageSrc(rawImg),
+                    label: params.get('label' + i) || '',
+                    imageAlt: params.get('imageAlt' + i) || params.get('alt' + i) || 'Report Image',
+                    imageWidth: params.get('imageWidth' + i) || params.get('width' + i) || '100%'
+                });
+                i++;
+            }
+
+            return reports;
+        }
+
+        // Function to get single-report URL parameters (backward compatible)
+        function getURLParameters() {
+            const params = new URLSearchParams(window.location.search);
+            const rawImageSrc = params.get('imageSrc') || params.get('img') || 'img/placeholder.png';
+
+            return {
+                title: params.get('title') || 'Report',
+                href: params.get('href') || '#',
+                imageSrc: resolveImageSrc(rawImageSrc),
+                imageAlt: params.get('imageAlt') || params.get('alt') || 'Report Image',
+                imageWidth: params.get('imageWidth') || params.get('width') || '100%'
+            };
+        }
+
+        // Detect multi-report or single-report mode
+        const params = new URLSearchParams(window.location.search);
+        const multiReports = getMultipleReports();
+
+        if (multiReports.length > 0) {
+            // Multiple reports mode: render all report cards stacked vertically
+            const pageTitle = params.get('title') || 'Reports';
+            createMultiReportPage(pageTitle, multiReports);
+            console.log('Multi-Report Template: ' + multiReports.length + ' reports loaded', multiReports);
+        } else {
+            // Single report mode (backward compatible)
+            const urlParams = getURLParameters();
+            createReportPage(urlParams);
+            console.log('Report Template Parameters:', urlParams);
+        }
+    </script>
