@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+  <!-- Define gradient for offline state -->
+  <defs>
+    <radialGradient id="offlineGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#f87171;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#dc2626;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Offline Indicator -->
+  <g id="offlineIndicator">
+    <!-- Main circle -->
+    <circle cx="10" cy="10" r="5" fill="url(#offlineGlow)" stroke="#f87171" stroke-width="1" />
+  </g>
+</svg>
