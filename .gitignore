@@ -26,3 +26,4 @@ node_modules/
 # Generated report artifacts (PDFs, PNGs, rendered HTML) - regenerate locally
 project/
 
+!_assets/js/project
