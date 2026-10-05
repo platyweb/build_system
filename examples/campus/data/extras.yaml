@@ -1,0 +1,17 @@
+# Extras (see examples/minimal/data/extras.yaml). In a building folder a
+# relative image src gets the ../ it needs.
+
+extras:
+  - component: image
+    pages: [floor_n-l01]
+    slot: after_risers
+    src: img/north_riser.png
+    caption: "North Tower riser cupboard"
+
+  # A live value card from a raw BACnet point, with its display format.
+  - component: live_value
+    pages: [home]
+    slot: after_info_bar
+    title: "Outside Air Temperature"
+    bacnet: "300|0|90000|85|-1"
+    format: temperature

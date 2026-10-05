@@ -566,9 +566,10 @@ const LivePointContextMenu = {
     //         data-override-hash="<ph value from step 2>"
     //         data-context-menu="change-value"
 
-    // Default Optergy display file used for all overrides.
+    // Default Optergy display file used for all overrides — set by the build
+    // from site.yaml optergy_override_display (blank if the site sets none).
     // All overridable points must exist in this compiled display.
-    OVERRIDE_FILE: '/usr/local/Optergy/Displays//tlb/test.xml',
+    OVERRIDE_FILE: '',
 
     // Override/change a point value.
     _overridePoint: function(elementId, textSpanId, bacnetAddress) {

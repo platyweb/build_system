@@ -1,0 +1,19 @@
+# Report cards. `urls:` maps image_ref → chart image URL (written into the
+# runtime's ReportUrls); `placements:` puts a report on a page/slot. The URLs
+# here are placeholders — use the chart URL from the Optergy report library.
+
+urls:
+  home_elec_demand: "/images/dynamic/UtilityReport.png?cacheId=1&reportType=report-demand&utilityType=Electricity"
+  floor_l00_electricity_demand: "/images/dynamic/UtilityReport.png?cacheId=2&reportType=report-demand&utilityType=Electricity"
+  floor_l00_electricity_consumption: "/images/dynamic/UtilityReport.png?cacheId=3&reportType=report-consumption&utilityType=Electricity"
+  floor_l00_solar_generation: "/images/dynamic/UtilityReport.png?cacheId=4&reportType=report-consumption&utilityType=Electricity"
+  performance_energy_split: "/images/dynamic/UtilityReport.png?cacheId=5&reportType=report-pie&utilityType=Electricity"
+  performance_monthly_energy: "/images/dynamic/UtilityReport.png?cacheId=6&reportType=report-consumption&utilityType=Electricity"
+
+placements:
+  - { id: 1, image_ref: "home_elec_demand",                  alt: "📊 Electricity Demand",      page: "home",  slot: "top",         position: 0, title: "Electricity Demand" }
+  - { id: 2, image_ref: "floor_l00_electricity_demand",      alt: "📊 Electricity Demand",      page: "floor", slot: "electricity", position: 0, floor: "L00" }
+  - { id: 3, image_ref: "floor_l00_electricity_consumption", alt: "📊 Electricity Consumption", page: "floor", slot: "electricity", position: 1, floor: "L00" }
+  - { id: 4, image_ref: "floor_l00_solar_generation",        alt: "📊 Solar Generation",        page: "floor", slot: "solar",       position: 0, floor: "L00", title: "Generation" }
+  - { id: 5, image_ref: "performance_energy_split",          alt: "📊 Energy Split",            page: "building_performance", slot: "pie",   position: 0, title: "Energy Split",   subtitle: "Last 12 months by utility" }
+  - { id: 6, image_ref: "performance_monthly_energy",        alt: "📊 Monthly Energy",          page: "building_performance", slot: "right", position: 0, title: "Monthly Energy", subtitle: "Last 12 months" }

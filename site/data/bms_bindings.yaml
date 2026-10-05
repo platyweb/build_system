@@ -1,0 +1,85 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# BMS bindings — UI bindings to BMS-side BACnet calculation points that
+# aren't physical meters (apportioned heat/cool demand, monthly aggregates,
+# vs-last-month percentages, floor-incomer instantaneous demand). Looked up
+# by (role, floor) at build time to compose summary cards on floor pages
+# (build.py derive_summary_cards). Build-time data only — not shipped in
+# the runtime JS.
+#
+# Schema (one row per binding):
+#   role   : a site.yaml `summary_roles:` key (the card's title + format)
+#   floor  : floor key — "ground" | "1st" | "2nd" | …
+#   id     : HTML element id used by live updaters
+#   bacnet : "<device>|<object type>|<instance>|85|-1"
+#
+# title and format are NOT stored here — they live in the role catalog so
+# each role has one canonical label and format across all floors.
+# ─────────────────────────────────────────────────────────────────────────────
+
+bindings:
+  # ─── Ground floor ─────────────────────────────────────────────────────────
+  - { role: "floor_demand_electricity",         floor: "ground", id: "live-elec-floor1-demand",               bacnet: "300|0|27382|85|-1" }
+  - { role: "floor_today_electricity",          floor: "ground", id: "live-elec-total-today-floor1",          bacnet: "300|0|2000239|85|-1" }
+  - { role: "floor_monthly_electricity",        floor: "ground", id: "live-elec-total-monthly-floor1",        bacnet: "300|0|2000240|85|-1" }
+  - { role: "floor_monthly_change_electricity", floor: "ground", id: "live-elec-total-monthly-change-floor1", bacnet: "300|2|100|85|-1" }
+
+  # ─── 1st floor ────────────────────────────────────────────────────────────
+  - { role: "floor_demand_electricity",         floor: "1st",    id: "live-elec-floor1-demand",               bacnet: "300|0|19982|85|-1" }
+  - { role: "floor_demand_heat_apportioned",    floor: "1st",    id: "live-heat-floor1-demand",               bacnet: "300|2|550|85|-1" }
+  - { role: "floor_demand_cool",                floor: "1st",    id: "live-cool-floor1-demand",               bacnet: "300|2|70|85|-1" }
+  - { role: "floor_today_electricity",          floor: "1st",    id: "live-elec-total-today-floor1",          bacnet: "300|0|2000163|85|-1" }
+  - { role: "floor_monthly_electricity",        floor: "1st",    id: "live-elec-total-monthly-floor1",        bacnet: "300|0|2000162|85|-1" }
+  - { role: "floor_monthly_change_electricity", floor: "1st",    id: "live-elec-total-monthly-change-floor1", bacnet: "300|2|101|85|-1" }
+  - { role: "floor_monthly_heat_apportioned",   floor: "1st",    id: "live-heat-total-monthly-floor1",        bacnet: "300|0|2000242|85|-1" }
+  - { role: "floor_monthly_change_heat",        floor: "1st",    id: "live-heat-total-monthly-change-floor1", bacnet: "300|2|111|85|-1" }
+  - { role: "floor_monthly_cool_apportioned",   floor: "1st",    id: "live-cool-total-monthly-floor1",        bacnet: "300|0|2000257|85|-1" }
+  - { role: "floor_monthly_change_cool",        floor: "1st",    id: "live-cool-total-monthly-change-floor1", bacnet: "300|2|121|85|-1" }
+
+  # ─── 2nd floor ────────────────────────────────────────────────────────────
+  - { role: "floor_demand_electricity",         floor: "2nd",    id: "live-elec-floor2-demand",               bacnet: "300|0|19982|85|-1" }
+  - { role: "floor_demand_heat_apportioned",    floor: "2nd",    id: "live-heat-floor2-demand",               bacnet: "300|2|51|85|-1" }
+  - { role: "floor_demand_cool",                floor: "2nd",    id: "live-cool-floor2-demand",               bacnet: "300|2|71|85|-1" }
+  - { role: "floor_today_electricity",          floor: "2nd",    id: "live-elec-total-today-floor2",          bacnet: "300|0|2000163|85|-1" }
+  - { role: "floor_monthly_electricity",        floor: "2nd",    id: "live-elec-total-monthly-floor2",        bacnet: "300|0|2000162|85|-1" }
+  - { role: "floor_monthly_change_electricity", floor: "2nd",    id: "live-elec-total-monthly-change-floor2", bacnet: "300|2|102|85|-1" }
+  - { role: "floor_monthly_heat_apportioned",   floor: "2nd",    id: "live-heat-total-monthly-floor2",        bacnet: "300|0|2000245|85|-1" }
+  - { role: "floor_monthly_change_heat",        floor: "2nd",    id: "live-heat-total-monthly-change-floor2", bacnet: "300|2|112|85|-1" }
+  - { role: "floor_monthly_cool_apportioned",   floor: "2nd",    id: "live-cool-total-monthly-floor2",        bacnet: "300|0|2000260|85|-1" }
+  - { role: "floor_monthly_change_cool",        floor: "2nd",    id: "live-cool-total-monthly-change-floor2", bacnet: "300|2|122|85|-1" }
+
+  # ─── 3rd floor ────────────────────────────────────────────────────────────
+  - { role: "floor_demand_electricity",         floor: "3rd",    id: "live-elec-floor3-demand",               bacnet: "300|0|2000168|85|-1" }
+  - { role: "floor_demand_heat_apportioned",    floor: "3rd",    id: "live-heat-floor3-demand",               bacnet: "300|2|52|85|-1" }
+  - { role: "floor_demand_cool",                floor: "3rd",    id: "live-cool-floor3-demand",               bacnet: "300|2|72|85|-1" }
+  - { role: "floor_today_electricity",          floor: "3rd",    id: "live-elec-total-today-floor3",          bacnet: "300|0|2000169|85|-1" }
+  - { role: "floor_monthly_electricity",        floor: "3rd",    id: "live-elec-total-monthly-floor3",        bacnet: "300|0|2000168|85|-1" }
+  - { role: "floor_monthly_change_electricity", floor: "3rd",    id: "live-elec-total-monthly-change-floor3", bacnet: "300|2|103|85|-1" }
+  - { role: "floor_monthly_heat_apportioned",   floor: "3rd",    id: "live-heat-total-monthly-floor3",        bacnet: "300|0|2000248|85|-1" }
+  - { role: "floor_monthly_change_heat",        floor: "3rd",    id: "live-heat-total-monthly-change-floor3", bacnet: "300|2|113|85|-1" }
+  - { role: "floor_monthly_cool_apportioned",   floor: "3rd",    id: "live-cool-total-monthly-floor3",        bacnet: "300|0|2000263|85|-1" }
+  - { role: "floor_monthly_change_cool",        floor: "3rd",    id: "live-cool-total-monthly-change-floor3", bacnet: "300|2|123|85|-1" }
+
+  # ─── 4th floor ────────────────────────────────────────────────────────────
+  - { role: "floor_demand_electricity",         floor: "4th",    id: "live-elec-floor4-demand",               bacnet: "300|0|20282|85|-1" }
+  - { role: "floor_demand_heat_apportioned",    floor: "4th",    id: "live-heat-floor4-demand",               bacnet: "300|2|53|85|-1" }
+  - { role: "floor_demand_cool",                floor: "4th",    id: "live-cool-floor4-demand",               bacnet: "300|2|73|85|-1" }
+  - { role: "floor_today_electricity",          floor: "4th",    id: "live-elec-total-today-floor4",          bacnet: "300|0|2000172|85|-1" }
+  - { role: "floor_monthly_electricity",        floor: "4th",    id: "live-elec-total-monthly-floor4",        bacnet: "300|0|2000171|85|-1" }
+  - { role: "floor_monthly_change_electricity", floor: "4th",    id: "live-elec-total-monthly-change-floor4", bacnet: "300|2|104|85|-1" }
+  - { role: "floor_monthly_heat_apportioned",   floor: "4th",    id: "live-heat-total-monthly-floor4",        bacnet: "300|0|2000251|85|-1" }
+  - { role: "floor_monthly_change_heat",        floor: "4th",    id: "live-heat-total-monthly-change-floor4", bacnet: "300|2|114|85|-1" }
+  - { role: "floor_monthly_cool_apportioned",   floor: "4th",    id: "live-cool-total-monthly-floor4",        bacnet: "300|0|2000266|85|-1" }
+  - { role: "floor_monthly_change_cool",        floor: "4th",    id: "live-cool-total-monthly-change-floor4", bacnet: "300|2|124|85|-1" }
+
+  # ─── 5th floor ────────────────────────────────────────────────────────────
+  # NB: "20005175" preserves a typo present in the original floor_5th.htm.
+  - { role: "floor_demand_electricity",         floor: "5th",    id: "live-elec-floor5-demand",               bacnet: "300|0|20382|85|-1" }
+  - { role: "floor_demand_heat_apportioned",    floor: "5th",    id: "live-heat-floor5-demand",               bacnet: "300|2|54|85|-1" }
+  - { role: "floor_demand_cool",                floor: "5th",    id: "live-cool-floor5-demand",               bacnet: "300|2|74|85|-1" }
+  - { role: "floor_today_electricity",          floor: "5th",    id: "live-elec-total-today-floor5",          bacnet: "300|0|20005175|85|-1" }
+  - { role: "floor_monthly_electricity",        floor: "5th",    id: "live-elec-total-monthly-floor5",        bacnet: "300|0|2000174|85|-1" }
+  - { role: "floor_monthly_change_electricity", floor: "5th",    id: "live-elec-total-monthly-change-floor5", bacnet: "300|2|105|85|-1" }
+  - { role: "floor_monthly_heat_apportioned",   floor: "5th",    id: "live-heat-total-monthly-floor5",        bacnet: "300|0|2000254|85|-1" }
+  - { role: "floor_monthly_change_heat",        floor: "5th",    id: "live-heat-total-monthly-change-floor5", bacnet: "300|2|115|85|-1" }
+  - { role: "floor_monthly_cool_apportioned",   floor: "5th",    id: "live-cool-total-monthly-floor5",        bacnet: "300|0|2000269|85|-1" }
+  - { role: "floor_monthly_change_cool",        floor: "5th",    id: "live-cool-total-monthly-change-floor5", bacnet: "300|2|125|85|-1" }

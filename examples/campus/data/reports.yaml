@@ -1,0 +1,7 @@
+# Report cards (placeholder chart URLs).
+
+urls:
+  n_l01_electricity_demand: "/images/dynamic/UtilityReport.png?cacheId=11&reportType=report-demand&utilityType=Electricity"
+
+placements:
+  - { id: 11, image_ref: "n_l01_electricity_demand", alt: "📊 Electricity Demand", page: "floor", slot: "electricity", position: 0, floor: "n-l01" }

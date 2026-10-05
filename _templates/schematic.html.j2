@@ -6,7 +6,7 @@
 
     Renders a fixed SVG background (img/<bg>.svg) with positioned live
     data widgets overlaid on top. Position coordinates align to features
-    drawn in the SVG. Overlay records come from _data/schematics.yaml; the
+    drawn in the SVG. Overlay records come from site/data/schematics.yaml; the
     `kind` field selects the macro variant:
 
         link    : clickable navigation rectangle
@@ -19,8 +19,8 @@
    ──────────────────────────────────────────────────────────────────────── -#}
 
 {% block extra_styles %}
-    <link rel="stylesheet" href="css/project/2.0/switchboard.css">
-    <link rel="stylesheet" href="css/project/2.0/diagrams.css">
+    <link rel="stylesheet" href="{{ _pp }}css/project/2.0/switchboard.css">
+    <link rel="stylesheet" href="{{ _pp }}css/project/2.0/diagrams.css">
 {%- endblock %}
 
 {% block content %}
@@ -39,5 +39,5 @@
 
 {% block extra_scripts %}
     <!-- Load position handler for data-position attributes -->
-    <script src="js/project/2.0/position-handler.js"></script>
+    <script src="{{ _pp }}js/project/2.0/position-handler.js"></script>
 {%- endblock %}

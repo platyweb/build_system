@@ -1,0 +1,5 @@
+page_title: "Meters Hierarchy"
+heading: "Campus Meters Hierarchy"
+subtitle: "Click on meters to expand/collapse child connections"
+search_placeholder: "Search for a meter (e.g., Lighting, LTHW)..."
+root_meter_ids: [1, 2, 60, 70]   # North electricity / North LTHW / South electricity / Site gas

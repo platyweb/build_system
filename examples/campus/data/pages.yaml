@@ -1,0 +1,10 @@
+# Frozen pages: body in pages/<key>.body.html. `building:` builds the page in
+# that building's folder — its fragment must then write relative URLs as
+# {{ path_prefix }}… (build.py --check warns about any that don't).
+
+pages:
+  - key: north_plant
+    out: plant_room.htm
+    building: north
+    page_title: "North Tower Plant Room · {{ building.ems_name }}"
+    heading: "North Tower Plant Room"

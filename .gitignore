@@ -23,7 +23,12 @@ node_modules/
 *.swp
 .idea/
 
-# Generated report artifacts (PDFs, PNGs, rendered HTML) - regenerate locally
-project/
+# Generated report artifacts (PDFs, PNGs, rendered HTML) - regenerate locally.
+# Anchored to the repo root: an unanchored `project/` also matched
+# _assets/css/project/ and _assets/js/project/, silently dropping the runtime
+# skeleton's own CSS/JS from git.
+/project/
 
-!_assets/js/project
+# Full copy of the last golden build, kept locally for readable diffs
+# (_build/regress.py). The committed sha256 manifests are the regression bar.
+/_baseline/

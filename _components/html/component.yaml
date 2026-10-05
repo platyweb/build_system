@@ -1,0 +1,3 @@
+description: Any HTML, from a fragment file in the site's pages/ folder. The catch-all for one-offs; when one recurs, make it a component with options.
+options:
+  file: {required: true, doc: "Fragment file name in site/pages/, e.g. plant_notice.html. It can use {{ building.* }} and {{ path_prefix }}, like a frozen page's fragment"}

@@ -1,0 +1,341 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# FLOOR ROSTER + per-floor data not derivable from the meter registry
+# (meters.csv), bms_bindings.yaml, or reports.yaml.
+#
+# This is the site's LEVEL ROSTER: one top-level `floor_<key>:` entry per
+# level, listed bottom → top. The order of the entries IS the physical order
+# — the sidebar, tenant floor lists and riser diagrams all follow it — so keys
+# can be named anything ("ground"/"1st", "L00", "Mezzanine", "Roof"). Every
+# floor named anywhere else (meters.csv, bms_bindings.yaml, reports.yaml,
+# tenants.yaml, sidebar.yaml groups, energy_flow.yaml) must be a level here;
+# `build.py --check` reports any that aren't.
+#
+# Each level gets one generated `floor_<key>.htm` page unless it sets
+# `page: false` (a level with meters but no page of its own, like the
+# basement plant levels below). The sidebar's `auto: floors` list is built
+# from the levels with pages, top floor first.
+#
+# Roster fields (all optional):
+#   label     → display name: tenant pages, floor lists      (default: the key)
+#   nav_label → sidebar menu text                              (default: label)
+#   heading   → the floor page's heading          (default: "<label> Overview")
+#   page      → false for a level with no page                 (default: true)
+#
+# A level with a page only renders if the meter registry has meters pinned to
+# it (floor=<key>) so its layout can be derived — or the entry supplies an
+# explicit `floorplan_tab.layout:`. A page level with neither is an error by
+# design (nothing to draw).
+#
+# Page data (any other field is passed to the floor page):
+#   tenants                         (string) → occupant name, carried for
+#                                     reference/tenant-page generation (not
+#                                     rendered on the floor page itself)
+#
+# Derived automatically (override allowed by setting the field in YAML):
+#   tabs                            → Summary + the report tabs in site.yaml
+#                                     floor_page.tabs (St Peters: Electricity /
+#                                     Heat / Cooling / Ventilation Report)
+#   floorplan_image                 → img/floors/floor_<key>.png
+#   floorplan_tab.layout            → group meters by (floor, column, zone), sort by
+#                                     position, insert floorplan after column 0
+#
+# Each report tab shows its summary cards (site.yaml floor_page.tabs roles,
+# titled from `summary_roles:`, bound per floor in `data/bms_bindings.yaml`)
+# then the `data/reports.yaml` placements for page=floor, floor=<key>,
+# slot=<the tab's slot>.
+#
+# Override hooks:
+#   floorplan_tab.floorplan_after_column: 1  # shift floorplan one column right
+#   floorplan_tab.layout: …                  # bypass layout derivation
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─── Basement levels — plant/landlord meters only, no floor pages ──────────
+floor_Basement:
+  label: "Basement Floor"
+  page: false
+
+floor_B4:
+  label: "B4"
+  page: false
+
+floor_B3:
+  label: "B3"
+  page: false
+
+floor_B2:
+  label: "B2"
+  page: false
+
+floor_B1:
+  label: "B1"
+  page: false
+
+# ─── Floors with pages ──────────────────────────────────────────────────────
+
+# Was mistagged floor: "Ground" (capitalised) in METER_REGISTRY, which didn't
+# match this "ground" key or the existing bms_bindings.yaml ground-floor rows
+# (floor_demand_electricity etc.) — fixed to lowercase so this floor now
+# renders with live data instead of being an orphaned meter.
+floor_ground:
+  label: "Ground Floor"
+  tenants: "Landlords"
+
+floor_1st:
+  label: "1st Floor"
+  nav_label: "Floor 1st"
+  tenants: "AON Reception"
+
+floor_2nd:
+  label: "2nd Floor"
+  nav_label: "Floor 2nd"
+  tenants: "Main Reception"
+
+floor_3rd:
+  label: "3rd Floor"
+  nav_label: "Floor 3rd"
+  tenants: "Bob Bob Restaurant"
+
+floor_4th:
+  label: "4th Floor"
+  nav_label: "Floor 4th"
+  tenants: "AON"
+
+floor_5th:
+  label: "5th Floor"
+  nav_label: "Floor 5th"
+  tenants: "AON"
+
+floor_6th:
+  label: "6th Floor"
+  nav_label: "Floor 6th"
+  tenants: "AON"
+
+floor_7th:
+  label: "7th Floor"
+  nav_label: "Floor 7th"
+  tenants: "AON"
+
+floor_8th:
+  label: "8th Floor"
+  nav_label: "Floor 8th"
+  tenants: "AON"
+
+floor_9th:
+  label: "9th Floor"
+  nav_label: "Floor 9th"
+  tenants: "AON"
+
+floor_10th:
+  label: "10th Floor"
+  nav_label: "Floor 10th"
+  tenants: "AON"
+
+floor_11th:
+  label: "11th Floor"
+  nav_label: "Floor 11th"
+  tenants: "AON"
+
+floor_12th:
+  label: "12th Floor"
+  nav_label: "Floor 12th"
+  tenants: "AON"
+
+floor_13th:
+  label: "13th Floor"
+  nav_label: "Floor 13th"
+  tenants: "AON"
+
+# Access limitation (per "List of tennants.xlsx"): COMS riser and AHU
+# access is through the tenant.
+floor_14th:
+  label: "14th Floor"
+  nav_label: "Floor 14th"
+  tenants: "RSH&P"
+
+# Access limitation (per "List of tennants.xlsx"): COMS riser and AHU
+# access is through the tenant.
+floor_15th:
+  label: "15th Floor"
+  nav_label: "Floor 15th"
+  tenants: "Virgin Money"
+
+floor_16th:
+  label: "16th Floor"
+  nav_label: "Floor 16th"
+  tenants: "KI Group Services"
+
+floor_17th:
+  label: "17th Floor"
+  nav_label: "Floor 17th"
+  tenants: "Brit Insurance"
+
+floor_18th:
+  label: "18th Floor"
+  nav_label: "Floor 18th"
+  tenants: "Brit Insurance"
+
+floor_19th:
+  label: "19th Floor"
+  nav_label: "Floor 19th"
+  tenants: "UIB"
+
+floor_20th:
+  label: "20th Floor"
+  nav_label: "Floor 20th"
+  tenants: "MS Amlin"
+
+floor_21st:
+  label: "21st Floor"
+  nav_label: "Floor 21st"
+  tenants: "MS Amlin"
+
+floor_22nd:
+  label: "22nd Floor"
+  nav_label: "Floor 22nd"
+  tenants: "MS Amlin"
+
+# Confirmed MS Amlin per "List of tennants.xlsx" (was previously inferred
+# from the contiguous 20th/21st/22nd/24th block; no "Tenants" tile in the
+# hand-built floor_23rd.htm mockup to read it from directly).
+floor_23rd:
+  label: "23rd Floor"
+  nav_label: "Floor 23rd"
+  tenants: "MS Amlin"
+
+floor_24th:
+  label: "24th Floor"
+  nav_label: "Floor 24th"
+  tenants: "MS Amlin"
+
+floor_25th:
+  label: "25th Floor"
+  nav_label: "Floor 25th"
+  tenants: "DRW"
+
+floor_26th:
+  label: "26th Floor"
+  nav_label: "Floor 26th"
+  tenants: "Aegon / Draft Kings"
+
+floor_27th:
+  label: "27th Floor"
+  nav_label: "Floor 27th"
+  tenants: "OMERS"
+
+floor_28th:
+  label: "28th Floor"
+  nav_label: "Floor 28th"
+  tenants: "OMERS"
+
+floor_29th:
+  label: "29th Floor"
+  nav_label: "Floor 29th"
+  tenants: "OMERS"
+
+floor_30th:
+  label: "30th Floor"
+  nav_label: "Floor 30th"
+  tenants: "Serve corp"
+
+floor_31st:
+  label: "31st Floor"
+  nav_label: "Floor 31st"
+  tenants: "Quadrature"
+
+floor_32nd:
+  label: "32nd Floor"
+  nav_label: "Floor 32nd"
+  tenants: "Quadrature"
+
+floor_33rd:
+  label: "33rd Floor"
+  nav_label: "Floor 33rd"
+  tenants: "Quadrature"
+
+floor_34th:
+  label: "34th Floor"
+  nav_label: "Floor 34th"
+  tenants: "Quadrature"
+
+floor_35th:
+  label: "35th Floor"
+  nav_label: "Floor 35th"
+  tenants: "DRW"
+
+floor_36th:
+  label: "36th Floor"
+  nav_label: "Floor 36th"
+  tenants: "DRW"
+
+floor_37th:
+  label: "37th Floor"
+  nav_label: "Floor 37th"
+  tenants: "DRW"
+
+floor_38th:
+  label: "38th Floor"
+  nav_label: "Floor 38th"
+  tenants: "DRW"
+
+floor_39th:
+  label: "39th Floor"
+  nav_label: "Floor 39th"
+  tenants: "Brit Insurance"
+
+floor_40th:
+  label: "40th Floor"
+  nav_label: "Floor 40th"
+  tenants: "FM Global"
+
+floor_41st:
+  label: "41st Floor"
+  nav_label: "Floor 41st"
+  tenants: "FM Global"
+
+floor_42nd:
+  label: "42nd Floor"
+  nav_label: "Floor 42nd"
+  tenants: "Xcite/ Landing 42"
+
+floor_43rd:
+  label: "43rd Floor"
+  nav_label: "Floor 43rd"
+  tenants: "Petredec"
+
+floor_44th:
+  label: "44th Floor"
+  nav_label: "Floor 44th"
+  tenants: "Affinity Shipping"
+
+floor_45th:
+  label: "45th Floor"
+  nav_label: "Floor 45th"
+  tenants: "D-Tek"
+
+# Plant floors — placeholder scaffolding only. Content (meters, layout) to
+# follow; these will end up in a different format than tenant floors once
+# the boiler / cooling-tower data is wired in.
+
+# Already has landlord/mechanical-plant meters pinned (floor: "46th") in
+# METER_REGISTRY, so layout auto-derives same as any tenant floor. Boiler
+# meters can just be added to the registry tagged floor: "46th" later.
+floor_46th:
+  label: "46th Floor"
+  nav_label: "Floor 46th"
+  tenants: "Landlords"
+
+# No meters registered yet (cooling towers pending) — derive_layout would
+# refuse to render with nothing pinned, so this supplies an explicit empty
+# placeholder layout. Once cooling-tower meters are tagged floor: "47th" in
+# METER_REGISTRY, delete the floorplan_tab override below so it auto-derives
+# like every other floor. img/floors/floor_47th.png does not exist yet —
+# add it or the floor plan image will 404.
+floor_47th:
+  label: "47th Floor"
+  nav_label: "Floor 47th"
+  tenants: "Landlords"
+  floorplan_tab:
+    image: "img/floors/floor_47th.png"
+    layout:
+      - type: cards
+        cards: []

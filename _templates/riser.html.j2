@@ -1,14 +1,14 @@
 {% extends "base.html.j2" %}
 {# Riser diagram — the vertical counterpart of switchboard.html.j2. Generated
-   by _build/build_risers.py from METER_REGISTRY + _data/risers.yaml. The
+   by _build/build_risers.py from METER_REGISTRY + site/data/risers.yaml. The
    busbar is a generated SVG background; each floor tap is a live HTML
    widget overlay, identical markup/widget system to the switchboard pages
    (same swb-box/swb-gauge, same switchboard-gauge.js) — only the background
    geometry and the top/bottom continuation arrows (instead of left/right)
    differ. #}
-{% block extra_styles %}    <link rel="stylesheet" href="css/project/2.0/diagrams.css">
-    <link rel="stylesheet" href="css/project/2.0/switchboard.css">
-    <link rel="stylesheet" href="css/project/2.0/switchboard-widget.css">
+{% block extra_styles %}    <link rel="stylesheet" href="{{ _pp }}css/project/2.0/diagrams.css">
+    <link rel="stylesheet" href="{{ _pp }}css/project/2.0/switchboard.css">
+    <link rel="stylesheet" href="{{ _pp }}css/project/2.0/switchboard-widget.css">
 {% endblock %}
 {% block content %}
                 <div class="switchboard-card-no-animation primary">
@@ -42,7 +42,7 @@
                 </div>
 {% endblock %}
 {% block tail_scripts %}    <!-- Position the overlays from their data-position attributes -->
-    <script src="js/project/2.0/position-handler.js"></script>
+    <script src="{{ _pp }}js/project/2.0/position-handler.js"></script>
     <!-- Render + live-update the segmented gauges -->
-    <script src="js/project/2.0/switchboard-gauge.js"></script>
+    <script src="{{ _pp }}js/project/2.0/switchboard-gauge.js"></script>
 {% endblock %}

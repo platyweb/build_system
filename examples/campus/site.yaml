@@ -1,0 +1,61 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CAMPUS EXAMPLE SITE — two buildings under one EMS.
+#
+# With more than one entry in `buildings:`, each building's pages are built
+# into their own folder — project/riverside-campus/north/…, …/south/… —
+# while site-wide pages (home, meters hierarchy, the site gas incomer) stay at
+# the root. Every level in data/floors.yaml names its building; incomers,
+# switchboards and pages.yaml entries may too. Each building folder gets its
+# own sidebar-template.js with links rewritten for that folder.
+#
+# Level keys are unique across the whole site (n-l01, s-l00, …), so a meter's
+# building follows from its floor — meters.csv needs no building column.
+# ─────────────────────────────────────────────────────────────────────────────
+
+slug: "riverside-campus"
+
+name: "Riverside Campus"
+short_name: "RC"
+postcode: "XY9 8ZW"
+net_internal_area: "9,800 m²"
+ems_name: "RC EMS"
+
+# key → the building's page folder; name → the sidebar's building sub-menu.
+buildings:
+  - { key: north, name: "North Tower" }
+  - { key: south, name: "South Annex" }
+
+modules: [floors, incomers, home, meters_hierarchy, pages, switchboards, sidebar]
+
+utilities:
+  electricity: {label: Electricity, kind: electric}
+  lthw:        {label: LTHW, kind: thermal}
+  gas:         {label: Gas, kind: other}
+
+optergy_lib_version: "260228085300"
+
+bacnet:
+  device: 300
+  power_offset:
+    Modbus: 40
+    Calculation: 82
+
+brand:
+  href: home.htm
+  label: "Riverside Campus"
+  logo_src: img/favicon.png
+footer:
+  logo: img/favicon.png
+  logo_alt: "Riverside"
+  email: estates@example.com
+
+summary_roles:
+  floor_today_electricity: {title: "Today's Consumption", format: energy}
+
+floor_page:
+  riser_card_link: "#"
+  summary_cards:
+    total: "Floor Total Electricity"
+  report_titles: [Demand, Consumption]
+  tabs:
+    - { id: electricity-report, label: "Electricity", slot: electricity, roles: [floor_today_electricity] }

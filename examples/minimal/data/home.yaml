@@ -1,0 +1,17 @@
+# home.htm through the engine's home.html.j2. Report cards come from
+# reports.yaml placements (page=home, slot=top / main).
+
+page_title: "Home · AD EMS"
+heading: "Acme Depot Energy Management System"
+
+info_bar:
+  - { label: "Electricity Demand", link: incomer_electricity.htm, id: live-home-elec-demand, bacnet: "300|0|10040|85|-1", format: power }
+  - { label: "Gas Today",          link: incomer_gas.htm,         id: live-home-gas-today,   bacnet: "300|0|2000011|85|-1", format: gas }
+  - { label: "Water Today",        link: incomer_water.htm,       id: live-home-water-today, bacnet: "300|0|2000021|85|-1", format: water }
+  - { label: "Floor Plan",         link: floor_L00.htm,           value: "Ground Floor" }
+
+welcome_title: "Welcome"
+bullet_points:
+  - "Live electricity, gas and water from the main incomers."
+  - "The floor page shows every distribution-board meter by zone."
+  - "The meters hierarchy traces each meter back to its incomer."

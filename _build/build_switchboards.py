@@ -1,49 +1,34 @@
 #!/usr/bin/env python3
 r"""
-Generate switchboard diagram pages from METER_REGISTRY + _data/switchboards.yaml.
+Generate switchboard diagram pages from METER_REGISTRY + site/data/switchboards.yaml.
 
 A board is defined by an incomer meter id; its "ways" are every meter whose
 parent_id == incomer_id. For each board this writes:
 
-    img/<key><suffix>.svg    the busbar background (busbar + connectors), generated
-    <key><suffix>.htm        the page: <img> background + live HTML widget overlays
+    img/<key>.svg    the busbar background (busbar + connectors), generated
+    <key>.htm        the page: <img> background + live HTML widget overlays
 
 The widgets are positioned in native SVG coordinates (data-position, centred by
 the .data-overlay CSS) and bound to live data via data-bacnet/data-format
 (computed from the registry, exactly like the hand-built pages), plus a
 segmented gauge rendered live by js/project/2.0/switchboard-gauge.js.
 
-While validating, <suffix> is ".generated" so the live swb_*.htm / img/lvNN.svg
-are left untouched. Set GEN_SUFFIX = "" (or pass --inplace) to overwrite them.
+This is the `switchboards` module (build.py MODULES): enable it in site.yaml
+`modules:`, or run it on its own with
 
-Usage:
-    .\.venv\Scripts\python.exe _build\build_switchboards.py            # all boards
-    .\.venv\Scripts\python.exe _build\build_switchboards.py swb_lv01   # one board
-    .\.venv\Scripts\python.exe _build\build_switchboards.py --inplace  # write live names
+    python _build/build.py --modules switchboards            # all boards
+    python _build/build.py --modules switchboards swb_lv01   # one board
 """
 import math
 import re
-import sys
 from collections import defaultdict
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))  # make build.py importable
 import yaml
-from build import DATA_DIR, SITE_DIR, make_env, read_meters
+import build  # imported by build.py as a module; paths (build.SITE_DIR, …) are read at call time
 
-# Output lives under the site directory (project/<slug>/, see building.yaml), not the repo
-# root — this mirrors every other builder in _build/ (all write under SITE_DIR).
-IMG_DIR = SITE_DIR / "img"
-GEN_SUFFIX = ".generated"     # overridden to "" by --inplace
-
-
-# ─── live-data address rules (mirror meter-templates.js) ─────────────────────
-def power_offset(meter_type: str) -> int:
-    return 40 if meter_type == "Modbus" else 82 if meter_type == "Calculation" else 0
-
-
-def demand_bacnet(meter: dict) -> str:
-    return f"300|0|{meter['base'] + power_offset(meter['type'])}|85|-1"
+# Output lives under the site directory (project/<slug>/, see site.yaml), not the repo
+# root — this mirrors every other builder in _build/ (all write under build.SITE_DIR).
 
 
 # ─── layout ──────────────────────────────────────────────────────────────────
@@ -63,7 +48,7 @@ def make_box(meter, cx, cy, w, h, cfg, default_rating, is_incomer=False):
         "title":    TAG_PREFIX_RE.sub("", meter["tag"]),
         "ct":       cfg.get("ct", ""),
         "rating":   cfg.get("rating", default_rating),
-        "bacnet":   demand_bacnet(meter),
+        "bacnet":   build.demand_address(meter),
         "cx": round(cx, 1), "cy": round(cy, 1), "w": w, "h": h,
         "is_incomer": is_incomer,
     }
@@ -155,7 +140,7 @@ def compute_board(key, board, defaults, by_id, children, boards):
             "tip_x":    round(tip_x, 1),
             "arrow_head": L.get("tie_arrow_head", 26),
             "label":    bus_tie.get("label") or target.get("heading", bus_tie["to"]),
-            "href":     f"{bus_tie['to']}{GEN_SUFFIX}.htm",
+            "href":     f"{bus_tie['to']}.htm",
             "label_cx": round(tip_x, 1),
             "label_cy": round(busbar_y - 30, 1),
         }
@@ -166,7 +151,7 @@ def compute_board(key, board, defaults, by_id, children, boards):
         "heading":       board.get("heading", key),
         "page_title":    board.get("page_title", board.get("heading", key)),
         "container_class": "floor-container",
-        "svg_path":      f"img/{key}{GEN_SUFFIX}.svg",
+        "svg_path":      f"img/{key}.svg",
         "boxes":         boxes + [incomer],
         "bus_tie":       tie,
     }
@@ -240,49 +225,49 @@ def build_svg(L, width, height, busbar_y, boxes, incomer, col_step, busbar_x1, b
 
 
 # ─── driver ──────────────────────────────────────────────────────────────────
-def main(argv):
-    global GEN_SUFFIX
-    only = None
-    for a in argv:
-        if a == "--inplace":
-            GEN_SUFFIX = ""
-        else:
-            only = a
-
-    cfg = yaml.safe_load((DATA_DIR / "switchboards.yaml").read_text(encoding="utf-8")) or {}
+def run(env, only: str | None = None) -> list[Path]:
+    """The `switchboards` module: one page + busbar SVG per board in
+    site/data/switchboards.yaml (`only`: a single board key)."""
+    cfg = yaml.safe_load((build.DATA_DIR / "switchboards.yaml").read_text(encoding="utf-8")) or {}
     defaults, boards = cfg.get("defaults", {}), cfg.get("boards", {})
 
-    meters = read_meters()
+    meters = build.read_meters()
     by_id = {m["id"]: m for m in meters}
     children = defaultdict(list)
     for m in meters:
         if m["parent_id"] is not None:
             children[m["parent_id"]].append(m)
 
-    env = make_env()
+    img_dir = build.SITE_DIR / "img"
     template = env.get_template("switchboard.html.j2")
 
     written = []
-    print("Building switchboards...")
     for key, board in boards.items():
         if only and only != key:
             continue
         ctx, svg = compute_board(key, board, defaults, by_id, children, boards)
         # heading/page_title in switchboards.yaml may reference {{ building.* }}
-        # (kept as data so a rename only touches building.yaml).
+        # (kept as data so a rename only touches site.yaml).
         for meta_key in ("heading", "page_title"):
             if isinstance(ctx.get(meta_key), str):
                 ctx[meta_key] = env.from_string(ctx[meta_key]).render()
-        svg_path = IMG_DIR / f"{key}{GEN_SUFFIX}.svg"
-        svg_path.write_text(svg, encoding="utf-8")
-        html_path = SITE_DIR / f"{key}{GEN_SUFFIX}.htm"
-        html_path.write_text(template.render(**ctx), encoding="utf-8")
+        # On a campus a board with `building:` lives in that building's
+        # folder: its SVG (shared img/) and bus-tie link are written relative
+        # to the site root, then rewritten for the page's folder.
+        bkey = build.check_building(board.get("building"), f"switchboards.yaml '{key}'")
+        out_dir, location_ctx = build.page_location(bkey)
+        folder = build.page_folder(bkey)
+        ctx.update(location_ctx)
+        ctx["svg_path"] = build.relative_url(ctx["svg_path"], folder)
+        if ctx["bus_tie"]:
+            to = board["bus_tie"]["to"]
+            ctx["bus_tie"]["href"] = build.relative_url(
+                build.site_href(boards[to].get("building"), f"{to}.htm"), folder)
+        svg_path = img_dir / f"{key}.svg"
+        svg_path.write_text(svg, encoding="utf-8", newline="\n")
+        html_path = out_dir / f"{key}.htm"
+        html_path.write_text(template.render(**ctx), encoding="utf-8", newline="\n")
         n_ways = len(ctx["boxes"]) - 1
-        print(f"  wrote {svg_path.relative_to(SITE_DIR)} + {html_path.relative_to(SITE_DIR)}  ({n_ways} ways)")
+        print(f"  wrote {svg_path.relative_to(build.SITE_DIR)} + {html_path.relative_to(build.SITE_DIR)}  ({n_ways} ways)")
         written += [svg_path, html_path]
-    print(f"Done. {len(written)} file(s) written.")
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    return written

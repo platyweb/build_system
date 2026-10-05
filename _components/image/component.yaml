@@ -1,0 +1,6 @@
+description: An image (a photo, an extra diagram, a logo) with an optional caption.
+options:
+  src:     {required: true,   doc: "Image URL. A relative one is from the site root, e.g. img/plant_room.png for site/assets/img/plant_room.png"}
+  alt:     {default: "",      doc: "Alternative text for screen readers"}
+  caption: {default: "",      doc: "Text shown under the image"}
+  width:   {default: "100%",  doc: "CSS width, e.g. 100% or 480px (never wider than its container)"}

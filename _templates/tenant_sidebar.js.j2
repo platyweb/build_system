@@ -79,10 +79,10 @@ const SIDEBAR_HTML = `
     <div class="sidebar-footer">
         <div class="footer-box">
             <div>
-                <img class="react-logo" src="{{ path_prefix }}img/knight_logo.svg" alt="KCL">
+                <img class="react-logo" src="{{ path_prefix }}{{ building.footer.logo }}" alt="{{ building.footer.logo_alt }}">
             </div>
             <div style="padding: 0 10px">
-                <a href="mailto:service@knightcontrols.co.uk"><i>service@knightcontrols.co.uk</i></a>
+                <a href="mailto:{{ building.footer.email }}"><i>{{ building.footer.email }}</i></a>
             </div>
         </div>
     </div>

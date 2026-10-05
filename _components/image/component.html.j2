@@ -1,0 +1,9 @@
+{#- image: see component.yaml for its options. A relative src is from the
+    site root; path_prefix makes it resolve from a campus building folder. -#}
+{%- set url = src if src.startswith(('/', 'http://', 'https://', 'data:')) else path_prefix ~ src %}
+                    <div class="extra-image" style="text-align: center;">
+                        <img src="{{ url }}" alt="{{ alt|e }}" style="width: {{ width }}; max-width: 100%; height: auto;">
+{%- if caption %}
+                        <div class="extra-image-caption">{{ caption|e }}</div>
+{%- endif %}
+                    </div>

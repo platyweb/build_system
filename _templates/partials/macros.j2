@@ -15,7 +15,7 @@
 {%- elif card.meter_id is defined %}
                                     <div data-meter-id="{{ card.meter_id }}" data-meter-field="{{ card.meter_field }}" data-refresh="{{ card.refresh|default(10) }}">Loading...</div>
 {%- else %}
-                                    <div{% if card.id %} id="{{ card.id }}"{% endif %} class="info-item-value"
+                                    <div{% if card.id|default(false) %} id="{{ card.id }}"{% endif %} class="info-item-value"
                                         data-bacnet="{{ card.bacnet }}" data-format="{{ card.format }}"{% if card.decimal_places is defined %} data-decimal-places="{{ card.decimal_places }}"{% endif %} data-refresh="{{ card.refresh|default(10) }}">
                                         Loading...
                                     </div>
@@ -108,7 +108,7 @@
 {# meters in one .floor-stats-group and gets the "top card" class; the       #}
 {# default "side" variant (East/West tenant risers) lists them flat.        #}
 {%- macro riser_card(card, variant='side') %}
-{%- set link = card.header_link|default('/docs/tlb/riser_overview.htm') %}
+{%- set link = card.header_link|default(floor_page.riser_card_link) %}
                                 <div class="{{ 'riser-column-top-card floor-card' if variant == 'center' else 'floor-card' }}">
                                     <a href="{{ link }}"{% if link != '#' %} target="_blank" rel="noopener noreferrer"{% endif %}
                                         class="floor-header-link">
@@ -135,13 +135,35 @@
 {%- endmacro %}
 
 
+{# ── report_tab_panel: one report tab on a floor / tenant-floor page ─────── #}
+{# `tab` is a build.py report tab: {id, label, summary_cards, reports} (from  #}
+{# site.yaml floor_page.tabs). with_cards=false drops the summary-card strip  #}
+{# (tenant floor pages show reports only).                                    #}
+{%- macro report_tab_panel(tab, with_cards=true) %}                    <!-- {{ tab.label }} Tab Content -->
+                    <div id="{{ tab.id }}-tab" class="tab-content" role="tabpanel"
+                        aria-labelledby="tab-{{ tab.id }}" tabindex="0">
+{%- if with_cards %}
+                        <div class="summary-cards">
+{%- for card in tab.summary_cards %}
+{{ summary_card(card) }}
+{%- endfor %}
+                        </div>
+{%- endif %}
+{%- for report in tab.reports %}
+
+{{ report_card(report) }}
+{%- endfor %}
+                    </div>
+{%- endmacro %}
+
+
 {# ── floor_card: header (zone/riser) + N stats groups ──────────────────── #}
 {# header_link="#" suppresses target/rel (matches tenant-page convention).  #}
 {%- macro floor_card(card, field_labels) %}
 {%- if card.comment is defined %}
                                 <!-- {{ card.comment }} -->
 {%- endif %}
-{%- set link = card.header_link|default('/docs/tlb/riser_overview.htm') %}
+{%- set link = card.header_link|default(floor_page.riser_card_link) %}
                                 <div class="floor-card">
                                     <a href="{{ link }}"{% if link != '#' %} target="_blank" rel="noopener noreferrer"{% endif %}
                                         class="floor-header-link">
@@ -162,8 +184,9 @@
 
 {# ── meter_node: one <li> in the meters_hierarchy tree, recursive ─────── #}
 {# Type "Calculation" renders as Virtual / .meter-virtual; everything else #}
-{# (Modbus / Bacnet) renders as Physical / .meter-electrical. Power point  #}
-{# offset: +82 for Calculation, +40 otherwise. The utility class stacks on #}
+{# (Modbus / Bacnet) renders as Physical / .meter-electrical. Status and  #}
+{# demand addresses come from site.yaml `bacnet:` (bacnet_address /         #}
+{# demand_address globals, see build.py). The utility class stacks on      #}
 {# top of that and carries its own virtual marker — a utility of           #}
 {# "lthw-virtual" gives .meter-lthw-virtual, which wins over .meter-virtual #}
 {# on source order and keeps the LTHW colours with a purple right edge.    #}
@@ -171,7 +194,6 @@
 {%- set ind = ' ' * (32 + 4 * depth) -%}
 {%- set has_children = children_map.get(m.id) -%}
 {%- set is_virtual = m.type == 'Calculation' -%}
-{%- set power_offset = 82 if is_virtual else 40 -%}
 {{ ind }}<li{% if not has_children %} class="no-children"{% endif %}>
 {{ ind }}    <span class="toggle-btn" onclick="toggleChildren(this)"></span>
 {{ ind }}    <a href="/meters/MeterDisplay.html?meter.id={{ m.id }}" target="_blank" rel="noopener noreferrer" class="meter meter-{{ 'virtual' if is_virtual else 'electrical' }}{% if m.utility %} meter-{{ m.utility }}{% endif %}">
@@ -180,7 +202,7 @@
 {{ ind }}            <span class="meter-type">{{ 'Virtual' if is_virtual else 'Physical' }}</span>
 {{ ind }}            <span class="meter-status">
 {{ ind }}                <div id="live-status-{{ m.id }}" class="info-item-value"
-{{ ind }}                    data-bacnet="300|3|{{ m.base }}|85|-1" data-format="status"
+{{ ind }}                    data-bacnet="{{ bacnet_address(3, m.base) }}" data-format="status"
 {{ ind }}                    data-refresh="10" data-status-online-svg="img/online-indicator.svg"
 {{ ind }}                    data-status-offline-svg="img/offline-indicator.svg"
 {{ ind }}                    data-status-online-text=" " data-status-offline-text=" "
@@ -188,7 +210,7 @@
 {{ ind }}            </span>
 {{ ind }}            <span class="meter-load">
 {{ ind }}                <div id="live-power-{{ m.id }}" class="info-item-value-small"
-{{ ind }}                    data-bacnet="300|0|{{ m.base + power_offset }}|85|-1" data-format="power"
+{{ ind }}                    data-bacnet="{{ demand_address(m) }}" data-format="power"
 {{ ind }}                    data-refresh="10">Loading...</div>
 {{ ind }}            </span>
 {{ ind }}        </div>
@@ -230,13 +252,13 @@
 {%- macro live_dial(d) %}                        <div class="dial-card">
                             <div class="energy-dial"
                                 data-dial-bacnet="{{ d.bacnet }}"
-{%- if d.format %} data-format="{{ d.format }}"{% endif %}
+{%- if d.format|default(false) %} data-format="{{ d.format }}"{% endif %}
                                 data-label="{{ d.label|default('') }}"
                                 data-min="{{ d.min|default(0) }}" data-max="{{ d.max|default(100) }}"
 {%- if d.suffix is defined %} data-suffix="{{ d.suffix }}"{% endif %}
 {%- if d.decimals is defined %} data-decimals="{{ d.decimals }}"{% endif %}
-{%- if d.width %} data-width="{{ d.width }}"{% endif %}
-{%- if d.height %} data-height="{{ d.height }}"{% endif %}
+{%- if d.width|default(false) %} data-width="{{ d.width }}"{% endif %}
+{%- if d.height|default(false) %} data-height="{{ d.height }}"{% endif %}
                                 data-refresh="{{ d.refresh|default(10) }}"></div>
                         </div>
 {%- endmacro %}
@@ -264,7 +286,7 @@
                                     <div class="stat-box">
                                         <div class="stat-label">{{ s.label }}</div>
                                         <div class="stat-value">
-{%- if s.wrap_span %}
+{%- if s.wrap_span|default(false) %}
                                             <span>
                                                 <div id="{{ s.id }}" class="info-item-value-small"
                                                     data-bacnet="{{ s.bacnet }}" data-format="{{ s.format }}"{% if s.decimal_places is defined %} data-decimal-places="{{ s.decimal_places }}"{% endif %} data-refresh="{{ s.refresh|default(10) }}">
@@ -364,7 +386,7 @@
 {# js/project/2.0/position-handler.js at runtime.                              #}
 
 {# Shape 1: link zone — clickable rectangle, no live data ──────────────── #}
-{%- macro data_overlay_link(o) %}                                <a href="{{ o.link }}" target="_blank" rel="noopener noreferrer"><div class="data-overlay" data-position="{{ o.position }}"{% if o.width or o.height %}  style="{% if o.width %}width: {{ o.width }}px;{% endif %}{% if o.height %} height: {{ o.height }}px;{% endif %}"{% endif %}></div></a>
+{%- macro data_overlay_link(o) %}                                <a href="{{ o.link }}" target="_blank" rel="noopener noreferrer"><div class="data-overlay" data-position="{{ o.position }}"{% if o.width|default(false) or o.height|default(false) %}  style="{% if o.width|default(false) %}width: {{ o.width }}px;{% endif %}{% if o.height|default(false) %} height: {{ o.height }}px;{% endif %}"{% endif %}></div></a>
 {%- endmacro %}
 
 
@@ -375,7 +397,7 @@
 {%- set field = o.field|default('demand') %}
                                 <a href="/meters/MeterDisplay.html?meter.id={{ o.meter_id }}" target="_blank"
                                     rel="noopener noreferrer">
-                                    <div{% if o.id %} id="{{ o.id }}"{% endif %} class="info-item-value data-overlay power loading"
+                                    <div{% if o.id|default(false) %} id="{{ o.id }}"{% endif %} class="info-item-value data-overlay power loading"
                                         data-position="{{ o.position }}" data-meter-id="{{ o.meter_id }}" data-meter-field="{{ field }}"
                                         data-refresh="{{ o.refresh|default(10) }}">Loading...</div>
                                 </a>
@@ -386,11 +408,11 @@
 {%- macro data_overlay_status(o) -%}
 {%- set size = o.font_size|default(10) %}
 {%- if o.meter_id is defined %}
-                                <div{% if o.id %} id="{{ o.id }}"{% endif %} class="info-item-value data-overlay text-{{ size }}"
+                                <div{% if o.id|default(false) %} id="{{ o.id }}"{% endif %} class="info-item-value data-overlay text-{{ size }}"
                                     data-position="{{ o.position }}" data-meter-id="{{ o.meter_id }}" data-meter-field="status"
                                     data-refresh="{{ o.refresh|default(10) }}"></div>
 {%- else %}
-                                <div{% if o.id %} id="{{ o.id }}"{% endif %} class="info-item-value data-overlay text-{{ size }}"
+                                <div{% if o.id|default(false) %} id="{{ o.id }}"{% endif %} class="info-item-value data-overlay text-{{ size }}"
                                     data-position="{{ o.position }}" data-bacnet="{{ o.bacnet }}" data-format="status"
                                     data-refresh="{{ o.refresh|default(10) }}"
                                     data-status-online-svg="img/online-indicator.svg"
@@ -409,7 +431,7 @@
 {%- set styling = ' power' if o.format in ('power', 'energy', 'water') else '' -%}
                                 <a href="{{ href }}"{% if is_meter_link %} target="_blank"
                                     rel="noopener noreferrer"{% endif %}>
-                                    <div{% if o.id %} id="{{ o.id }}"{% endif %} class="info-item-value data-overlay{{ styling }} loading"
+                                    <div{% if o.id|default(false) %} id="{{ o.id }}"{% endif %} class="info-item-value data-overlay{{ styling }} loading"
                                         data-position="{{ o.position }}" data-bacnet="{{ o.bacnet }}" data-format="{{ o.format }}"
                                         data-refresh="{{ o.refresh|default(10) }}"
                                         {%- if o.context_menu is defined %} data-context-menu="{{ o.context_menu }}"{% endif %}

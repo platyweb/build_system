@@ -1,0 +1,17 @@
+{#- live_value: see component.yaml for its options. Styled like the summary
+    cards on incomer pages. The value element always carries an id: the
+    runtime binds a live value through it, and only meter elements get one
+    automatically. -#}
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <div class="summary-card-title">{{ title|e }}</div>
+                            <div class="summary-card-value">
+                                <div id="{{ id or extra_id }}" class="info-item-value"
+{%- if meter_id is not none %} data-meter-id="{{ meter_id }}" data-meter-field="{{ meter_field }}"
+{%- elif point %} data-point="{{ point }}"
+{%- else %} data-bacnet="{{ bacnet }}"{% endif %}
+{%- if format %} data-format="{{ format }}"{% elif bacnet %} data-format="number"{% endif %}
+{%- if decimal_places is not none %} data-decimal-places="{{ decimal_places }}"{% endif %} data-refresh="{{ refresh }}">Loading...</div>
+                            </div>
+                        </div>
+                    </div>

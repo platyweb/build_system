@@ -1,0 +1,34 @@
+# Incomer pages. `building:` puts one in that building's folder (and its
+# sub-menu); without it the incomer is site-wide, at the root. Keys must be
+# unique across the site, so per-building incomers carry a `nav_label:` for
+# the sidebar instead of being named incomer_<utility>.
+
+incomer_gas:
+  heading: "Site Gas Incomer"
+  summary_cards:
+    - { title: "Today's Consumption", meter_id: 70, meter_field: daily }
+    - { title: "Monthly Consumption", meter_id: 70, meter_field: monthly }
+
+incomer_north_electricity:
+  building: north
+  nav_label: Electricity
+  heading: "North Tower Electricity Incomer"
+  summary_cards:
+    - { title: "Demand",              meter_id: 1, meter_field: demand }
+    - { title: "Today's Consumption", meter_id: 1, meter_field: daily }
+
+incomer_north_lthw:
+  building: north
+  nav_label: LTHW
+  heading: "North Tower LTHW Plant"
+  summary_cards:
+    - { title: "Heat Demand",         meter_id: 2, meter_field: demand }
+    - { title: "Today's Heat Energy", meter_id: 2, meter_field: daily }
+
+incomer_south_electricity:
+  building: south
+  nav_label: Electricity
+  heading: "South Annex Electricity Incomer"
+  summary_cards:
+    - { title: "Demand",              meter_id: 60, meter_field: demand }
+    - { title: "Today's Consumption", meter_id: 60, meter_field: daily }

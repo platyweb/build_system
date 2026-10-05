@@ -1,0 +1,160 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SITE / BUILDING FACTS — the single source of truth for building identity.
+#
+# This file is what makes a directory a site directory (build.py --site DIR,
+# default site/). Everything else for this building lives beside it: data/
+# (YAML + meters.csv), pages/ (frozen fragments), templates/ (overrides of
+# _templates/), assets/ (images copied over _assets/).
+#
+# Available to every template as the `building` global (set in make_env), and
+# consumed by:
+#   - build_sidebar      → brand + footer (sidebar.yaml may still override)
+#   - tenant sidebars    → footer
+#   - base.html.j2       → optergy_lib_version
+#   - live-points.js     → optergy_override_display
+#   - riser/floor cards  → floor_page.riser_card_link
+#   - building_performance → name, postcode, net_internal_area
+#
+# Add a fact here once; reference it as {{ building.<field> }} anywhere. Live
+# BMS values (NABERS rating, HDD/CDD, …) are NOT here — those are named BACnet
+# points in data/points.yaml.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# slug: the output directory name — project/<slug>/ — and the tenant-pages
+# relative-path prefix derives from it too (see build.py's configure()).
+slug: "st-peters"
+
+# TODO: placeholder values — this is a new site (formerly the Leadenhall
+# build system, ported across). Replace with the real building facts.
+name: "St Peters"
+short_name: "SP"
+postcode: "TBD"
+net_internal_area: "--- m²"
+
+# Short branding suffix for browser-tab titles, e.g. "Floor 12 · SP EMS".
+# Referenced from data/pages.yaml page_title fields and the page_title
+# fallbacks computed in _build/build.py (build_floors, build_incomers,
+# build_schematics, build_building_performance).
+ems_name: "SP EMS"
+
+# Page families to build, from the engine's MODULES (build.py):
+#   floors incomers home meters_hierarchy schematics building_performance
+#   pages tenants energy_flow dials switchboards risers sidebar
+# (`build.py --modules a,b` overrides this list for one run.) Not enabled here:
+#   - home, schematics: nothing to build — home.htm and the riser/tariff
+#     schematics are frozen fragments in data/pages.yaml.
+#   - tenants: tenant pages not yet reconciled (data/tenants.yaml).
+#   - energy_flow, dials: those pages don't exist on this site.
+#   - switchboards, risers: LV-01/02 and the risers are frozen fragments in
+#     data/pages.yaml; the switchboards module would write the same
+#     swb_lv01/02.htm, which the build refuses.
+modules: [floors, incomers, meters_hierarchy, building_performance, pages, sidebar]
+
+# Utilities this site meters, in display order. The code is what meters.csv
+# utility cells resolve to (a code or label, any case; "Fluid energy" picks the
+# thermal code named in the meter's function) and the CSS class .meter-<code>;
+# the label names it on pages; kind (electric | thermal | other) groups
+# utilities for the zone-card subtitles.
+utilities:
+  electricity: {label: Electricity, kind: electric}
+  gas:         {label: Gas, kind: other}
+  water:       {label: Water, kind: other}
+  lphw:        {label: LPHW, kind: thermal}
+  lthw:        {label: LTHW, kind: thermal}
+  chw:         {label: CHW, kind: thermal}
+
+# Cache-busting version on the Optergy controller's own /js/* libraries
+# (base.html.j2) — match the controller's firmware build.
+optergy_lib_version: "260228085300"
+
+# Optergy display file that live-points.js point overrides (data-context-menu=
+# "change-value") post to; every overridable point must be in it. Optional —
+# blank in the engine skeleton if unset.
+optergy_override_display: "/usr/local/Optergy/Displays//tlb/test.xml"
+
+# BACnet point addressing — "<device>|<object type>|<instance>|85|-1".
+# A meter's demand point is instance base + power_offset[its meters.csv
+# type]; every type used in meters.csv needs an entry. Used by the page
+# generators (build.py bacnet_address/demand_address) and written into the
+# runtime's BACNET_CONFIG for meter-templates.js.
+bacnet:
+  device: 300
+  power_offset:
+    Modbus: 40
+    Calculation: 82
+
+# Sidebar brand block (logo + label, links home).
+brand:
+  href: home.htm
+  label: "St Peters"
+  logo_src: img/favicon.png
+
+# Sidebar footer (facilities-management contact).
+footer:
+  logo: img/knight_logo.svg
+  logo_alt: KCL
+  email: service@knightcontrols.co.uk
+
+# Summary-card catalog: role → card title + display format. Floor-page tabs
+# list roles; each card's live point comes from data/bms_bindings.yaml by
+# (role, floor) — a role with no binding for a floor shows "N/A".
+summary_roles:
+  floor_today_electricity:          {title: "Today Electricity Consumption",   format: energy}
+  floor_monthly_electricity:        {title: "Monthly Electricity Consumption", format: energy}
+  floor_monthly_change_electricity: {title: "vs Last Month",          format: percentage_signed}
+  floor_monthly_heat_apportioned:   {title: "Monthly Heat Energy",    format: energy}
+  floor_monthly_change_heat:        {title: "vs Last Month",          format: percentage_signed}
+  floor_monthly_cool_apportioned:   {title: "Monthly Cooling Energy", format: energy}
+  floor_monthly_change_cool:        {title: "vs Last Month",          format: percentage_signed}
+  floor_peak_cool_demand:           {title: "Peak Cooling Demand",    format: power}
+  floor_ventilation_status:         {title: "Ventilation AHU Status", format: status}
+  floor_supply_air_temp:            {title: "Supply Air Temp",        format: temperature}
+  floor_extract_air_temp:           {title: "Extract Air Temp",       format: temperature}
+
+# Floor pages (floor_<key>.htm).
+floor_page:
+  # Where riser cards link when a card has no header_link of its own. NOTE: a
+  # leftover from the Leadenhall ("tlb") site — kept so St Peters' output is
+  # unchanged; point it at this site's riser overview.
+  riser_card_link: /docs/tlb/riser_overview.htm
+  # First tab: floor summary + floorplan + the riser/zone cards.
+  summary_label: Summary
+  # Floor-level cards beside the floorplan, each bound to the meter whose
+  # meters.csv `function` is this name on that floor (also the card title):
+  # total (beside the image), tenants / landlords (the row below). Omit a key
+  # to drop its card.
+  summary_cards:
+    total:     "Floor Total Electricity"
+    tenants:   "Floor Tenants Electricity"
+    landlords: "Floor Landlords Electricity"
+  # The zone whose column is drawn as the centre (landlord) riser, and the
+  # suffix added to zone-card titles: "North - Landlord", "East - Tenants".
+  centre_zone: North
+  zone_suffix: {centre: " - Landlord", side: " - Tenants"}
+  # Report tabs after the summary: each shows its roles' summary cards, then
+  # the reports.yaml placements for page=floor, floor=<key>, slot=<slot>,
+  # titled by position with report_titles.
+  report_titles: [Demand, Consumption]
+  tabs:
+    - id: electricity-report
+      label: "Electricity Report"
+      slot: electricity
+      roles: [floor_today_electricity, floor_monthly_electricity, floor_monthly_change_electricity]
+    - id: heat-report
+      label: "Heating Energy Report"
+      slot: heat
+      roles: [floor_monthly_heat_apportioned, floor_monthly_change_heat, floor_monthly_cool_apportioned]
+    - id: cooling-report
+      label: "Cooling Energy Report"
+      slot: cooling
+      roles: [floor_monthly_cool_apportioned, floor_monthly_change_cool, floor_peak_cool_demand]
+    - id: ventilation-report
+      label: "Building Ventilation Report"
+      slot: ventilation
+      roles: [floor_ventilation_status, floor_supply_air_temp, floor_extract_air_temp]
+
+# Tenant floor pages (tenants/<slug>/floor_<key>.htm): the floor-page tabs
+# to show, by id (default: all of them).
+tenant_page:
+  summary_label: Floorplan
+  tabs: [electricity-report, heat-report, cooling-report]

@@ -1,0 +1,12 @@
+id,tag,base,type,daily,monthly,parent_id,floor,column,zone,position,function,utility,tenant,tenant_display,main_display
+1,Main Incomer - Electricity,10000,Modbus,2000001,2000002,0,L00,n/a,n/a,n/a,Incomer,Electricity,,,
+2,DB-01 Lighting,10100,Modbus,0,0,1,L00,0,West,1,Lighting,Electricity,,,
+3,DB-01 Small Power,10200,Modbus,0,0,1,L00,0,West,2,Small Power,Electricity,,,
+4,Mechanical Plant,10300,Modbus,0,0,1,L00,1,North,1,Mechanical Plant,Electricity,,,
+5,Dock Doors,10400,Modbus,0,0,1,L00,1,North,2,Dock Doors,Electricity,,,
+6,DB-02 Lighting,10500,Modbus,0,0,1,L00,2,East,1,Lighting,Electricity,,,
+7,DB-02 Small Power,10600,Modbus,0,0,1,L00,2,East,2,Small Power,Electricity,,,
+9,Solar PV Inverter,10700,Modbus,2000031,2000032,1,L00,2,Roof Array,3,Solar PV,Solar PV,,,
+8,Floor Total Electricity,20000,Calculation,0,0,,L00,n/a,n/a,n/a,Floor Total Electricity,Electricity,,,
+10,Main Incomer - Gas,11000,Modbus,2000011,2000012,0,n/a,n/a,n/a,n/a,Incomer,Gas,,,
+11,Main Incomer - Water,11100,Modbus,2000021,2000022,0,n/a,n/a,n/a,n/a,Incomer,Water,,,

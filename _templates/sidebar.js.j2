@@ -6,6 +6,10 @@
     behaviour code (theme toggle, active-page highlight, …) below the END
     marker is hand-maintained.
 
+    URLs are written relative to the site root; `rel` (build_sidebar)
+    rewrites them for the folder the rendered sidebar serves — identity at
+    the root, "../…" in a campus building's folder.
+
     Item kinds the template handles:
       - kind: "theme_toggle"   → inline dark/light mode switcher
       - leaf  (has href)       → simple <li><a>
@@ -14,7 +18,7 @@
 {#- recursive menu_item macro: renders one <li> (with possible nested <ul>). -#}
 {%- macro menu_item(item, indent=16) -%}
 {%- set pad = ' ' * indent -%}
-{%- if item.kind == 'theme_toggle' -%}
+{%- if item.get('kind') == 'theme_toggle' -%}
 {{ pad }}<li class="menu-item" id="theme-toggle-item">
 {{ pad }}    <a href="#"
 {{ pad }}        onclick="event.preventDefault(); (function(){ var t = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-bs-theme', t); localStorage.setItem('theme', t); document.getElementById('theme-icon').className = t === 'dark' ? 'bx bxs-sun' : 'bx bxs-moon'; document.getElementById('theme-label').textContent = t === 'dark' ? 'Light Mode' : 'Dark Mode'; })();">
@@ -27,7 +31,7 @@
 {%- elif item.children is defined -%}
 {{ pad }}<li class="menu-item sub-menu">
 {{ pad }}    <a href="#">
-{%- if item.icon %}
+{%- if item.get('icon') %}
 {{ pad }}        <span class="menu-icon">
 {{ pad }}            <i class="bx {{ item.icon }}"></i>
 {{ pad }}        </span>
@@ -43,10 +47,10 @@
 {{ pad }}    </div>
 {{ pad }}</li>
 {%- else -%}
-{%- set cls = 'menu-item' + (' ' + item.class if item.class else '') -%}
+{%- set cls = 'menu-item' + (' ' + item.class if item.get('class') else '') -%}
 {{ pad }}<li class="{{ cls }}">
-{{ pad }}    <a href="{{ item.href }}"{% if item.target %} target="{{ item.target }}"{% endif %}{% if item.rel %} rel="{{ 'noopener noreferrer' if item.rel == 'noopener' else item.rel }}"{% endif %}>
-{%- if item.icon %}
+{{ pad }}    <a href="{{ rel(item.href) }}"{% if item.get('target') %} target="{{ item.target }}"{% endif %}{% if item.get('rel') %} rel="{{ 'noopener noreferrer' if item.rel == 'noopener' else item.rel }}"{% endif %}>
+{%- if item.get('icon') %}
 {{ pad }}        <span class="menu-icon">
 {{ pad }}            <i class="bx {{ item.icon }}"></i>
 {{ pad }}        </span>
@@ -60,13 +64,13 @@ const SIDEBAR_HTML = `
 <aside id="sidebar" class="sidebar break-point-lg has-bg-image">
   <a id="btn-collapse" class="sidebar-collapser" role="button" aria-label="Collapse sidebar"><i class="bx bx-md bx-chevron-left"></i></a>
   <div class="image-wrapper">
-    <img src="img/sidebar-bg.png" alt="sidebar background">
+    <img src="{{ rel('img/sidebar-bg.png') }}" alt="sidebar background">
   </div>
   <div class="sidebar-layout">
-    <a href="{{ brand.href }}">
+    <a href="{{ rel(brand.href) }}">
         <div class="sidebar-header">
             <div class="pro-sidebar-logo">
-                <div><img src="{{ brand.logo_src }}" alt="Optergy"></div>
+                <div><img src="{{ rel(brand.logo_src) }}" alt="Optergy"></div>
                 <h5><i>{{ brand.label }}</i></h5>
             </div>
         </div>
@@ -96,7 +100,7 @@ const SIDEBAR_HTML = `
     <div class="sidebar-footer">
         <div class="footer-box">
             <div>
-                <img class="react-logo" src="{{ footer.logo }}" alt="{{ footer.logo_alt }}">
+                <img class="react-logo" src="{{ rel(footer.logo) }}" alt="{{ footer.logo_alt }}">
             </div>
             <div style="padding: 0 10px">
                 <a href="mailto:{{ footer.email }}"><i>{{ footer.email }}</i></a>

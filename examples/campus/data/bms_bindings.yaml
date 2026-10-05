@@ -1,0 +1,5 @@
+# Live point behind each floor-page summary card, by (role, floor).
+
+bindings:
+  - { role: "floor_today_electricity", floor: "n-l01", id: "live-n-l01-elec-today", bacnet: "300|2|101|85|-1" }
+  - { role: "floor_today_electricity", floor: "s-l00", id: "live-s-l00-elec-today", bacnet: "300|2|102|85|-1" }

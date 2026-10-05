@@ -1,3 +1,6 @@
+// Tab switching for floor and tenant floor pages. Zone header colours come
+// from meter-templates.js, which gives each meter row it generates a
+// meter-<utility> class from the meter's meters.csv utility code.
 function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
@@ -15,17 +18,3 @@ function switchTab(tabName) {
         clickedButton.setAttribute('aria-selected', 'true');
     }
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    const subheaders = document.querySelectorAll('.floor-stats-subheader');
-    subheaders.forEach(header => {
-        const text = header.textContent.trim();
-        if (text.includes('lphw')) {
-            header.classList.add('meter-lphw');
-        } else if (text.includes('CHW')) {
-            header.classList.add('meter-chw');
-        } else if (text.includes('Electricity')) {
-            header.classList.add('meter-electricity');
-        }
-    });
-});

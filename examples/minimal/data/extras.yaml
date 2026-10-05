@@ -1,0 +1,42 @@
+# Extras: components from the catalog (_components/, plus the site's own
+# components/) added to engine pages. Each placement names a component, the
+# pages it goes on (page keys like floor_L00, or kinds: floor, incomer, home),
+# a slot on those pages, and the component's options. `build.py --check`
+# checks every placement against the component's declared options.
+
+extras:
+  # An image with only its required option.
+  - component: image
+    pages: [floor_L00]
+    slot: after_summary
+    src: img/plant_room.png
+
+  # The same image on every incomer page, with every option set.
+  - component: image
+    pages: [incomer]
+    slot: bottom
+    src: img/plant_room.png
+    alt: "Plant room"
+    caption: "Main plant room: incomers and distribution boards"
+    width: 480px
+
+  # A one-off piece of HTML: pages/home_notice.html.
+  - component: html
+    pages: [home]
+    slot: after_info_bar
+    file: home_notice.html
+
+  # A live value card: a meter's reading (only the required options + one source).
+  - component: live_value
+    pages: [home]
+    slot: top
+    title: "Site Demand"
+    meter_id: 1
+
+  # A live value card from a named point (data/points.yaml).
+  - component: live_value
+    pages: [floor_L00]
+    slot: bottom
+    title: "Energy Intensity (kWh/m²)"
+    point: energy_intensity
+    decimal_places: 1

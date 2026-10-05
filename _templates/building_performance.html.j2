@@ -1,12 +1,14 @@
 {#- ────────────────────────────────────────────────────────────────────────
     building_performance.html.j2 — NABERS-style base-building performance page.
 
-    Building facts (postcode, net internal area) come from _data/building.yaml
-    via the `building` global; the three report cards come from REPORT_REGISTRY
-    rows (page=building_performance, slots pie/right) passed in as pie_reports /
-    right_reports. The NABERS/degree-day live values are page-specific BMS
-    calculation points, kept as literal data-bacnet here (the POINTS registry
-    mirrors them for any page that prefers data-point).
+    Building facts (postcode, net internal area) come from site/site.yaml
+    via the `building` global; the three report cards come from reports.yaml
+    placements (page=building_performance, slots pie/right) passed in as pie_reports /
+    right_reports. The NABERS/degree-day live values are named BMS calculation
+    points (data-point): the site defines each one in data/points.yaml and the
+    runtime fills in its data-bacnet + data-format. Points used here:
+      hdd_15_5, cdd_15_5, occupancy_above_20, annual_electricity, annual_gas,
+      energy_intensity, nabers_rating
    ──────────────────────────────────────────────────────────────────────── -#}
 {% extends "base.html.j2" %}
 {% block content %}
@@ -37,17 +39,14 @@
                                     <ul style="margin-left: 20px; margin-bottom: 15px;">
                                         <li style="margin-bottom: 5px;">Building Postcode: {{ building.postcode }}</li>
                                         <li style="margin-bottom: 5px;">HDD@15.5: <div id="live-hdd"
-                                                class="info-item-value-small" data-bacnet="300|2|89|85|-1"
-                                                data-format="number" data-refresh="10">Loading...</div>
+                                                class="info-item-value-small" data-point="hdd_15_5">Loading...</div>
                                         </li>
                                         <li style="margin-bottom: 5px;">CDD@15.5: <div id="live-cdd"
-                                                class="info-item-value-small" data-bacnet="300|2|90|85|-1"
-                                                data-format="number" data-refresh="10">Loading...</div>
+                                                class="info-item-value-small" data-point="cdd_15_5">Loading...</div>
                                         </li>
                                         <li style="margin-bottom: 5px;">Weekly Hours Occupancy is above 20% : <div
                                                 id="live-floor-occ" class="info-item-value-small"
-                                                data-bacnet="300|2|91|85|-1" data-format="number" data-refresh="10">
-                                                Loading...</div>
+                                                data-point="occupancy_above_20">Loading...</div>
                                         </li>
                                         <li style="margin-bottom: 5px;">Net Internal Building Area: <strong>{{ building.net_internal_area }}</strong></li>
                                     </ul>
@@ -56,12 +55,10 @@
                                         Rolling Energy Data</h4>
                                     <ul style="margin-left: 20px; margin-bottom: 15px;">
                                         <li style="margin-bottom: 5px;">Electricity consumption: <div id="live-elec"
-                                                class="info-item-value-small" data-bacnet="300|2|87|85|-1"
-                                                data-format="energy" data-refresh="10">Loading...</div>
+                                                class="info-item-value-small" data-point="annual_electricity">Loading...</div>
                                         </li>
                                         <li style="margin-bottom: 5px;">Gas consumption: <div id="live-gas"
-                                                class="info-item-value-small" data-bacnet="300|2|88|85|-1"
-                                                data-format="energy" data-refresh="10">Loading...</div>
+                                                class="info-item-value-small" data-point="annual_gas">Loading...</div>
                                         </li>
                                         <li style="margin-bottom: 5px;">District Heating: <strong>N/A</strong></li>
                                         <li style="margin-bottom: 5px;">District Cooling: <strong>N/A</strong></li>
@@ -72,7 +69,7 @@
                                     <p style="margin-bottom: 10px;">
                                         <strong>Energy Intensity (kWh/m²):</strong>
                                     <div id="live-energy-intensity" class="info-item-value-small"
-                                        data-bacnet="300|2|84|85|-1" data-format="number" data-refresh="10">Loading...
+                                        data-point="energy_intensity">Loading...
                                     </div><br>
                                     <strong>Water Usage:</strong> <strong>N/A</strong>
                                     </p>
@@ -100,8 +97,8 @@
                                 </div>
                                 <div class="performance-content">
                                     <div class="performance-circle">
-                                        <div id="live-rating" class="info-item-value-xlarge" data-bacnet="300|2|86|85|-1"
-                                            data-format="nabers" data-refresh="10" style="font-size: 32px;">Loading...</div>
+                                        <div id="live-rating" class="info-item-value-xlarge" data-point="nabers_rating"
+                                            style="font-size: 32px;">Loading...</div>
                                     </div>
                                 </div>
                             </div>
@@ -147,3 +144,7 @@
                         </div>
                     </div>
 {% endblock %}
+{% block tail_scripts %}
+    <!-- Load meter templating (resolves data-point from POINTS) -->
+    <script src="{{ _pp }}js/project/2.0/meter-templates.js"></script>
+{%- endblock %}

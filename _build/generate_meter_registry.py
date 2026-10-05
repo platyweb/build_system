@@ -1,10 +1,10 @@
 """
-Generate METER_REGISTRY block for js/project/2.0/meter-templates.js from _data/meters.csv.
+Read site/data/meters.csv — the meter source of truth — into normalised rows.
 
-Usage:  python generate_meter_registry.py
-
-Reads _data/meters.csv and replaces the METER_REGISTRY block in
-js/project/2.0/meter-templates.js between the BEGIN/END markers.
+build.py uses read_csv() twice: read_meters() for every page builder, and
+write_js_blocks() to render the runtime's METER_REGISTRY block
+(jsblocks.render_meter_registry). The normalisers below map the
+spreadsheet's human-edited cells onto the codes the build and CSS expect.
 
 CSV columns (in order):
   id, tag, base, type, daily, monthly, parent_id, floor, column, zone,
@@ -38,17 +38,7 @@ from __future__ import annotations
 
 import csv
 import re
-import sys
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))  # make build.py importable
-from build import DATA_DIR, ROOT, SITE_DIR  # noqa: E402  (SITE_DIR derives from _data/building.yaml's slug)
-
-CSV_FILE = DATA_DIR / "meters.csv"
-JS_FILE = SITE_DIR / "js" / "project" / "2.0" / "meter-templates.js"
-
-BEGIN_MARKER = "// ── BEGIN GENERATED METER_REGISTRY ── DO NOT EDIT BY HAND ──"
-END_MARKER = "// ── END GENERATED METER_REGISTRY ──"
 
 CORE_FIELDS = ["id", "tag", "base", "type", "daily", "monthly"]
 PLACEMENT_FIELDS = ["floor", "column", "zone", "position", "function", "utility"]
@@ -80,17 +70,14 @@ def normalise_type(raw: str) -> str:
 
 
 # The CSS (--meter-chw-bg, --meter-lthw-bg, --meter-electricity-bg, …) and the
-# `meter-{{ m.utility }}` class the floor-card macro emits both key off these
-# exact lowercase codes. The spreadsheet instead groups meters under broader
-# category labels ("Electricity", "Fluid energy"), so "Fluid energy" alone
-# can't tell chw from lthw/lphw — the `function` column can, since every
-# fluid-energy meter is tagged CHW/LTHW/LPHW 1:1 there.
-FLUID_ENERGY_FUNCTIONS = {"chw", "lthw", "lphw"}
-
-# Codes the CSS styles by name, i.e. what a utility cell may spell out
-# directly instead of going through a category label. Lower-cased on the way
-# through so "LTHW" in the spreadsheet still lands on .meter-lthw.
-UTILITY_CODES = {"electricity", "gas", "water"} | FLUID_ENERGY_FUNCTIONS
+# `meter-{{ m.utility }}` class the floor-card macro emits both key off the
+# site's lowercase utility codes — site.yaml `utilities:`, passed in as
+# `utilities` ({code: {label, kind}}). A utility cell may spell out a code or a
+# label from that catalog, in any case ("LTHW", "Electricity"). The spreadsheet
+# may instead use the broader category "Fluid energy", which alone can't tell
+# chw from lthw/lphw — the `function` column can, since every fluid-energy
+# meter is tagged with exactly one thermal-kind code there.
+FLUID_ENERGY = "fluid energy"
 
 # Suffix marking a virtual (calculated) meter, e.g. a utility cell of
 # "lthw-virtual". It rides along on whatever the base code normalises to, so
@@ -114,166 +101,89 @@ def parse_yes_no_default_true(raw: str | None) -> bool:
     return clean(raw).strip().lower() != "no"
 
 
-def normalise_utility(raw: str, function: str) -> str:
-    """Map a utility cell to the lowercase code the CSS classes key off,
-    preserving a trailing "-virtual" marker (see VIRTUAL_SUFFIX)."""
+def normalise_utility(raw: str, function: str, utilities: dict[str, dict]) -> str:
+    """Map a utility cell to the site's lowercase code the CSS classes key
+    off, preserving a trailing "-virtual" marker (see VIRTUAL_SUFFIX)."""
     u = clean(raw)
     is_virtual = u.lower().endswith(VIRTUAL_SUFFIX)
     if is_virtual:
         u = u[: -len(VIRTUAL_SUFFIX)]
-    base = _normalise_base_utility(u, function)
+    base = _normalise_base_utility(u, function, utilities)
     return base + VIRTUAL_SUFFIX if is_virtual else base
 
 
-def _normalise_base_utility(u: str, function: str) -> str:
-    if u.lower() == "fluid energy":
+def _normalise_base_utility(u: str, function: str, utilities: dict[str, dict]) -> str:
+    if u.lower() == FLUID_ENERGY:
         # Most fluid-energy rows carry a descriptive function string (e.g.
         # "HM/04/LTHW - L04 Tenants LTHW", "CHW Basement Cooling") rather
         # than the bare "CHW"/"LTHW"/"LPHW" ticker an exact match would
-        # need — a contains-check finds the tag wherever it sits in the
-        # string. Every fluid-energy row in the registry carries exactly
-        # one of the three (checked against the full CSV), so first match
+        # need — a contains-check finds the code wherever it sits in the
+        # string. Every fluid-energy row carries exactly one thermal code
+        # (checked against the reference site's 650-row CSV), so first match
         # wins with no ambiguity in practice.
         f = function.strip().lower()
-        for token in FLUID_ENERGY_FUNCTIONS:
-            if token in f:
-                return token
+        for code, spec in utilities.items():
+            if spec["kind"] == "thermal" and code in f:
+                return code
         return u
-    # Anything the CSS knows by name is lower-cased; anything else is passed
-    # through untouched, so an unrecognised label stays visible in the
-    # registry (as a class with no styling) rather than being silently
-    # mangled into one.
-    return u.lower() if u.lower() in UTILITY_CODES else u
+    # A catalog code or label (any case) becomes its code; anything else is
+    # passed through untouched, so an unrecognised label stays visible in
+    # the registry (and build.py --check reports it) rather than being
+    # silently mangled into one.
+    names = {code: code for code in utilities} | {spec["label"].lower(): code for code, spec in utilities.items()}
+    return names.get(u.lower(), u)
 
 
-def read_csv() -> list[dict]:
+# Integer cells every row must have (BACnet addressing keys off them).
+REQUIRED_INT_FIELDS = {"id", "base"}
+
+
+def _int(row: dict, field: str, *, blank: int | None = None) -> int | None:
+    """An integer CSV cell. Blank / "n/a" / "null" gives `blank`; anything
+    else that isn't an integer stops the build with a message naming the row
+    — these cells are emitted as bare JS numbers, so a stray word would
+    otherwise produce a METER_REGISTRY the browser can't parse."""
+    v = clean(row.get(field))
+    if v == "" or v.lower() == "null":
+        if blank is None and field in REQUIRED_INT_FIELDS:
+            raise SystemExit(f"meters.csv: meter id={clean(row.get('id'))!r} has no {field}")
+        return blank
+    if not re.fullmatch(r"-?\d+", v):
+        raise SystemExit(
+            f"meters.csv: meter id={clean(row.get('id'))!r} has {field}={v!r} — expected a whole number"
+            + ("" if field in REQUIRED_INT_FIELDS else ", or blank / n/a")
+        )
+    return int(v)
+
+
+def read_csv(csv_file: Path, utilities: dict[str, dict]) -> list[dict]:
+    """meters.csv rows, normalised; `utilities` is the site's catalog
+    (site.yaml `utilities:`) that utility cells are mapped onto."""
     meters: list[dict] = []
-    with CSV_FILE.open(newline="", encoding="utf-8") as f:
+    with csv_file.open(newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             if not clean(row.get("id")):
                 continue  # blank trailing row (common Excel-export artifact)
-            parent_raw = clean(row.get("parent_id"))
             function = clean(row["function"])
             meters.append(
                 {
-                    "id":        int(row["id"]),
+                    "id":        _int(row, "id"),
                     "tag":       clean(row["tag"]),
-                    "base":      int(row["base"]),
+                    "base":      _int(row, "base"),
                     "type":      normalise_type(row["type"]),
-                    "daily":     int(clean(row["daily"]) or 0),
-                    "monthly":   int(clean(row["monthly"]) or 0),
-                    "parent_id": int(parent_raw) if parent_raw != "" else None,
+                    "daily":     _int(row, "daily", blank=0),
+                    "monthly":   _int(row, "monthly", blank=0),
+                    "parent_id": _int(row, "parent_id"),
                     "floor":     clean(row["floor"]),
-                    "column":    clean(row["column"]),
+                    "column":    _int(row, "column"),
                     "zone":      clean(row["zone"]),
-                    "position":  clean(row["position"]),
+                    "position":  _int(row, "position"),
                     "function":  function,
-                    "utility":   normalise_utility(row["utility"], function),
+                    "utility":   normalise_utility(row["utility"], function, utilities),
                     "tenant":    clean(row.get("tenant")),
                     "tenant_display": parse_yes_no(row.get("tenant_display")),
                     "main_display": parse_yes_no_default_true(row.get("main_display")),
                 }
             )
     return meters
-
-
-def _render_entry(m: dict, widths: dict[str, int]) -> str:
-    """Render one registry entry with aligned columns."""
-    parts = [
-        f'id: {str(m["id"]).rjust(widths["id"])}',
-        f'tag: {(chr(34) + m["tag"] + chr(34)).ljust(widths["tag"] + 2)}',
-        f'base: {str(m["base"]).rjust(widths["base"])}',
-        f'type: "{m["type"]}"',
-        f'daily: {str(m["daily"]).rjust(widths["daily"])}',
-        f'monthly: {str(m["monthly"]).rjust(widths["monthly"])}',
-    ]
-
-    # parent_id is emitted only for meters that appear in meters_hierarchy.htm
-    # (0 marks the root). Meters outside the hierarchy carry no parent_id.
-    if m.get("parent_id") is not None:
-        parts.append(f'parent_id: {m["parent_id"]}')
-
-    # Placement fields are emitted only when set, so meters not pinned to a
-    # floor don't carry empty properties.
-    if m["floor"]:
-        parts.append(f'floor: "{m["floor"]}"')
-        # column/position are emitted as bare JS tokens (ints, or the keyword
-        # null) — never quoted — so a blank (cleared from "n/a") must become
-        # the literal `null` rather than nothing, or the JS fails to parse.
-        parts.append(f'column: {m["column"] or "null"}')
-        parts.append(f'zone: "{m["zone"]}"')
-        parts.append(f'position: {m["position"] or "null"}')
-        parts.append(f'function: "{m["function"]}"')
-        parts.append(f'utility: "{m["utility"]}"')
-
-    # tenant: comma-separated tenant slugs for shared meters; emitted only
-    # when set so non-tenant meters stay clean.
-    if m.get("tenant"):
-        parts.append(f'tenant: "{m["tenant"]}"')
-
-    # tenant_display: explicit opt-in gate for the tenant-pages builder —
-    # emitted only when true (blank/"no" in the CSV is the default and
-    # needs no property at all, same as the other optional fields).
-    if m.get("tenant_display"):
-        parts.append("tenant_display: true")
-
-    # main_display: opt-OUT gate for the main (non-tenant) floor pages —
-    # inverse polarity from tenant_display, so it's emitted only when
-    # false (blank/"yes" in the CSV is the default and needs no property,
-    # same as every other optional field).
-    if not m.get("main_display", True):
-        parts.append("main_display: false")
-
-    return "    { " + ", ".join(parts) + " }"
-
-
-def build_registry_block(meters: list[dict]) -> str:
-    widths = {
-        "id":      max(len(str(m["id"]))      for m in meters),
-        "tag":     max(len(m["tag"])          for m in meters),
-        "base":    max(len(str(m["base"]))    for m in meters),
-        "daily":   max(len(str(m["daily"]))   for m in meters),
-        "monthly": max(len(str(m["monthly"])) for m in meters),
-    }
-
-    lines = [BEGIN_MARKER, "const METER_REGISTRY = ["]
-    for i, m in enumerate(meters):
-        comma = "," if i < len(meters) - 1 else ""
-        lines.append(_render_entry(m, widths) + comma)
-    lines.append("];")
-    lines.append(END_MARKER)
-    return "\n".join(lines)
-
-
-def update_js(new_block: str) -> bool:
-    content = JS_FILE.read_text(encoding="utf-8")
-    pattern = re.escape(BEGIN_MARKER) + r".*?" + re.escape(END_MARKER)
-    if not re.search(pattern, content, re.DOTALL):
-        print(f"ERROR: BEGIN/END markers not found in {JS_FILE}")
-        return False
-    new_content = re.sub(pattern, new_block, content, flags=re.DOTALL)
-    JS_FILE.write_text(new_content, encoding="utf-8")
-    return True
-
-
-def main() -> None:
-    if not CSV_FILE.exists():
-        raise SystemExit(f"{CSV_FILE} not found")
-    if not JS_FILE.exists():
-        raise SystemExit(f"{JS_FILE} not found")
-
-    meters = read_csv()
-    print(f"Read {len(meters)} meters from {CSV_FILE.name}")
-
-    block = build_registry_block(meters)
-    if update_js(block):
-        with_placement = sum(1 for m in meters if m["floor"])
-        print(f"Updated METER_REGISTRY in {JS_FILE.relative_to(ROOT)}")
-        print(f"  ({with_placement} meters carry placement fields)")
-    else:
-        raise SystemExit("Failed to update JS file")
-
-
-if __name__ == "__main__":
-    main()

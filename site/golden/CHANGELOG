@@ -1,0 +1,20 @@
+2026-10-02  st-peters: initial golden
+  site: initial golden, 181 files
+  all: initial golden, 272 files
+2026-10-02  st-peters: Phase 2 re-baseline 1: BMS_BINDINGS + REPORT_REGISTRY removed from shipped JS (no runtime readers; now site/data/bms_bindings.yaml + reports.yaml placements); ReportUrls now generated from reports.yaml urls (blank-line grouping dropped); JS doc comments updated. Verified: node --check OK; METER_REGISTRY/POINTS/ReportUrls deep-equal old vs new in Node; no remaining references; every .htm byte-identical (only meter-templates.js + reports.js changed).
+  site: 2 changed, 0 added, 0 removed
+  all: 2 changed, 0 added, 0 removed
+2026-10-02  st-peters: Phase 2 re-baseline 1b: meter-templates.js runtime reads a generated BACNET_CONFIG (site.yaml bacnet:) instead of hardcoded device 300 / offsets 40,82. Verified: only meter-templates.js changed; node --check OK; getMeterBacnet() identical for all 652 meters x 5 fields (3260 addresses) old vs new in Node; every .htm byte-identical.
+  site: 1 changed, 0 added, 0 removed
+  all: 1 changed, 0 added, 0 removed
+2026-10-02  st-peters: Phase 3 re-baseline 2: modules registry. Extended variant 'all' (main() + direct calls to the unused builders) replaced by 'extra' = build.py --modules <every module except pages>; pages is excluded because St Peters' frozen swb_lv01/02.htm and the switchboards module write the same files (now an error) and the site variant covers it. Switchboard/riser module output drops the .generated suffix. Verified vs the old 'all' golden: 238 files identical; 16 switchboard files == old .generated originals with '.generated' removed; the 18 files not in 'extra' are exactly the pages-module outputs; site variant byte-identical. st-peters.all.sha256 retired.
+  extra: initial golden, 254 files
+2026-10-02  st-peters: Phase 5.0 re-baseline 3 (pre-approved): heat report tab panel in floor.html.j2 + tenant_floor.html.j2 wraps its attributes like the other three panels, and its comment reads 'Heating Energy Report Tab Content' (the tab label) instead of 'Heat Energy Report Tab Content' — what a loop over tabs produces. Verified: only floor/tenant-floor pages changed (48 site, 95 extra, 1 acme-depot); every changed page identical to the old one after stripping HTML comments and collapsing whitespace; the raw diff is the heat panel's 3 lines only.
+  site: 48 changed, 0 added, 0 removed
+  extra: 95 changed, 0 added, 0 removed
+2026-10-03  st-peters: Phase 7 re-baseline (owner-approved 2026-10-03): comment-only edits in the skeleton JS. meter-templates.js placement-field examples made generic (no client tenant names), POINTS schema comment corrected to <device>|<object type>|<instance>, stray quote removed; sidebar-template.js header says SIDEBAR_HTML is generated from data/sidebar.yaml; live-points.js OVERRIDE_FILE comment names site.yaml optergy_override_display. Verified: every changed file (live-points/meter-templates/sidebar-template.js, + campus per-building sidebars) identical to the old one with comments stripped and whitespace collapsed, every raw diff line a comment line; no .htm changed.
+  site: 3 changed, 0 added, 0 removed
+  extra: 3 changed, 0 added, 0 removed
+2026-10-03  st-peters: Phase 7 re-baseline (owner-approved 2026-10-03): floor-tabs.js drops its DOMContentLoaded zone-header colouring (text match on 'lphw'/'CHW'/'Electricity'), which never had an effect: verified on all 149 pages that load floor-tabs.js (every golden variant) that none has a .floor-stats-subheader in its HTML and floor-tabs.js always loads before meter-templates.js, whose data-floor-meter resolver creates the subheaders afterwards with a meter-<utility> class from the meter's utility code. switchTab() byte-identical; a 3-line header comment added; only floor-tabs.js changed.
+  site: 1 changed, 0 added, 0 removed
+  extra: 1 changed, 0 added, 0 removed

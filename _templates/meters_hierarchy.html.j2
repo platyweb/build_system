@@ -9,7 +9,7 @@
     e.g. one root per utility (electricity / CHW / LTHW). Each root renders
     as its own top-level tree via meter_node (recursive).
 
-    YAML data lives in `_data/meters_hierarchy.yaml`:
+    YAML data lives in `site/data/meters_hierarchy.yaml`:
       heading            : page <h1>
       subtitle           : line under the title
       search_placeholder : input placeholder text
@@ -17,7 +17,7 @@
       root_meter_id      : single root node id (used if root_meter_ids absent)
    ──────────────────────────────────────────────────────────────────────── -#}
 
-{% block extra_styles %}    <link rel="stylesheet" href="css/project/2.0/meters-hierarchy.css">
+{% block extra_styles %}    <link rel="stylesheet" href="{{ _pp }}css/project/2.0/meters-hierarchy.css">
 {% endblock %}
 
 {% block content %}
@@ -51,5 +51,5 @@
 
 {% block tail_scripts %}
     <!-- Meters Hierarchy JavaScript -->
-    <script src="js/project/2.0/meter-hierarchy.js"></script>
+    <script src="{{ _pp }}js/project/2.0/meter-hierarchy.js"></script>
 {%- endblock %}

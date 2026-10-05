@@ -1,0 +1,9 @@
+# Level roster, bottom → top — one `floor_<key>:` entry per level; the order
+# of entries is the physical order. A single-storey building has one level.
+# Fields (all optional): label, nav_label, heading, page (false = no page).
+# Plant basements and roofs are levels too (page: false), e.g.
+#   floor_B1:   {label: Basement, page: false}
+# See examples/campus for levels split across buildings.
+
+floor_L00:
+  label: "Ground Floor"

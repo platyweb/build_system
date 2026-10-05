@@ -1,0 +1,16 @@
+# Site-wide landing page (root). Links into a building are written relative
+# to the site root: north/…, south/….
+
+page_title: "Home · RC EMS"
+heading: "Riverside Campus Energy Management System"
+
+info_bar:
+  - { label: "North Tower Demand", link: north/incomer_north_electricity.htm, id: live-home-north-demand, bacnet: "300|0|10040|85|-1", format: power }
+  - { label: "South Annex Demand", link: south/incomer_south_electricity.htm, id: live-home-south-demand, bacnet: "300|0|20040|85|-1", format: power }
+  - { label: "Site Gas Today",     link: incomer_gas.htm,                     id: live-home-gas-today,    bacnet: "300|0|2000021|85|-1", format: gas }
+  - { label: "North Plant Room",   link: north/plant_room.htm,                value: "B1 + Roof" }
+
+welcome_title: "Welcome"
+bullet_points:
+  - "Each building has its own floor and incomer pages."
+  - "The site gas incomer and the meters hierarchy cover the whole campus."

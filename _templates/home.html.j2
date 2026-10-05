@@ -11,16 +11,16 @@
       top_reports      : 2 headed reports inside the 3-column row
       reports          : N more headed reports stacked below
 
-    Driven by `_data/home.yaml`.
+    Driven by `site/data/home.yaml`.
    ──────────────────────────────────────────────────────────────────────── -#}
 
-{% block content %}
+{% block content %}{{ slot('top') }}
                     <!-- Info Bar - Full Width (layout via .info-bar in style.css) -->
                     <div class="info-bar">
 {%- for item in info_bar %}
 {{ info_bar_item(item) }}
 {%- endfor %}
-                    </div>
+                    </div>{{ slot('after_info_bar') }}
 
                     <div class="home-reports">
 
@@ -50,6 +50,6 @@
 {%- for report in reports %}
 
 {{ report_card_headed(report) }}
-{%- endfor %}
+{%- endfor %}{{ slot('bottom') }}
                     </div>
 {% endblock %}

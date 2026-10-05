@@ -1,0 +1,13 @@
+description: A card with a title and one live value, from a meter, a named point or a raw BACnet address.
+options:
+  title:          {required: true,   doc: "Card title"}
+  meter_id:       {default: null,    doc: "A meters.csv meter id; shows its meter_field"}
+  meter_field:    {default: demand,  choices: [demand, energy, daily, monthly, status], doc: "Which reading of meter_id"}
+  point:          {default: "",      doc: "A named point from data/points.yaml"}
+  bacnet:         {default: "",      doc: "A raw address, <device>|<object type>|<instance>|85|-1"}
+  format:         {default: "",      doc: "Display format, e.g. power, energy, temperature. Default: the meter field's or point's own; number for a raw address"}
+  decimal_places: {default: null,    doc: "Decimal places shown (default 1)"}
+  refresh:        {default: 10,      doc: "Seconds between readings"}
+  id:             {default: "",      doc: "DOM id of the value element. Default: a unique extra-<page>-<n>"}
+one_of:
+  - [meter_id, point, bacnet]

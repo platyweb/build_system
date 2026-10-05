@@ -1,0 +1,86 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# MINIMAL EXAMPLE SITE — a single-storey depot.
+#
+# The smallest site the engine builds: one level, three incomers (electricity,
+# gas, water), a home page, the meters hierarchy and a building performance
+# page — no tenants, switchboards or risers. Start a new building from it:
+#
+#     cp -r examples/minimal site      # then edit site/, build, snapshot
+#
+# Everything about one building lives in its site directory:
+#   site.yaml   this file — identity, modules, BACnet addressing
+#   data/       floors.yaml (level roster), meters.csv, one YAML per module
+#   pages/      frozen page fragments (none here)
+#   templates/  overrides of the engine's _templates/ (none here)
+#   assets/     site images copied over _assets/ (none here)
+#   golden/     regression manifests (_build/regress.py)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Output directory name: project/<slug>/.
+slug: "acme-depot"
+
+name: "Acme Depot"
+short_name: "AD"
+postcode: "AB1 2CD"
+net_internal_area: "2,400 m²"
+# Suffix for browser-tab titles, e.g. "Ground Floor Overview · AD EMS".
+ems_name: "AD EMS"
+
+# Page families to build, from the engine's MODULES (build.py).
+modules: [floors, incomers, home, meters_hierarchy, building_performance, sidebar]
+
+# Utilities this site meters, in display order. The code is what meters.csv
+# utility cells resolve to (a code or label, any case; "Fluid energy" picks the
+# thermal code named in the meter's function) and the CSS class .meter-<code>;
+# the label names it on pages; kind (electric | thermal | other) groups
+# utilities for the zone-card subtitles.
+utilities:
+  electricity: {label: Electricity, kind: electric}
+  solar:       {label: Solar PV, kind: electric}
+  gas:         {label: Gas, kind: other}
+  water:       {label: Water, kind: other}
+
+# Cache-busting version on the Optergy controller's own /js/* libraries.
+optergy_lib_version: "260228085300"
+
+# BACnet point addressing — "<device>|<object type>|<instance>|85|-1". A
+# meter's demand point is instance base + power_offset[its meters.csv type].
+bacnet:
+  device: 300
+  power_offset:
+    Modbus: 40
+    Calculation: 82
+
+# Sidebar brand block (logo + label, links home) and footer contact.
+brand:
+  href: home.htm
+  label: "Acme Depot"
+  logo_src: img/favicon.png
+footer:
+  logo: img/favicon.png
+  logo_alt: "Acme"
+  email: facilities@example.com
+
+# Summary-card catalog: role → card title + display format. A floor_page tab
+# lists roles; each card's live point is the data/bms_bindings.yaml row for
+# (role, floor) — no row shows "N/A".
+summary_roles:
+  floor_today_electricity: {title: "Today's Consumption", format: energy}
+  floor_solar_demand:      {title: "Solar Output",        format: power}
+  floor_today_solar:       {title: "Today's Generation",  format: energy}
+
+# Floor pages. Everything here is optional; an office tower would also set
+# tenant/landlord summary cards, a centre_zone + zone_suffix for its riser,
+# zone_subtitles and more tabs (heating, cooling, ventilation).
+floor_page:
+  # Riser cards on floor pages link here ("#" = not a link).
+  riser_card_link: "#"
+  # Card beside the floorplan: the meter whose `function` is this name.
+  summary_cards:
+    total: "Floor Total Electricity"
+  # Report tabs: summary cards for `roles`, then the reports.yaml placements
+  # for page=floor, floor=<key>, slot=<slot>, titled by position.
+  report_titles: [Demand, Consumption]
+  tabs:
+    - { id: electricity-report, label: "Electricity", slot: electricity, roles: [floor_today_electricity] }
+    - { id: solar-report,       label: "Solar PV",    slot: solar,       roles: [floor_solar_demand, floor_today_solar] }

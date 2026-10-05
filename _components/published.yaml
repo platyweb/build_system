@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# The published extras API. Every slot, component and option below may already
+# be used by some site's data/extras.yaml, so newer engines must keep
+# accepting it with the same result. tests/test_components.py checks that:
+#   - everything the engine has is listed here, and everything listed here
+#     still exists (a removed option survives as an `aliases:` or `retired:`
+#     entry in its component.yaml);
+#   - a component's required options and one_of groups never change: a new
+#     option needs a `default:` that keeps today's output;
+#   - an option's choices only grow.
+# Adding a slot, component or option: add it here too. Changing a component's
+# markup or a default changes every site that uses it; their goldens show it
+# as a re-baseline, so make that a deliberate change and say so.
+# ─────────────────────────────────────────────────────────────────────────────
+
+slots:
+  floor:   [top, after_summary, after_risers, bottom]
+  incomer: [top, after_cards, bottom]
+  home:    [top, after_info_bar, bottom]
+
+components:
+  image: {required: [src],  options: [src, alt, caption, width]}
+  html:  {required: [file], options: [file]}
+  live_value:
+    required: [title]
+    options:  [title, meter_id, meter_field, point, bacnet, format, decimal_places, refresh, id]
+    one_of:   [[meter_id, point, bacnet]]
+    choices:  {meter_field: [demand, energy, daily, monthly, status]}

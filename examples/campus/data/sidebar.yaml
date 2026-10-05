@@ -1,0 +1,27 @@
+# Main sidebar. Hrefs are written relative to the site root; each building
+# folder's copy of the sidebar has them rewritten for that folder.
+#   { auto: buildings }               → one sub-menu per site.yaml building:
+#                                       its floors (top first), incomers, switchboards
+#   { auto: floors, building: north } → just one building's floors (also
+#                                       works for incomers / switchboards)
+
+top_items:
+  - { label: Home, icon: bxs-home, href: home.htm }
+
+bottom_items:
+  - { label: Logout, icon: bxs-user, href: "/Login.html?logout", class: menu-logout }
+
+sections:
+  - header: BUILDINGS
+    items:
+      - { auto: buildings, icon: bxs-building }
+
+  - header: SITE
+    items:
+      - { label: "Site Gas Incomer", icon: bxs-building-house, href: incomer_gas.htm }
+      - { label: "North Plant Room", icon: bx-cog, href: north/plant_room.htm }
+      - { label: "Meters Hierarchy", icon: bx-tachometer, href: meters_hierarchy.htm }
+
+  - header: SETTINGS
+    items:
+      - { kind: theme_toggle }

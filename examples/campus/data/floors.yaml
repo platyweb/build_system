@@ -1,0 +1,14 @@
+# Level roster for the whole campus, bottom → top within each building. Every
+# level names its building; keys are unique site-wide. page: false = a level
+# with meters but no page of its own (the North Tower's plant basement/roof).
+
+# ─── North Tower ─────────────────────────────────────────────────────────────
+floor_n-b1:   {building: north, label: "North B1 Plant", page: false}
+floor_n-l00:  {building: north, label: "North Ground Floor", nav_label: "Ground Floor"}
+floor_n-l01:  {building: north, label: "North Level 1",      nav_label: "Level 1"}
+floor_n-l02:  {building: north, label: "North Level 2",      nav_label: "Level 2"}
+floor_n-l03:  {building: north, label: "North Level 3",      nav_label: "Level 3"}
+floor_n-roof: {building: north, label: "North Roof Plant", page: false}
+
+# ─── South Annex (single storey) ─────────────────────────────────────────────
+floor_s-l00:  {building: south, label: "South Ground Floor", nav_label: "Ground Floor"}

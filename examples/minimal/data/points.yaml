@@ -1,0 +1,21 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Named non-meter BACnet points (BMS calculation points: NABERS rating,
+# degree days, energy intensity, site sensors, …). Pages reference a point
+# by name with `data-point="<name>"`; the build writes this table into the
+# runtime's POINTS block (meter-templates.js), whose resolver fills in
+# data-bacnet + data-format on load (mirroring data-meter-id).
+#
+# Schema: <name>: { bacnet: "<device>|<object type>|<instance>|85|-1", format: "<fmt>" }
+#   format ∈ number | energy | power | percentage | temperature | nabers | status
+#
+# The building_performance page shows the seven points below.
+# ─────────────────────────────────────────────────────────────────────────────
+
+points:
+  hdd_15_5:           { bacnet: "300|2|80|85|-1", format: "number" }
+  cdd_15_5:           { bacnet: "300|2|81|85|-1", format: "number" }
+  occupancy_above_20: { bacnet: "300|2|82|85|-1", format: "number" }
+  annual_electricity: { bacnet: "300|2|83|85|-1", format: "energy" }
+  annual_gas:         { bacnet: "300|2|84|85|-1", format: "energy" }
+  energy_intensity:   { bacnet: "300|2|85|85|-1", format: "number" }
+  nabers_rating:      { bacnet: "300|2|86|85|-1", format: "nabers" }

@@ -1,0 +1,33 @@
+# Switchboard diagrams (the `switchboards` module). A board's ways are every
+# meter whose parent_id is its incomer_id. `building:` builds the board into
+# that building's folder; a bus_tie may link boards in different buildings;
+# nav_label names it in the sidebar (default: swb_lvNN → "LV-NN").
+
+defaults:
+  default_rating: 150          # gauge full-scale (kW) when a way has none below
+  layout:
+    box:        { w: 190, h: 64 }
+    gap:        30
+    row_top:    110
+    rows:       2              # stack ways two-high so a 13-way board stays narrow
+    incomer_gap: 90
+    margin:     100
+    min_width:  1580
+    busbar:     { color: "#6d28d9", width: 6 }
+    conn:       { color: "#6d28d9", width: 3 }
+
+boards:
+  swb_north_mdb:
+    building:   north
+    nav_label:  "Main Distribution Board"
+    heading:    "North Tower Main Distribution Board"
+    incomer_id: 1
+    ways: {}
+
+  swb_south_mdb:
+    building:   south
+    nav_label:  "Main Distribution Board"
+    heading:    "South Annex Main Distribution Board"
+    incomer_id: 60
+    ways: {}
+    bus_tie:    { side: right, to: swb_north_mdb, label: "↔ North Tower MDB" }

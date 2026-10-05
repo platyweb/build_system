@@ -6,7 +6,7 @@
 
     Single tab. Summary cards across the top, then optional stat_grids
     (rows of mini stat-cards used by incomer_electricity), then N report
-    cards stacked. Driven entirely by `_data/incomers.yaml`:
+    cards stacked. Driven entirely by `site/data/incomers.yaml`:
 
         heading        : page <h1>
         summary_cards  : list of { title, [id, bacnet, format, decimal_places] | value }
@@ -16,14 +16,14 @@
                          or { library_item_id, image_ref, alt }    (default kind)
    ──────────────────────────────────────────────────────────────────────── -#}
 
-{% block content %}
+{% block content %}{{ slot('top') }}
                     <!-- Floorplan Tab Content -->
                     <div id="floorplan-tab" class="tab-content active">
                         <div class="summary-cards">
 {%- for card in summary_cards %}
 {{ summary_card(card) }}
 {%- endfor %}
-                        </div>
+                        </div>{{ slot('after_cards') }}
 
 {%- for grid in stat_grids|default([]) %}
                         <div class="grid-cols-{{ grid.columns }}">
@@ -34,8 +34,8 @@
 {% endfor %}
 {%- for report in reports %}
 
-{% if report.kind == 'headed' %}{{ report_card_headed(report) }}{% else %}{{ report_card(report) }}{% endif %}
-{%- endfor %}
+{% if report.kind|default('') == 'headed' %}{{ report_card_headed(report) }}{% else %}{{ report_card(report) }}{% endif %}
+{%- endfor %}{{ slot('bottom') }}
 
                     </div>
 {% endblock %}

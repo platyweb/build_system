@@ -1,0 +1,14 @@
+2026-10-02  riverside-campus: initial golden
+  site: initial golden, 59 files
+2026-10-02  riverside-campus: Phase 6: campus example also enables switchboards (one board per building, cross-building bus tie, nav_label).
+  site: 3 changed, 4 added, 0 removed
+2026-10-03  riverside-campus: Phase 7: site-neutral engine skeleton — live-points.js OVERRIDE_FILE is blank unless site.yaml optergy_override_display sets it (it held one site's display path); a neutral engine default img/sidebar-bg.png; placeholder floorplans for the five levels with pages (examples/campus/assets/img/floors/).
+  site: 1 changed, 6 added, 0 removed
+2026-10-03  riverside-campus: Phase 7 re-baseline (owner-approved 2026-10-03): comment-only edits in the skeleton JS. meter-templates.js placement-field examples made generic (no client tenant names), POINTS schema comment corrected to <device>|<object type>|<instance>, stray quote removed; sidebar-template.js header says SIDEBAR_HTML is generated from data/sidebar.yaml; live-points.js OVERRIDE_FILE comment names site.yaml optergy_override_display. Verified: every changed file (live-points/meter-templates/sidebar-template.js, + campus per-building sidebars) identical to the old one with comments stripped and whitespace collapsed, every raw diff line a comment line; no .htm changed.
+  site: 5 changed, 0 added, 0 removed
+2026-10-03  riverside-campus: Phase 7 re-baseline (owner-approved 2026-10-03): floor-tabs.js drops its DOMContentLoaded zone-header colouring (text match on 'lphw'/'CHW'/'Electricity'), which never had an effect: verified on all 149 pages that load floor-tabs.js (every golden variant) that none has a .floor-stats-subheader in its HTML and floor-tabs.js always loads before meter-templates.js, whose data-floor-meter resolver creates the subheaders afterwards with a meter-<utility> class from the meter's utility code. switchTab() byte-identical; a 3-line header comment added; only floor-tabs.js changed.
+  site: 1 changed, 0 added, 0 removed
+2026-10-03  riverside-campus: Extras: example places an image with a caption on north/floor_n-l01 after_risers — its relative src renders as ../img/north_riser.png from the building folder; adds img/north_riser.png. Verified: the diff only adds the placed markup (0 lines removed); St Peters goldens identical.
+  site: 1 changed, 1 added, 0 removed
+2026-10-03  riverside-campus: Extras: new live_value component — example places a raw-BACnet card (Outside Air Temperature, format temperature) on home after_info_bar. Verified: the diff only adds the card (0 lines removed); St Peters goldens identical.
+  site: 1 changed, 0 added, 0 removed

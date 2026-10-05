@@ -1,14 +1,15 @@
 {% extends 'base.html.j2' %}
-{%- from 'partials/macros.j2' import summary_card, floor_summary_card, riser_card, report_card -%}
+{%- from 'partials/macros.j2' import floor_summary_card, riser_card, report_tab_panel -%}
 
 {#- ────────────────────────────────────────────────────────────────────────
     tenant_floor.html.j2 — per-tenant floor view.
 
     Lives at project/tenants/<tenant>/floor_<key>.htm — a sibling of
-    project/<slug>/ (see building.yaml), not nested inside it. Asset paths
+    project/<slug>/ (see site.yaml), not nested inside it. Asset paths
     resolve via `path_prefix` (defaults to "../../<slug>//" from build_tenants).
     Structurally identical to floor.html.j2 (same Floor Summary + Riser
-    Meters layout) except the Building Ventilation Report tab is dropped —
+    Meters layout) except it shows site.yaml tenant_page.tabs (e.g. all
+    but a Building Ventilation Report) with no summary-card strip —
     mirrors it line for line otherwise so the two page types render the
     same. Floor layout is
     derived from METER_REGISTRY meters where the tenant slug is in
@@ -48,8 +49,10 @@
                         <div class="floor-section floor-section-summary floor-section-summary--single-row">
                             <div class="floor-summary-section">
                                 <div class="floor-summary-row">
+{%- if floorplan_tab.total_card is defined %}
 
 {{ floor_summary_card(floorplan_tab.total_card) }}
+{%- endif %}
 
                                     <div class="floor-summary-image">
                                         <img src="{{ floorplan_tab.image }}" alt="Floor Plan" class="floor-summary-img">
@@ -64,45 +67,22 @@
                             <!-- 3 Column Layout: Left | Center (top card) | Right -->
                             <div class="floor-three-column-grid">
 {%- for col in floorplan_tab.layout if col.type == 'cards' %}
-{%- set is_center = col.cards and col.cards[0].title == 'North' %}
+{%- set is_center = col.cards and col.cards[0].title == floor_page.centre_zone %}
                                 <div class="{{ 'center-column' if is_center else 'riser-column' }}">
 {%- for card in col.cards %}
-{%- set suffix = 'Landlord' if card.title == 'North' else 'Tenants' %}
+{%- set suffix = floor_page.zone_suffix.centre if card.title == floor_page.centre_zone else floor_page.zone_suffix.side %}
 
-{{ riser_card({'title': card.title ~ ' - ' ~ suffix, 'location': card.location, 'meters': card.meters, 'header_link': card.header_link}, 'center' if is_center else 'side') }}
+{{ riser_card({'title': card.title ~ suffix, 'location': card.location, 'meters': card.meters, 'header_link': card.header_link}, 'center' if is_center else 'side') }}
 {%- endfor %}
                                 </div>
 {%- endfor %}
                             </div>
                         </div>
                     </div>
+{%- for tab in report_tabs %}
 
-                    <!-- Electricity Report Tab Content -->
-                    <div id="electricity-report-tab" class="tab-content" role="tabpanel"
-                        aria-labelledby="tab-electricity-report" tabindex="0">
-{%- for report in electricity_tab.reports %}
-
-{{ report_card(report) }}
+{{ report_tab_panel(tab, with_cards=false) }}
 {%- endfor %}
-                    </div>
-
-                    <!-- Heat Energy Report Tab Content -->
-                    <div id="heat-report-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-heat-report"
-                        tabindex="0">
-{%- for report in heat_tab.reports %}
-
-{{ report_card(report) }}
-{%- endfor %}
-                    </div>
-
-                    <!-- Cooling Energy Report Tab Content -->
-                    <div id="cooling-report-tab" class="tab-content" role="tabpanel"
-                        aria-labelledby="tab-cooling-report" tabindex="0">
-{%- for report in cooling_tab.reports %}
-
-{{ report_card(report) }}
-{%- endfor %}
-                    </div>
 {% endblock %}
 
 {% block extra_scripts %}

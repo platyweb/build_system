@@ -15,18 +15,18 @@
 {% block extra_styles %}{% endblock %}
 {% block optergy_scripts %}    <!-- Optergy Libraries for Live Data -->
     <script type="text/javascript" src="/js/ScriptResources_en.js"></script>
-    <script type="text/javascript" src="/js/liveDisplayAndDashboard.js?v=260228085300"></script>
-    <script type="text/javascript" src="/js/jquery-2.2.4.js?v=260228085300"></script>
-    <script type="text/javascript" src="/js/jquery-migrate-1.4.1.js?v=260228085300"></script>
-    <script type="text/javascript" src="/js/jquery-ui-1.8.24.custom.js?v=260228085300"></script>
-    <script type="text/javascript" src="/js/optergy-dialogs.js?v=260228085300"></script>
-    <script type="text/javascript" src="/js/optergy-forms.js?v=260228085300"></script>
-    <script type="text/javascript" src="/js/setup.js?v=260228085300"></script>
-    <script type="text/javascript" src="/js/jquery.ui.touch.js?v=260228085300"></script>
-    <script type="text/javascript" src="/js/jquery.optergy-functions-2.js?v=260228085300"></script>
+    <script type="text/javascript" src="/js/liveDisplayAndDashboard.js?v={{ building.optergy_lib_version }}"></script>
+    <script type="text/javascript" src="/js/jquery-2.2.4.js?v={{ building.optergy_lib_version }}"></script>
+    <script type="text/javascript" src="/js/jquery-migrate-1.4.1.js?v={{ building.optergy_lib_version }}"></script>
+    <script type="text/javascript" src="/js/jquery-ui-1.8.24.custom.js?v={{ building.optergy_lib_version }}"></script>
+    <script type="text/javascript" src="/js/optergy-dialogs.js?v={{ building.optergy_lib_version }}"></script>
+    <script type="text/javascript" src="/js/optergy-forms.js?v={{ building.optergy_lib_version }}"></script>
+    <script type="text/javascript" src="/js/setup.js?v={{ building.optergy_lib_version }}"></script>
+    <script type="text/javascript" src="/js/jquery.ui.touch.js?v={{ building.optergy_lib_version }}"></script>
+    <script type="text/javascript" src="/js/jquery.optergy-functions-2.js?v={{ building.optergy_lib_version }}"></script>
 {% endblock %}</head>
 
-<body{% if layout_mode %} data-layout-mode="{{ layout_mode }}"{% endif %}>
+<body{% if layout_mode|default(false) %} data-layout-mode="{{ layout_mode }}"{% endif %}>
     <div class="layout has-sidebar fixed-sidebar fixed-header">
         <!-- Sidebar will be loaded here -->
         <div id="sidebar-container"></div>
@@ -39,7 +39,7 @@
                     </a>
                 </div>
 
-                <div class="container{% if container_class %} {{ container_class }}{% endif %}"{% if container_style %} style="{{ container_style }}"{% elif not container_class %} style="display: flex; flex-direction: column; gap: 15px;"{% endif %}>
+                <div class="container{% if container_class|default(false) %} {{ container_class }}{% endif %}"{% if container_style|default(false) %} style="{{ container_style }}"{% elif not container_class|default(false) %} style="display: flex; flex-direction: column; gap: 15px;"{% endif %}>
                     <!-- Row 1: Title Bar -->
                     <div class="title-bar">
                         <h1>{{ heading }}</h1>
