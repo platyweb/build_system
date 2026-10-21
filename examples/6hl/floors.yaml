@@ -1,0 +1,70 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# FLOOR ROSTER + per-floor data not derivable from the meter registry,
+# BMS_BINDINGS, or REPORT_REGISTRY.
+#
+# This file defines how many floors the site has. Each top-level `floor_<key>:`
+# entry produces exactly one generated `floor_<key>.htm` page. Add an entry to
+# add a floor; delete one to remove it. Keys sort naturally: ground, 1st, 2nd, …
+#
+# NOTE: unlike this file's original design intent, the live sidebar
+# (js/project/2.0/sidebar-template.js) is NOT auto-generated from this
+# roster on this site — that generator path (build_sidebar() in build.py,
+# driven by _data/sidebar.yaml) is stale content left over from a different
+# property and has no BEGIN/END markers in sidebar-template.js to hook into.
+# Adding a floor here does not add its sidebar entry — edit
+# sidebar-template.js by hand too.
+#
+# A floor only renders if the meter registry has meters pinned to that floor
+# (floor=<key>) so its layout can be derived — or the entry supplies an explicit
+# `floorplan_tab.layout:`. Adding a bare `floor_6th:` with no registry meters
+# and no layout is an error by design (nothing to draw).
+#
+# Required per entry:
+#   tenants                         (string) → occupant name, carried for
+#                                     reference/tenant-page generation (not
+#                                     rendered on the floor page itself)
+#
+# Derived automatically (override allowed by setting the field in YAML):
+#   heading                         → "<Key> Floor Overview"
+#   tabs                            → fixed 2-tab set: Summary (floorplan),
+#                                     Electricity Report
+#   floorplan_image                 → img/floor.png (the site has one generic
+#                                     floorplan image, not one per floor)
+#   floorplan_tab.layout            → group meters by (floor, column, zone), sort by
+#                                     position, insert floorplan after column 0
+#   floorplan_tab.summary_cards     → roles (FLOORPLAN_TAB_ROLES)
+#   electricity_tab.summary_cards   → roles (ELECTRICITY_TAB_ROLES)
+#   electricity_tab.reports         → REPORT_REGISTRY rows where
+#                                     page=floor, floor=<key>, slot=electricity
+#
+# Role→BACnet bindings live in `js/project/2.0/meter-templates.js`
+# (BMS_BINDINGS block). Role→(title, format) catalog lives in `_build/build.py`
+# (SUMMARY_CARD_ROLES). Report metadata (image_ref, library_item_id, alt) lives
+# in `js/project/2.0/reports.js` (REPORT_REGISTRY block).
+#
+# Override hooks:
+#   floorplan_tab.floorplan_after_column: 1  # shift floorplan one column right
+#   floorplan_tab.layout: …                  # bypass layout derivation
+#   <tab>.summary_cards: …                   # bypass summary-card derivation
+#   <tab>.reports: …                         # bypass report derivation
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Was mistagged floor: "Ground" (capitalised) in METER_REGISTRY, which didn't
+# match this "ground" key or the existing BMS_BINDINGS ground-floor rows
+# (floor_demand_electricity etc.) — fixed to lowercase so this floor now
+# renders with live data instead of being an orphaned meter.
+floor_ground:
+  tenants: "Landlords"
+
+floor_2nd:
+  tenants: "Teanant1"
+
+floor_3rd:
+  tenants: "Teanant1"
+
+floor_4th:
+  tenants: "Teanant1"
+
+floor_5th:
+  tenants: "Teanant1"
+

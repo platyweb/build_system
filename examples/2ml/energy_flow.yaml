@@ -1,0 +1,104 @@
+# ─────────────────────────────────────────────────────────────────────────
+# energy_flow.htm — LIVE electrical-demand Sankey diagram.
+#
+# Every flow is driven by live Optergy meter demand (kW) via the project's
+# standard data-meter-id mechanism. Rendered by _templates/energy_flow.html.j2
+# + js/project/2.0/energy-sankey.js (D3, self-hosted / offline).
+#
+#   nodes : { name, color }
+#   a flow = { source, target, value, meters: [<meter ids>] }
+#       value  — initial width shown until the first live reading lands
+#       meters — METER_REGISTRY ids; the flow's live value is the SUM of their
+#                demand. Each UNIQUE meter is polled once; flows that share a
+#                meter reuse that one reading (no duplicate polling).
+#
+# Aggregate flows are the UNION of their children's meters, so the diagram
+# conserves (a parent flow always equals the sum of the flows it feeds):
+#   • Floor N → end use   = that floor's sub-meters for the use (auto-derived
+#                           from the registry by (floor, function))
+#   • Tenants → Floor N   = union of Floor N's end-use meters      (auto)
+#   • Electricity → Tenants = union of all floor meters            (auto)
+#   • Landlord → plant    = the meter sets listed in landlord_flows
+#   • Electricity → Landlord = union of all landlord_flow meters    (auto)
+#
+# To add Gas as a separate flow: Gas-Main-Incomer is meter 112 (note its
+# demand is NOT kW — gas units — so it would distort this kW diagram; better
+# on its own chart). LPHW landlord meters are 194-200, pumps 75/76, primary 132.
+# ─────────────────────────────────────────────────────────────────────────
+
+page_title: "Live Electrical Demand - Energy Flow"
+heading: "Electrical Demand — Live Energy Flow"
+subtitle: "Real-time electrical demand (kW), live from Optergy meters. Hover a flow for its value; drag a node to reposition."
+unit: kW
+meter_field: demand   # all flows live on demand (kW)
+
+nodes:
+  - { name: Electricity,    color: "#2f81f7" }
+  # gas / heat sources & plant
+  - { name: Gas,            color: "#d29922" }
+  - { name: Boilers,        color: "#f0883e" }
+  # mid tier
+  - { name: Landlord,       color: "#a371f7" }
+  - { name: Tenants,        color: "#3fb950" }
+  # landlord plant (real metered groups)
+  - { name: Chillers,       color: "#39d0d8" }
+  - { name: Lifts,          color: "#db61a2" }
+  - { name: "Car Park",     color: "#f0883e" }
+  - { name: "Other LL",     color: "#8b949e" }
+  # tenant floors
+  - { name: "Floor 1",      color: "#56d364" }
+  - { name: "Floor 2",      color: "#4ac259" }
+  - { name: "Floor 3",      color: "#3fb950" }
+  - { name: "Floor 4",      color: "#2ea043" }
+  - { name: "Floor 5",      color: "#238636" }
+  # tenant end uses
+  - { name: "Fan Coil",     color: "#39d0d8" }
+  - { name: "Small Power",  color: "#e3b341" }
+  - { name: Lighting,       color: "#f2cc60" }
+  # heat (LPHW) loads
+  - { name: "LPHW (Landlord)", color: "#ff6b6b" }
+  - { name: "Reception UFH",   color: "#ffb3b3" }
+
+# ── Landlord plant flows (Landlord → plant), each a real meter set ──────────
+#   Chillers : Chiller No1 (2) + Chiller No2 (10)
+#   Lifts    : Lifts Total (107)
+#   Car Park : MSCP 4/1/2/3 (4, 12, 13, 14)
+#   Other LL : Landlords Rising Busbar (6) + DB-LL-G1 (15) + DB-LLB3 (20)
+#              + BMS/Security/Dock A/C (23, 24, 25)
+landlord_flows:
+  - { target: Chillers,   value: 120, meters: [2, 10] }
+  - { target: Lifts,      value: 40,  meters: [107] }
+  - { target: "Car Park", value: 60,  meters: [4, 12, 13, 14] }
+  - { target: "Other LL", value: 90,  meters: [6, 15, 20, 23, 24, 25] }
+
+# ── Tenant floors ───────────────────────────────────────────────────────────
+# Floor → end-use meters are auto-derived from METER_REGISTRY: all electricity
+# meters whose (floor, function) match. Keeps this file small and always in
+# sync with the registry. `value` is the initial pre-data width per flow.
+floors: ["1st", "2nd", "3rd", "4th", "5th"]
+floor_end_uses:
+  - { target: "Fan Coil",    function: "Fan Coil Units", value: 25 }
+  - { target: "Small Power", function: "Small Power",    value: 20 }
+  - { target: Lighting,      function: "Lighting",       value: 15 }
+
+# ── Gas / heating (LPHW), all in kW ─────────────────────────────────────────
+# Gas is a landlord utility: Gas → Landlord → Boilers → LPHW loads. The landlord
+# runs the boilers, which produce the LPHW heat sent to the loads below. The
+# Landlord→Boilers (gas kW in) vs Boilers→loads (heat kW out) gap is the boiler
+# conversion loss and is shown as a node imbalance (correct, not a bug).
+#
+# The GAS kW source is a raw/calculated BACnet point (bound directly by
+# live-points.js — no METER_REGISTRY entry needed). Set `bacnet` to the GAS kW
+# point address; `format: power` renders it as kW. (Alternatively use
+# `meter_id:` + `meter_field:` for a registry meter instead of `bacnet:`.)
+gas:
+  bacnet: "300|2|71|85|-1"   # TODO: replace with the real GAS kW point address
+  format: power              # power → kW
+  refresh: 10
+
+# Boilers → heat loads. LPHW (Landlord) = the 11 Landlords LPHW circuit meters
+# (190-200); Reception UFH = HM-Rec-UFH-LPHW (131). (HM-Primary-LPHW 132 is the
+# parent loop total — omitted to avoid double-counting its children.)
+heat_flows:
+  - { target: "LPHW (Landlord)", value: 80, meters: [190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200] }
+  - { target: "Reception UFH",   value: 20, meters: [131] }

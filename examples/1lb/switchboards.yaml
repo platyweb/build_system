@@ -1,0 +1,10 @@
+# Switchboard diagrams — consumed by _build/build_switchboards.py
+#
+# Each board is defined by its incomer meter id. The "ways" drawn on the
+# busbar are EVERY meter whose parent_id == incomer_id in METER_REGISTRY
+# (pulled live at build time — add a meter to the registry and it appears
+# here automatically). The only things the registry can't supply are the
+# gauge `rating` (full-scale kW for the segmented gauge) and the `ct` label,
+# so those live here, keyed by meter id.
+
+#No SWBs

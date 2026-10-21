@@ -1,0 +1,62 @@
+id,tag,base,type,daily,monthly,parent_id,floor,column,zone,position,function,utility,tenant,tenant_display,main_display
+4,2ML-LL-TX1,10300,Modbus,2000000,2000040,56,n/a,n/a,n/a,n/a,Incomer,Electricity,n/a,,no
+5,2ML-LL-TX2,10400,Modbus,2000001,2000041,56,n/a,n/a,n/a,n/a,Incomer,Electricity,n/a,,no
+6,2ML-LL-WCA/1B/001,10500,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+7,2ML-LL-WCA/1B/002,10600,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+8,2ML-LL-PPC/1B/R/007A,10700,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+9,2ML-LL-PPC/ 1B/R/010,10800,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+10,2ML-LL-WCA/1B/003,10900,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+11,2ML-PPC/1B/R/006,11000,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+12,2ML-WCA/1B/004,11100,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+13,2ML-LL-PPC/1B/R/006A,11200,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+14,2ML-LL-PPC/1B/R/007,11300,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+15,2ML-LL-Tenants Riser,11400,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+16,2ML-LL-Shower Block,11500,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+17,2ML-LL-DB/L9/B1,11600,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+18,2ML-LL-DB/L6/B1,11700,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+19,2ML-LL-DB/L3/B1,11800,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+20,2ML-LL-DB/L1/GB1,11900,Modbus,0,0,4,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+21,2ML-LL-PPC/1B/LG/002,12000,Modbus,0,0,5,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+22,2ML-LL-DB/1L/LG,12100,Modbus,0,0,5,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+23,2ML-LL-DB/L6/B2,12200,Modbus,0,0,5,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+24,2ML-LL-PPC/1B/R/008,12300,Modbus,0,0,5,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+25,2ML-LL-PPC/1B/R/009,12400,Modbus,0,0,5,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+26,2ML-LL-Life Safety/Fire Services,12500,Modbus,0,0,5,n/a,n/a,n/a,n/a,SWB Meter,Electricity,n/a,,no
+27,2ML-T/FL01-DB/LP Total,12600,Modbus,2000002,2000042,15,1st,1,1,0,2ML-T/FL01-DB/LP Total,Electricity,HG Capital LLP,yes,
+28,2ML-T/FL01-DB/LP Top,12700,Modbus,2000003,2000043,15,1st,1,1,1,2ML-T/FL01-DB/LP Top,Electricity,HG Capital LLP,yes,
+29,2ML-T/FL01-T3 Top-GPL/FCU,12800,Modbus,2000004,2000044,15,1st,1,1,2,2ML-T/FL01-T3 Top-GPL/FCU,Electricity,HG Capital LLP,yes,
+30,2ML-T/FL01-T2 LH-GPL/FCU,12900,Modbus,2000005,2000045,15,1st,1,1,3,2ML-T/FL01-T2 LH-GPL/FCU,Electricity,HG Capital LLP,yes,
+31,2ML-T/FL01-T4 RH-GPL/FCU,13000,Modbus,2000006,2000046,15,1st,1,1,4,2ML-T/FL01-T4 RH-GPL/FCU,Electricity,HG Capital LLP,yes,
+32,2ML-T/FL02-DB/LP Total,13100,Modbus,2000007,2000047,15,2nd,1,1,0,2ML-T/FL02-DB/LP Total,Electricity,HG Capital LLP,yes,
+33,2ML-T/FL02-DB/LP Top,13200,Modbus,2000008,2000048,15,2nd,1,1,1,2ML-T/FL02-DB/LP Top,Electricity,HG Capital LLP,yes,
+34,2ML-T/FL02-NE/1,13300,Modbus,2000009,2000049,15,2nd,1,1,2,2ML-T/FL02-NE/1,Electricity,HG Capital LLP,yes,
+35,2ML-T/FL02-PB2,13400,Modbus,2000010,2000050,15,2nd,1,1,3,2ML-T/FL02-PB2,Electricity,HG Capital LLP,yes,
+36,2ML-T/FL03-DB/TLM Top,13500,Modbus,2000011,2000051,15,3rd,1,1,0,2ML-T/FL03-DB/TLM Top,Electricity,n/a,yes,
+37,2ML-T/FL03-DB/TLM Total,13600,Modbus,2000012,2000052,15,3rd,1,1,1,2ML-T/FL03-DB/TLM Total,Electricity,n/a,yes,
+38,2ML-T/FL04-DB/TLM,13700,Modbus,2000013,2000053,15,4th,1,1,0,2ML-T/FL04-DB/TLM,Electricity,Terra Firma Capital Partners Ltd,yes,
+39,2ML-T/FL04-DB/TP Total,13800,Modbus,2000014,2000054,15,4th,1,1,1,2ML-T/FL04-DB/TP Total,Electricity,Terra Firma Capital Partners Ltd,yes,
+40,2ML-T/FL04-DB/Top Section,13900,Modbus,2000015,2000055,15,4th,1,1,2,2ML-T/FL04-DB/Top Section,Electricity,Terra Firma Capital Partners Ltd,yes,
+41,2ML-T/FL05-DB/TM,14000,Modbus,2000016,2000056,15,5th,1,1,0,2ML-T/FL05-DB/TM,Electricity,Montagu Private Equity LLP,yes,
+42,2ML-T/FL05-DB/TPL Total,14100,Modbus,2000017,2000057,15,5th,1,1,1,2ML-T/FL05-DB/TPL Total,Electricity,Montagu Private Equity LLP,yes,
+43,2ML-T/FL05-DB/TPL Top,14200,Modbus,2000018,2000058,15,5th,1,1,2,2ML-T/FL05-DB/TPL Top,Electricity,Montagu Private Equity LLP,yes,
+44,2ML-T/FL06-DB/TM,14300,Modbus,2000019,2000059,15,6th,1,1,0,2ML-T/FL06-DB/TM,Electricity,Montagu Private Equity LLP,yes,
+45,2ML-T/FL06-DB/TPL Total,14400,Modbus,2000020,2000060,15,6th,1,1,1,2ML-T/FL06-DB/TPL Total,Electricity,Montagu Private Equity LLP,yes,
+46,2ML-T/FL06-DB/TPL Top,14500,Modbus,2000021,2000061,15,6th,1,1,2,2ML-T/FL06-DB/TPL Top,Electricity,Montagu Private Equity LLP,yes,
+47,2ML-T/FL07-DB/L,14600,Modbus,2000022,2000062,15,7th,1,1,0,2ML-T/FL07-DB/L,Electricity,Globallogic Corp UK Ltd,yes,
+48,2ML-T/FL07-DB/P,14700,Modbus,2000023,2000063,15,7th,1,1,1,2ML-T/FL07-DB/P,Electricity,Globallogic Corp UK Ltd,yes,
+49,2ML-T/FL07-UPS,14800,Modbus,2000024,2000064,15,7th,1,1,2,2ML-T/FL07-UPS,Electricity,Globallogic Corp UK Ltd,yes,
+50,2ML-T/FL08-DB/LP Total,14900,Modbus,2000025,2000065,15,8th,1,1,0,2ML-T/FL08-DB/LP Total,Electricity,Actis Capital LLP,yes,
+51,2ML-T/FL08-DB/LP Top,15000,Modbus,2000026,2000066,15,8th,1,1,1,2ML-T/FL08-DB/LP Top,Electricity,Actis Capital LLP,yes,
+52,2ML-T/FL08-DB/LP Power,15100,Modbus,2000027,2000067,15,8th,1,1,2,2ML-T/FL08-DB/LP Power,Electricity,Actis Capital LLP,yes,
+53,2ML-T/FL08-DB/P,15200,Modbus,2000028,2000068,15,8th,1,1,3,2ML-T/FL08-DB/P,Electricity,Actis Capital LLP,yes,
+54,2ML-T/FL08-DB/L,15300,Modbus,2000029,2000069,15,8th,1,1,4,2ML-T/FL08-DB/L,Electricity,Actis Capital LLP,yes,
+55,2ML-T/FL08-DB/Comms,15400,Modbus,2000030,2000070,15,8th,1,1,5,2ML-T/FL08-DB/Comms,Electricity,Actis Capital LLP,yes,
+56,2ML-Main Incomer Electricity,15500,Calculation,2000039,2000079,,n/a,n/a,n/a,n/a,Main Incomer,Electricity,n/a,,
+57,2ML-Floor 01 Total Electricity,15600,Calculation,2000031,2000071,,1st,n/a,n/a,n/a,Floor Total Electricity,Electricity,n/a,,
+58,2ML-Floor 02 Total Electricity,15700,Calculation,2000032,2000072,,2nd,n/a,n/a,n/a,Floor Total Electricity,Electricity,n/a,,
+59,2ML-Floor 03 Total Electricity,15800,Calculation,2000033,2000073,,3rd,n/a,n/a,n/a,Floor Total Electricity,Electricity,n/a,,
+60,2ML-Floor 04 Total Electricity,15900,Calculation,2000034,2000074,,4th,n/a,n/a,n/a,Floor Total Electricity,Electricity,n/a,,
+61,2ML-Floor 05 Total Electricity,16000,Calculation,2000035,2000075,,5th,n/a,n/a,n/a,Floor Total Electricity,Electricity,n/a,,
+62,2ML-Floor 06 Total Electricity,16100,Calculation,2000036,2000076,,6th,n/a,n/a,n/a,Floor Total Electricity,Electricity,n/a,,
+63,2ML-Floor 07 Total Electricity,16200,Calculation,2000037,2000077,,7th,n/a,n/a,n/a,Floor Total Electricity,Electricity,n/a,,
+64,2ML-Floor 08 Total Electricity,16300,Calculation,2000038,2000078,,8th,n/a,n/a,n/a,Floor Total Electricity,Electricity,n/a,,

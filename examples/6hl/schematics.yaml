@@ -1,0 +1,3 @@
+# Schematics (risers + tariffs) are bespoke pixel-positioned SVG-overlay pages.
+# They are reproduced as frozen-body singletons via _data/pages.yaml +
+# _templates/pages/<key>.body.html (build_pages), not data-driven here.

@@ -1,0 +1,46 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SITE / BUILDING FACTS — the single source of truth for building identity.
+#
+# This file's PARENT FOLDER NAME is the site's identity: _data/<site>/ is this
+# site's input, project/<site>/ is its output (build.py resolves both from the
+# same name — see resolve_site()/list_sites()). Porting the build system to a
+# new site: copy this whole _data/<site>/ folder to a new name and edit its
+# contents — nothing here or in build.py needs a separate slug field.
+#
+# Available to every template as the `building` global (set in make_env), and
+# consumed by:
+#   - build_sidebar      → brand + footer (sidebar.yaml may still override)
+#   - building_performance → name, postcode, net_internal_area
+#
+# Add a fact here once; reference it as {{ building.<field> }} anywhere. Live
+# BMS values (NABERS rating, HDD/CDD, …) are NOT here — those are named BACnet
+# points in the POINTS registry (js/project/2.0/meter-templates.js).
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: "1 London Bridge London"
+short_name: "1LB"
+postcode: "SE1 2AP"
+net_internal_area: "--- m²"
+
+# Short branding suffix for browser-tab titles, e.g. "Floor 12 · TLB EMS".
+# Referenced from _data/pages.yaml page_title fields and the page_title
+# fallbacks computed in _build/build.py (build_floors, build_incomers,
+# build_schematics, build_building_performance).
+ems_name: "1LB EMS"
+
+# Sidebar brand block (logo + label, links home).
+brand:
+  href: home.htm
+  label: "1 London Bridge"
+  logo_src: img/favicon.png
+
+# Sidebar footer (facilities-management contact).
+footer:
+  logo: img/knight_logo.svg
+  logo_alt: KCL
+  email: service@knightcontrols.co.uk
+
+# Floor-page floorplan image width (CSS value); omit for full width.
+floorplan_scale: 100%
+floor_layout: west_plan_east   # 3 columns: West risers | floorplan | East risers
+floor_split_cards: true        # Floor West / East Electricity cards under the total

@@ -1,0 +1,35 @@
+# Riser diagrams — consumed by _build/build_risers.py
+#
+# A riser is any meter with function == "Riser-meter" in METER_REGISTRY (see
+# _data/meters.csv — the CSV is the source of truth; regenerate the
+# registry via _build/generate_meter_registry.py after editing it). Risers
+# are auto-discovered from the registry, NOT hand-listed here — this file
+# only supplies layout defaults and optional per-riser overrides, keyed by
+# the riser meter's id, for the rare case one needs tuning (most don't).
+#
+# A riser's floor tap-offs are every meter whose parent_id equals the riser
+# meter's own id, one tier below how a switchboard's ways work. Core (East/
+# West/North) comes straight from each tap's own `zone` field — nothing to
+# configure. A riser taller than floors_per_page floor-rows splits across
+# multiple linked pages automatically.
+
+defaults:
+  default_rating: 60           # gauge full-scale (kW) — floor tap-offs are much smaller than switchboard ways
+  floors_per_page: 20          # split a riser into linked pages past this many floor-rows
+  layout:
+    box:          { w: 190, h: 54 }
+    floor_gap:    16           # min vertical gap between floor rows
+    gap:          30           # min horizontal gap driving tap depth spacing
+    tap_offset:   70           # busbar -> nearest tap's box, horizontal distance
+    depth_step:   220          # extra horizontal distance per additional tap sharing a floor
+    tap_stagger:  10           # vertical cascade per extra tap at one floor (so they're not dead level)
+    margin:       80
+    incomer_gap:  70           # vertical gap from the bottom floor row to the incomer / continuation arrow
+    lane_pitch_target: 14      # min spacing between a floor's fanned tap lanes (see build_switchboards.py's version of this fix)
+    busbar:       { color: "#6d28d9", width: 6 }    # same dual-theme purple as switchboards
+    conn:         { color: "#6d28d9", width: 3 }
+    tie_arrow_len:  70
+    tie_arrow_head: 26
+
+overrides: {}
+  # 90: { floors_per_page: 12 }   # example: force a smaller split for one riser

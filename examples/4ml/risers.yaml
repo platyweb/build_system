@@ -1,0 +1,17 @@
+# Riser diagrams — consumed by _build/build_risers.py
+#
+# A riser is any meter with function == "Riser-meter" in METER_REGISTRY (see
+# _data/meters.csv — the CSV is the source of truth; regenerate the
+# registry via _build/generate_meter_registry.py after editing it). Risers
+# are auto-discovered from the registry, NOT hand-listed here — this file
+# only supplies layout defaults and optional per-riser overrides, keyed by
+# the riser meter's id, for the rare case one needs tuning (most don't).
+#
+# A riser's floor tap-offs are every meter whose parent_id equals the riser
+# meter's own id, one tier below how a switchboard's ways work. Core (East/
+# West/North) comes straight from each tap's own `zone` field — nothing to
+# configure. A riser taller than floors_per_page floor-rows splits across
+# multiple linked pages automatically.
+
+
+#No risers

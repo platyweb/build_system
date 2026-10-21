@@ -1,0 +1,116 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Per-incomer page data. Each top-level key becomes <key>.htm via the
+# incomer.html.j2 template. Excludes incomer_electricity (rich layout, still
+# hand-written).
+#
+# Schema:
+#   heading        : <h1> text
+#   summary_cards  : list of cards. Each card is either
+#                      { title, value }                                       static
+#                    OR { title, id, bacnet, format, [decimal_places] }       live
+#   reports        : optional. Derived from REPORT_REGISTRY when omitted
+#                    (page=incomer, incomer=<slug>, slot=main).
+#
+# Option A layout: a clean KPI strip (Demand where a real point exists ·
+# Monthly Consumption · vs Last Month % · Generated energy) + reports. IDs are
+# now unique per utility (previously `live-gas-cons` was copy-pasted everywhere).
+#
+# CAVEATS to verify against the BMS point list:
+#   - Consumption point 300|0|2000000 is shared by chw/lphw/lthw below — at most
+#     one can be correct; confirm the real per-utility consumption points.
+#   - "vs Last Month" uses 300|2|130 rendered as a signed %; confirm that point
+#     is a percentage (water's equivalent, 300|2|131, is a percentage).
+#   - Cost and carbon KPIs are omitted pending point IDs (electricity uses
+#     300|2|135 / 300|2|136 for cost and 300|2|133 / 300|2|134 for Scope 1/2).
+# ─────────────────────────────────────────────────────────────────────────────
+
+incomer_chw:
+  heading: "CHW Primary Consumption"
+  summary_cards:
+    - { title: "Monthly Consumption",          id: live-gas-cons,             bacnet: "300|0|2000000|85|-1", format: energy, decimal_places: 0 }
+    - { title: "Monthly Consumption Change",   id: live-gas-cons-vslastmonth, bacnet: "300|2|130|85|-1",     format: energy, decimal_places: 0 }
+    - { title: "Monthly Generated CHW Energy", id: live-gas-cons,             bacnet: "300|0|2000213|85|-1", format: energy, decimal_places: 0 }
+
+
+incomer_gas:
+  heading: "Gas Main Incomer"
+  summary_cards:
+    - { title: "Monthly Consumption",           id: live-gas-cons,             bacnet: "300|0|2000235|85|-1", format: gas, decimal_places: 0 }
+    - { title: "Monthly Consumption Change",    id: live-gas-cons-vslastmonth, bacnet: "300|2|130|85|-1",     format: gas, decimal_places: 0 }
+    - { title: "Monthly Generated LPHW Energy", id: live-gas-lphw-gen,         bacnet: "300|0|2000228|85|-1", format: gas, decimal_places: 0 }
+
+
+incomer_lphw:
+  heading: "LPHW Primary Consumption"
+  summary_cards:
+    - { title: "Monthly Consumption",           id: live-gas-cons,             bacnet: "300|0|2000000|85|-1", format: energy, decimal_places: 0 }
+    - { title: "Monthly Consumption Change",    id: live-gas-cons-vslastmonth, bacnet: "300|2|130|85|-1",     format: energy, decimal_places: 0 }
+    - { title: "Monthly Generated LPHW Energy", id: live-gas-cons,             bacnet: "300|0|2000228|85|-1", format: energy, decimal_places: 0 }
+
+
+incomer_lthw:
+  heading: "LTHW Primary Consumption"
+  summary_cards:
+    - { title: "Monthly Consumption",           id: live-gas-cons,             bacnet: "300|0|2000000|85|-1", format: gas, decimal_places: 0 }
+    - { title: "Monthly Consumption Change",    id: live-gas-cons-vslastmonth, bacnet: "300|2|130|85|-1",     format: gas, decimal_places: 0 }
+    - { title: "Monthly Generated LTHW Energy", value: "Offline" }
+
+
+incomer_electricity:
+  heading: "Electricity Main Incomer"
+  summary_cards:
+    - { title: "Demand",                  id: live-elec-incomer-demand,             bacnet: "300|0|19682|85|-1",   format: power }
+    - { title: "Monthly Consumption",     id: live-elec-incomer-consumption,        bacnet: "300|0|2000006|85|-1", format: energy }
+    - { title: "vs Last Month",           id: live-elec-incomer-consumption-change, bacnet: "300|2|46|85|-1",      format: percentage }
+    - { title: "TX1 / TX2 ratio",         id: live-elec-incomer-ratio,              bacnet: "300|2|47|85|-1",      format: percentage }
+  stat_grids:
+    - columns: 4
+      cards:
+        - title: "Demand"
+          comment: "Riser 1"
+          stats:
+            - { label: "TX1", id: live-tx1-demand, bacnet: "300|0|10040|85|-1", format: power }
+            - { label: "TX2", id: live-tx2-demand, bacnet: "300|0|10840|85|-1", format: power }
+        - title: "Consumption"
+          comment: "Zone 2"
+          stats:
+            - { label: "TX1 Today", id: live-tx1-consumption-today, bacnet: "300|0|2000001|85|-1", format: energy, wrap_span: true }
+            - { label: "TX2 Today", id: live-tx2-consumption-today, bacnet: "300|0|2000004|85|-1", format: energy, wrap_span: true }
+        - title: "Costs"
+          comment: "Zone 3"
+          stats:
+            - { label: "TX1 Monthly", id: live-tx1-consumption-monthly, bacnet: "300|2|135|85|-1", format: cost, wrap_span: true }
+            - { label: "TX2 Monthly", id: live-tx2-consumption-monthly, bacnet: "300|2|136|85|-1", format: cost, wrap_span: true }
+        - title: "Greenhouse Gas"
+          comment: "Zone 4"
+          stats:
+            - { label: "Scope 1", id: live-ghg-scope1-consumption, bacnet: "300|2|133|85|-1", format: weight, wrap_span: true }
+            - { label: "Scope 2", id: live-ghg-scope2-consumption, bacnet: "300|2|134|85|-1", format: weight, wrap_span: true }
+    - columns: 2
+      cards:
+        - title: "TX1 Electricity Quality"
+          location: "feeds LV-01"
+          comment: "Riser 1"
+          link: "/meters/MeterDisplay.html?meter.id=1"
+          stats:
+            - { label: "Average Phase Voltage", id: live-incomer-tx1-voltage,         bacnet: "300|2|40|85|-1",    format: voltage }
+            - { label: "Neutral Current",       id: live-incomer-tx1-neutral-current, bacnet: "300|0|10034|85|-1", format: current }
+            - { label: "Average Current THD",   id: live-incomer-tx1-voltage-thd,     bacnet: "300|2|42|85|-1",    format: percentage }
+            - { label: "Average Power Factor",  id: live-incomer-tx1-power-factor,    bacnet: "300|0|10060|85|-1", format: number, decimal_places: 2 }
+        - title: "TX2 Electricity Quality"
+          location: "feeds LV-02"
+          comment: "Zone 2"
+          link: "/meters/MeterDisplay.html?meter.id=9"
+          stats:
+            - { label: "Average Phase Voltage", id: live-incomer-tx2-voltage,         bacnet: "300|2|41|85|-1",    format: voltage }
+            - { label: "Neutral Current",       id: live-incomer-tx2-neutral-current, bacnet: "300|0|10834|85|-1", format: current }
+            - { label: "Average Current THD",   id: live-incomer-tx2-voltage-thd,     bacnet: "300|2|43|85|-1",    format: percentage }
+            - { label: "Average Power Factor",  id: live-incomer-tx2-power-factor,    bacnet: "300|0|10860|85|-1", format: number, decimal_places: 2 }
+
+
+incomer_water:
+  heading: "Water Main Incomer"
+  summary_cards:
+    - { title: "Monthly Consumption",          id: live-water-cons,             bacnet: "300|0|2000283|85|-1", format: gas, decimal_places: 0 }
+    - { title: "Previous Monthly Consumption", id: live-water-cons-vslastmonth, bacnet: "300|0|2000284|85|-1", format: gas, decimal_places: 0 }
+    - { title: "Monthly Consumption Change",   id: live-water-cons-change,      bacnet: "300|2|131|85|-1",     format: percentage, decimal_places: 0 }
