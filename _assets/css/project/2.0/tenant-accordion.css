@@ -1,0 +1,50 @@
+/* ========================================
+   TENANT ACCORDION STYLES
+   ======================================== */
+
+/* Accordion Icon */
+.accordion-icon {
+    font-size: 24px;
+    transition: transform 0.3s ease;
+    margin-left: auto;
+    color: var(--color-primary);
+}
+
+/* Closed state */
+.floor-card.accordion-closed .floor-stats-group {
+    display: none;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, max-height 0.3s ease;
+}
+
+.floor-card.accordion-closed .floor-stats-group-link {
+    pointer-events: none;
+    display: none;
+}
+
+/* Open state */
+.floor-card.accordion-open .floor-stats-group {
+    display: block;
+    opacity: 1;
+    max-height: 2000px;
+    animation: slideDown 0.3s ease;
+}
+
+/* Rotate icon when open */
+.floor-card.accordion-open .accordion-icon {
+    transform: rotate(180deg);
+}
+
+/* Slide down animation */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

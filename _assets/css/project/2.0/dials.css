@@ -1,0 +1,43 @@
+/* ========================================
+   LIVE SEGMENTED DIALS (energy-dials.js)
+   Themable wrapper around EnergyCharts.segmentedDial. The library renders the
+   value/label text in fixed light colours (built for a dark demo); these rules
+   re-point them at the project palette so dials read on both light and dark.
+   ======================================== */
+
+.dial-card {
+  background: var(--color-bg-light);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow-sm);
+  flex: 1 1 320px;
+  min-width: 280px;
+}
+
+/* Row of dial cards (wraps on narrow viewports). */
+.dial-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.energy-dial-canvas svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* segmentedDial draws two <text> nodes: [1] the big value, [2] the label.
+   Inline fills are overridden here (hence !important) to track the theme. */
+.energy-dial-canvas text:nth-of-type(1) {
+  fill: var(--color-text) !important;
+}
+.energy-dial-canvas text:nth-of-type(2) {
+  fill: var(--color-text-light) !important;
+}
+
+/* Hidden live-point source element that feeds each dial. */
+.energy-dial-src {
+  display: none !important;
+}

@@ -1,0 +1,69 @@
+/* ============================================================================
+   SWITCHBOARD METER WIDGET  (generated single-line diagram overlays)
+   Each .swb-box is a .data-overlay (so it's absolutely positioned and centred
+   on its data-position by diagrams.css). These rules turn that overlay into a
+   boxed widget: status dot + title, live value + CT, and a segmented gauge.
+   ============================================================================ */
+
+.swb-box {
+    /* .data-overlay already gives: position:absolute; transform:translate(-50%,-50%) */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 4px 8px;
+    border: 1.5px solid var(--color-border, #2c3e50);
+    border-radius: 9px;
+    background: var(--color-bg-white, #ffffff);
+    white-space: normal;              /* override .data-overlay nowrap */
+    color: var(--color-dark, #0a3d62);
+    font-weight: 400;
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.12));
+}
+
+.swb-head { display: flex; align-items: center; gap: 5px; }
+.swb-title {
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--color-dark, #0a3d62);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.swb-valrow { display: flex; align-items: baseline; gap: 2px; }
+.swb-value { font-weight: 700; font-size: 18px; line-height: 1; color: var(--color-dark, #0a3d62); }
+.swb-ct    { margin-left: auto; align-self: center; font-size: 9px; color: var(--color-text, #8a8f98); }
+
+/* segmented gauge — a flex row of equal blocks; switchboard-gauge.js colors them */
+.swb-gauge { display: flex; gap: 2px; height: 11px; }
+.swb-gauge .seg { flex: 1 1 0; border-radius: 2px; background: rgba(0, 0, 0, 0.10); }
+
+/* status dot — colored by load level (set on .swb-box by switchboard-gauge.js) */
+.swb-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    flex: 0 0 auto;
+    background: #9aa0a6;              /* grey until first reading */
+}
+.swb-box.status-ok    .swb-dot { background: #27ae60; }
+.swb-box.status-warn  .swb-dot { background: #f39c12; }
+.swb-box.status-alarm .swb-dot { background: #e74c3c; }
+.swb-box.status-warn  { border-color: #f39c12; }
+.swb-box.status-alarm { border-color: #e74c3c; }
+
+/* the incomer reads as the board's "source" — a touch heavier */
+.swb-incomer { border-width: 2px; border-color: var(--color-primary, #6d28d9); }
+
+/* bus-tie label: sits next to the arrow build_switchboards.py draws off one
+   end of the busbar, linking to the connected board's page. */
+.swb-tie {
+    padding: 3px 10px;
+    border: 1.5px solid var(--color-primary, #6d28d9);
+    border-radius: 999px;
+    background: var(--color-bg-white, #ffffff);
+    color: var(--color-primary, #6d28d9);
+    font-weight: 700;
+    font-size: 12px;
+}
+.swb-tie:hover { background: var(--color-primary, #6d28d9); color: #fff; }

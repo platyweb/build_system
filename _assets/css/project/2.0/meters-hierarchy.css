@@ -1,0 +1,711 @@
+/* ========================================
+   METERS HIERARCHY SPECIFIC STYLES
+   ======================================== */
+
+/* Page Title */
+.meters-page-title {
+    background: var(--bs-tertiary-bg);
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    border: 2px solid var(--bs-border-color);
+    margin-bottom: 15px;
+}
+
+.meters-page-title h1 {
+    color: var(--bs-body-color);
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Main Container Override */
+.meters-hierarchy-container {
+    max-width: 1600px;
+    margin: 0 0;
+    background: var(--bs-body-bg);
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: var(--shadow-lg);
+}
+
+/* Header Section */
+.meters-header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.meters-title-area h1 {
+    color: var(--bs-body-color);
+    margin-bottom: 10px;
+    font-size: 28px;
+}
+
+.meters-subtitle {
+    color: var(--bs-secondary-color);
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+
+/* Search Container */
+.search-container {
+    flex: 1;
+    min-width: 250px;
+    max-width: 400px;
+}
+
+.search-wrapper {
+    position: relative;
+}
+
+.search-box {
+    width: 100%;
+    padding: 12px 16px;
+    padding-left: 40px;
+    border: 2px solid var(--bs-border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    position: relative;
+}
+
+.search-box:focus {
+    outline: none;
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--bs-secondary-color);
+    font-size: 16px;
+    pointer-events: none;
+}
+
+.search-results {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--bs-secondary-color);
+    min-height: 18px;
+}
+
+.search-results.found {
+    color: var(--color-success);
+}
+
+.search-results.not-found {
+    color: var(--color-danger);
+}
+
+/* Search Autocomplete Dropdown */
+.search-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    max-height: 320px;
+    overflow-y: auto;
+    background: var(--bs-body-bg, #fff);
+    border: 2px solid var(--color-secondary);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.search-dropdown.active {
+    display: block;
+}
+
+.search-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid var(--bs-border-color, #e0e0e0);
+    font-size: 13px;
+    color: var(--bs-body-color, #3f4750);
+}
+
+.search-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.search-dropdown-item:hover,
+.search-dropdown-item.active {
+    background: var(--color-bg-blue, #e8f4f8);
+}
+
+.search-dropdown-item .dropdown-meter-icon {
+    font-size: 14px;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.search-dropdown-item .dropdown-meter-name {
+    font-weight: 600;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-dropdown-item .dropdown-meter-name mark {
+    background: #ffc107;
+    color: inherit;
+    padding: 0 1px;
+    border-radius: 2px;
+}
+
+.search-dropdown-item .dropdown-meter-type {
+    font-size: 11px;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.search-dropdown-empty {
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--color-danger, #f44336);
+    text-align: center;
+}
+
+.search-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.search-dropdown::-webkit-scrollbar-thumb {
+    background: var(--bs-border-color, #c0c0c0);
+    border-radius: 3px;
+}
+
+.search-dropdown::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* When dropdown is open, adjust search box border radius */
+.search-box.dropdown-open {
+    border-radius: 8px 8px 0 0;
+    border-color: var(--color-secondary);
+}
+
+[data-bs-theme="dark"] .search-dropdown {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-bs-theme="dark"] .search-dropdown-item:hover,
+[data-bs-theme="dark"] .search-dropdown-item.active {
+    background: rgba(102, 126, 234, 0.15);
+}
+
+[data-bs-theme="dark"] .search-dropdown-item .dropdown-meter-name mark {
+    background: #664d03;
+}
+
+.highlight {
+    background: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 3px;
+    animation: pulse 1s ease-in-out 2;
+}
+
+@keyframes pulse {
+    0%, 100% { background: #fff3cd; }
+    50% { background: #ffc107; }
+}
+
+/* Tree Structure */
+.tree {
+    padding: 20px 0;
+    overflow-x: auto;
+}
+
+.tree ul {
+    padding-left: 24px;
+    position: relative;
+    list-style: none;
+    overflow: hidden;
+    max-height: 5000px;
+    transition: max-height 0.5s ease-in-out, opacity 0.4s ease-in-out;
+    opacity: 1;
+}
+
+/* The first (root) ul needs no extra indent */
+.tree > ul {
+    padding-left: 0;
+    min-width: max-content;
+}
+
+.tree ul ul::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 20px;
+    width: 2px;
+    background: var(--bs-border-color);
+}
+
+.tree li {
+    position: relative;
+    padding: 8px 0 8px 45px;
+    list-style: none;
+    display: flex;
+    align-items: flex-start;
+}
+
+.tree li::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 26px;
+    width: 35px;
+    height: 2px;
+    background: var(--bs-border-color);
+}
+
+.tree li::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 50%;
+    width: 2px;
+    background: var(--bs-border-color);
+}
+
+.tree li:last-child::after {
+    display: none;
+}
+
+.tree > ul > li:first-child::after {
+    display: none;
+}
+
+/* Meter Cards */
+.meter {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--gradient-secondary);
+    color: white;
+    border-radius: 8px;
+    box-shadow: var(--shadow-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    width: 240px;
+    min-width: 240px;
+    max-width: 240px;
+}
+
+.meter::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: skewX(-15deg);
+    pointer-events: none;
+}
+
+.meter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.meter:visited {
+    color: white;
+}
+
+/* Meter Type Colors.
+   Each fill is a custom property so this page's `-virtual` variants can
+   layer the purple right-edge fade over the exact same gradient rather
+   than restating it — including the dark-mode retune further down this
+   section, which the variants then pick up for free. The fade itself,
+   --meter-virtual-edge, comes from style.css (loaded ahead of this file
+   on every page using these classes), so retuning the "virtual" cue
+   restyles the floor pages and this page together. */
+:root {
+    --hier-electrical-fill:  linear-gradient(135deg, #1E5959 0%, #024959 100%);
+    --hier-virtual-fill:     linear-gradient(135deg, #45214A 0%, #454545 100%);
+    --hier-lphw-fill:        linear-gradient(135deg, #f97316 0%, #dc2626 100%);
+    --hier-lthw-fill:        linear-gradient(135deg, #fff0f0 0%, #ffb3b3 100%);
+    --hier-chw-fill:         linear-gradient(135deg, #eef7ff 0%, #9fd3ff 100%);
+    --hier-electricity-fill: linear-gradient(135deg, #eafaf0 0%, #a3e9b8 100%);
+    --hier-gas-fill:         linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    --hier-water-fill:       linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+}
+
+.meter-electrical,
+.meter-electrical-virtual {
+    background: var(--hier-electrical-fill);
+    box-shadow: 0 2px 8px rgba(11, 43, 64, 0.5);
+}
+
+.meter-electrical-virtual {
+    background-image: var(--meter-virtual-edge), var(--hier-electrical-fill);
+}
+
+.meter-electrical:hover,
+.meter-electrical-virtual:hover {
+    box-shadow: 0 4px 12px rgba(11, 43, 64, 0.5);
+}
+
+/* The generic virtual card — what a Calculation meter with no utility of
+   its own gets. No edge fade: the whole fill already reads as virtual. A
+   meter that does carry a utility gets both this class and
+   .meter-<utility>-virtual, and the utility rules below win on order. */
+.meter-virtual {
+    background: var(--hier-virtual-fill);
+    box-shadow: 0 2px 8px rgba(11, 43, 64, 0.5);
+}
+
+.meter-virtual:hover {
+    box-shadow: 0 4px 12px rgba(11, 43, 64, 0.5);
+}
+
+.meter-lphw,
+.meter-lphw-virtual {
+    background: var(--hier-lphw-fill);
+    box-shadow: 0 2px 8px rgba(11, 43, 64, 0.5);
+}
+
+.meter-lphw-virtual {
+    background-image: var(--meter-virtual-edge), var(--hier-lphw-fill);
+}
+
+.meter-lphw:hover,
+.meter-lphw-virtual:hover {
+    box-shadow: 0 4px 12px rgba(11, 43, 64, 0.5);
+}
+
+/* lthw/chw/electricity below: a richer 135deg gradient within each
+   utility's own hue, plus a colored left accent stripe instead of an
+   all-around border (a more modern "stat card" idiom) and a softer,
+   more elevated shadow. Text reuses the --meter-*-text variable from
+   style.css (floor pages' "Meter Type Colors"), so if you retune those
+   variables both this page and the floor pages restyle together — only
+   the background/border treatment here is specific to this page.
+   Text contrast checked against both gradient stops AND the floor
+   pages' flat fill: 6.0:1-11.6:1 across all three, both themes. */
+.meter-lthw,
+.meter-lthw-virtual,
+.meter-chw,
+.meter-chw-virtual,
+.meter-electricity,
+.meter-electricity-virtual {
+    border-radius: 10px;
+    border: none;
+    border-left: 4px solid transparent;
+}
+
+.meter-lthw,
+.meter-lthw-virtual {
+    background: var(--hier-lthw-fill);
+    color: var(--meter-lthw-text);
+    border-left-color: var(--meter-lthw-border);
+    box-shadow: 0 3px 10px rgba(220, 53, 69, 0.22);
+}
+
+.meter-lthw-virtual {
+    background-image: var(--meter-virtual-edge), var(--hier-lthw-fill);
+}
+
+.meter-lthw:visited,
+.meter-lthw-virtual:visited {
+    color: var(--meter-lthw-text);
+}
+
+.meter-lthw:hover,
+.meter-lthw-virtual:hover {
+    box-shadow: 0 6px 16px rgba(220, 53, 69, 0.35);
+}
+
+.meter-chw,
+.meter-chw-virtual {
+    background: var(--hier-chw-fill);
+    color: var(--meter-chw-text);
+    border-left-color: var(--meter-chw-border);
+    box-shadow: 0 3px 10px rgba(13, 110, 253, 0.22);
+}
+
+.meter-chw-virtual {
+    background-image: var(--meter-virtual-edge), var(--hier-chw-fill);
+}
+
+.meter-chw:visited,
+.meter-chw-virtual:visited {
+    color: var(--meter-chw-text);
+}
+
+.meter-chw:hover,
+.meter-chw-virtual:hover {
+    box-shadow: 0 6px 16px rgba(13, 110, 253, 0.35);
+}
+
+.meter-electricity,
+.meter-electricity-virtual {
+    background: var(--hier-electricity-fill);
+    color: var(--meter-electricity-text);
+    border-left-color: var(--meter-electricity-border);
+    box-shadow: 0 3px 10px rgba(25, 135, 84, 0.22);
+}
+
+.meter-electricity-virtual {
+    background-image: var(--meter-virtual-edge), var(--hier-electricity-fill);
+}
+
+.meter-electricity:visited,
+.meter-electricity-virtual:visited {
+    color: var(--meter-electricity-text);
+}
+
+.meter-electricity:hover,
+.meter-electricity-virtual:hover {
+    box-shadow: 0 6px 16px rgba(25, 135, 84, 0.35);
+}
+
+/* Dark-mode gradient stops for the three above. Retuning a fill here also
+   retunes its `-virtual` variant, which layers the edge fade over
+   whichever fill the active theme resolves. */
+[data-bs-theme="dark"] {
+    --hier-lthw-fill:        linear-gradient(135deg, #4a1f1f 0%, #6b2b2b 100%);
+    --hier-chw-fill:         linear-gradient(135deg, #16233a 0%, #24406b 100%);
+    --hier-electricity-fill: linear-gradient(135deg, #17301f 0%, #235c33 100%);
+}
+
+.meter-gas,
+.meter-gas-virtual {
+    background: var(--hier-gas-fill);
+    box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+}
+
+.meter-gas-virtual {
+    background-image: var(--meter-virtual-edge), var(--hier-gas-fill);
+}
+
+.meter-gas:hover,
+.meter-gas-virtual:hover {
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.5);
+}
+
+.meter-water,
+.meter-water-virtual {
+    background: var(--hier-water-fill);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.meter-water-virtual {
+    background-image: var(--meter-virtual-edge), var(--hier-water-fill);
+}
+
+.meter-water:hover,
+.meter-water-virtual:hover {
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+}
+
+
+/* Meter Content */
+.meter-icon {
+    font-size: 20px;
+}
+
+.meter-info {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.meter-info > .meter-id,
+.meter-info > .meter-type {
+    flex: 0 0 100%;
+}
+
+.meter-info > .meter-status,
+.meter-info > .meter-load {
+    flex: 0 0 auto;
+}
+
+.meter-id {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.meter-type {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.meter-load {
+    font-size: 11px;
+    opacity: 0.8;
+    margin-top: 0;
+    display: inline-block;
+    margin-left: 20px;
+}
+
+.meter-status {
+    font-size: 10px;
+    opacity: 0.8;
+    margin-top: 0;
+    display: inline-block;
+    margin-right: 0;
+}
+
+/* Toggle Button */
+.toggle-btn {
+    position: absolute;
+    left: 0;
+    top: 18px;
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background: var(--bs-body-bg);
+    color: var(--color-secondary);
+    border-radius: 50%;
+    text-align: center;
+    line-height: 18px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 2px solid var(--color-secondary);
+    transition: all 0.3s ease;
+    z-index: 1;
+    flex-shrink: 0;
+}
+
+.toggle-btn:hover {
+    background: var(--color-secondary);
+    color: white;
+}
+
+.collapsed > .toggle-btn::before {
+    content: '+';
+}
+
+.toggle-btn::before {
+    content: '−';
+}
+
+.no-children > .toggle-btn {
+    visibility: hidden;
+}
+
+.collapsed > ul {
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+/* Legend */
+.legend {
+    margin-top: 30px;
+    padding: 20px;
+    background: var(--bs-secondary-bg);
+    border-radius: 8px;
+    border-left: 4px solid var(--color-secondary);
+}
+
+.legend h3 {
+    color: var(--bs-body-color);
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+    font-size: 14px;
+    color: var(--bs-secondary-color);
+}
+
+.legend-icon {
+    font-size: 18px;
+}
+
+/* Dark Mode Adjustments for Meters */
+[data-bs-theme="dark"] .meter::after {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="dark"] .toggle-btn {
+    background: var(--bs-secondary-bg);
+}
+
+[data-bs-theme="dark"] .highlight {
+    background: #664d03;
+    color: #ffecb5;
+}
+
+/* Responsive Design for Meters */
+@media (max-width: 767.98px) {
+    .meters-hierarchy-container {
+        padding: 20px;
+    }
+
+    .meters-header-section {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .search-container {
+        max-width: 100%;
+    }
+
+    .tree ul {
+        padding-left: 20px;
+    }
+
+    .meter {
+        width: 200px;
+        min-width: 200px;
+        max-width: 200px;
+        font-size: 12px;
+        padding: 10px 12px;
+    }
+
+    .meters-title-area h1 {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .meter {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .tree ul {
+        padding-left: 15px;
+    }
+
+    .tree li {
+        padding-left: 30px;
+    }
+
+    .tree li::before {
+        width: 20px;
+    }
+}

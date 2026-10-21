@@ -1,0 +1,55 @@
+/* ========================================
+   ENERGY FLOW (D3 SANKEY) DIAGRAM
+   Ported from d3/sankey-energy.html, re-themed to inherit the project
+   palette (style.css variables) so it tracks light / dark mode instead
+   of the original hard-coded dark gradient.
+   ======================================== */
+
+.sankey-card {
+  background: var(--color-bg-light);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+}
+
+/* The SVG scales down on narrow viewports while keeping its aspect ratio. */
+.sankey-card svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.sankey-sub {
+  color: var(--color-text-light);
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+
+.sankey-card .node-label {
+  font-size: 12px;
+  fill: var(--color-text);
+  pointer-events: none;
+}
+
+.sankey-card .node-value {
+  fill: var(--color-text-light);
+  font-weight: 400;
+}
+
+.sankey-card .link {
+  fill: none;
+  transition: stroke-opacity 0.2s;
+}
+
+.sankey-card .link:hover {
+  stroke-opacity: 0.75 !important;
+}
+
+.sankey-card .node rect {
+  stroke: rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
