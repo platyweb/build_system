@@ -283,7 +283,7 @@ def build_svg(L, width, height, busbar_x, busbar_top_y, busbar_bottom_y,
 def run(env, only: str | None = None) -> list[Path]:
     """The `risers` module: one or more linked pages + SVGs per riser meter
     (function == "Riser-meter") in meters.csv (`only`: a single riser key)."""
-    cfg_all = yaml.safe_load((build.DATA_DIR / "risers.yaml").read_text(encoding="utf-8")) or {}
+    cfg_all = yaml.safe_load(build.data_path("risers.yaml").read_text(encoding="utf-8")) or {}
     defaults = cfg_all.get("defaults", {})
     overrides = cfg_all.get("overrides", {}) or {}
 
@@ -296,7 +296,7 @@ def run(env, only: str | None = None) -> list[Path]:
 
     risers = sorted((m for m in meters if m["function"] == "Riser-meter"), key=lambda m: m["id"])
     if not risers:
-        print("  (skip risers: no meters with function == 'Riser-meter' in meters.csv)")
+        print(f"  (skip risers: no meters with function == 'Riser-meter' in {build.meters_file().name})")
         return []
 
     img_dir = build.SITE_DIR / "img"

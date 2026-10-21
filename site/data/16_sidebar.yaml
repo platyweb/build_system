@@ -19,7 +19,7 @@
 #                                                                  for sites that just want every item
 #                                                                  listed flat — it's opt-in per site.
 #               { kind: theme_toggle }                          — theme switcher
-# brand + footer come from site/site.yaml.
+# brand + footer come from 00_site.yaml.
 # ─────────────────────────────────────────────────────────────────────────────
 
 top_items: []

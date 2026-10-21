@@ -1,14 +1,19 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# FLOOR ROSTER + per-floor data not derivable from the meter registry
-# (meters.csv), bms_bindings.yaml, or reports.yaml.
+# DATA FILE 02 — fill in after 00_site.yaml and 01_pages.yaml. 03_meters.yaml comes next:
+# its levels and cores are the ones defined here.
+#
+# FLOOR ROSTER + TENANTS + per-floor data not derivable from the meters
+# (03_meters.yaml), bms_bindings.yaml, or reports.yaml.
 #
 # This is the site's LEVEL ROSTER: one top-level `floor_<key>:` entry per
 # level, listed bottom → top. The order of the entries IS the physical order
 # — the sidebar, tenant floor lists and riser diagrams all follow it — so keys
 # can be named anything ("ground"/"1st", "L00", "Mezzanine", "Roof"). Every
-# floor named anywhere else (meters.csv, bms_bindings.yaml, reports.yaml,
-# tenants.yaml, sidebar.yaml groups, energy_flow.yaml) must be a level here;
-# `build.py --check` reports any that aren't.
+# floor named anywhere else (03_meters.yaml, bms_bindings.yaml, reports.yaml,
+# the tenants below, sidebar.yaml groups, energy_flow.yaml) must be a level
+# here; `build.py --check` reports any that aren't.
+#
+# The one other top-level key, `tenants:`, is the tenant catalog (below).
 #
 # Each level gets one generated `floor_<key>.htm` page unless it sets
 # `page: false` (a level with meters but no page of its own, like the
@@ -20,16 +25,18 @@
 #   nav_label → sidebar menu text                              (default: label)
 #   heading   → the floor page's heading          (default: "<label> Overview")
 #   page      → false for a level with no page                 (default: true)
+#   cores     → {<core>: <tenant short name>}: who holds each core. St
+#               Peters' cores are the floor-page cards (North / West / East)
+#               that 03_meters.yaml groups each level's meters into; a core
+#               left out is the landlord's. A core's meters take its tenant. `--check` warns when a
+#               meter's tenant tag doesn't match the core it sits in (or,
+#               for a meter outside the cores, any core on its floor). No
+#               page shows cores yet.
 #
 # A level with a page only renders if the meter registry has meters pinned to
 # it (floor=<key>) so its layout can be derived — or the entry supplies an
 # explicit `floorplan_tab.layout:`. A page level with neither is an error by
 # design (nothing to draw).
-#
-# Page data (any other field is passed to the floor page):
-#   tenants                         (string) → occupant name, carried for
-#                                     reference/tenant-page generation (not
-#                                     rendered on the floor page itself)
 #
 # Derived automatically (override allowed by setting the field in YAML):
 #   tabs                            → Summary + the report tabs in site.yaml
@@ -49,10 +56,110 @@
 #   floorplan_tab.layout: …                  # bypass layout derivation
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ─── Tenants ──────────────────────────────────────────────────────────────────
+# One entry per tenant, keyed by its SHORT NAME: what a level's `cores:`
+# names and a meter's `tenant:` (03_meters.yaml) spells. Fields:
+#   name           → proper name: "Tenant" card, page titles, sidebar
+#                    (default: the short name)
+#   slug           → output folder, tenants/<slug>/ (default: the short name
+#                    lower-cased, other characters → "-"). Set only where
+#                    that default isn't the folder you want.
+#   index: {}      → also builds the tenant's index.htm (multi-floor tenants)
+#   extra_floors / exclude_floors / floors.<key>.{heading,
+#                    floorplan_tab_label} → see README "data/floors.yaml"
+#
+# Entry order is the sidebar's tenant order. A tenant's pages show the meters
+# tagged with its short name and `tenant_display: yes`, on the floors those
+# meters name. Landlords / Main Reception / "Mezzanine of retail units" are
+# common areas, not tenants, so they have no entry (their meters show on no
+# tenant page).
+#
+# Roster reconciled against "tenants/List of tennants.xlsx" + meters.csv.
+# The `tenants` module is still off in site.yaml `modules:` pending further
+# reconciliation — this block is data-only until it's enabled.
+tenants:
+  # ── Single-floor tenants ──
+  Bob Bob Restaurant:
+    name: "Bob Bob Restaurant"
+
+  # Access limitation (per xlsx): COMS riser and AHU access is through the tenant.
+  RSH&P:
+    name: "RSH&P"
+
+  # Access limitation (per xlsx): COMS riser and AHU access is through the tenant.
+  Virgin Money:
+    name: "Virgin Money"
+
+  KI Group Services:
+    name: "KI Group Services"
+
+  UIB:
+    name: "UIB"
+
+  Aegon / Draft Kings:
+    name: "Aegon / Draft Kings"
+    slug: aegon-draftkings
+
+  Serve corp:
+    name: "Serve corp"
+    slug: servcorp
+
+  Xcite:
+    name: "Xcite/ Landing 42"
+
+  Petredec:
+    name: "Petredec"
+
+  Affinity Shipping:
+    name: "Affinity Shipping"
+
+  D-Tek:
+    name: "D-Tek"
+    slug: dtek
+
+  # Ground-floor retail unit.
+  Black Sheep:
+    name: "Black Sheep"
+
+  # ── Multi-floor tenants ──
+  AON:
+    name: "AON"
+    index: {}
+
+  # Floors 17th/18th/39th + a ground-floor retail unit.
+  Brit Insurance:
+    name: "Brit Insurance"
+    index: {}
+
+  MS Amlin:
+    name: "MS Amlin"
+    index: {}
+
+  # Floors 25th + 35th-38th (non-contiguous block).
+  DRW:
+    name: "DRW"
+    index: {}
+
+  OMERS:
+    name: "OMERS"
+    index: {}
+
+  Quadrature:
+    name: "Quadrature"
+    index: {}
+
+  FM Global:
+    name: "FM Global"
+    index: {}
+
 # ─── Basement levels — plant/landlord meters only, no floor pages ──────────
+# AON's basement (meter 641 "Aon Basement Electricity" and its North-core
+# meters) is a normal floor of theirs, so it holds a core like any other.
 floor_Basement:
   label: "Basement Floor"
   page: false
+  cores:
+    North: AON
 
 floor_B4:
   label: "B4"
@@ -78,121 +185,178 @@ floor_B1:
 # renders with live data instead of being an orphaned meter.
 floor_ground:
   label: "Ground Floor"
-  tenants: "Landlords"
+  # Retail units, not core space: cores inferred from meters 112/113,
+  # "Mezz Retail Unit East" / "Mezz Retail Unit West", which sit outside
+  # the cores (03_meters.yaml `floor:`). Confirm with the owner. Was `tenants: "Landlords"`.
+  cores:
+    East: Brit Insurance
+    West: Black Sheep
 
 floor_1st:
   label: "1st Floor"
   nav_label: "Floor 1st"
-  tenants: "AON Reception"
+  # AON Reception.
+  cores:
+    North: AON
 
 floor_2nd:
   label: "2nd Floor"
   nav_label: "Floor 2nd"
-  tenants: "Main Reception"
+  # Main Reception: no tenant cores.
 
 floor_3rd:
   label: "3rd Floor"
   nav_label: "Floor 3rd"
-  tenants: "Bob Bob Restaurant"
+  cores:
+    North: Bob Bob Restaurant
+    East: Bob Bob Restaurant
 
 floor_4th:
   label: "4th Floor"
   nav_label: "Floor 4th"
-  tenants: "AON"
+  cores:
+    North: AON
+    West: AON
+    East: AON
 
 floor_5th:
   label: "5th Floor"
   nav_label: "Floor 5th"
-  tenants: "AON"
+  cores:
+    North: AON
+    West: AON
+    East: AON
 
 floor_6th:
   label: "6th Floor"
   nav_label: "Floor 6th"
-  tenants: "AON"
+  cores:
+    North: AON
+    West: AON
+    East: AON
 
 floor_7th:
   label: "7th Floor"
   nav_label: "Floor 7th"
-  tenants: "AON"
+  cores:
+    North: AON
+    West: AON
+    East: AON
 
 floor_8th:
   label: "8th Floor"
   nav_label: "Floor 8th"
-  tenants: "AON"
+  cores:
+    North: AON
+    West: AON
+    East: AON
 
 floor_9th:
   label: "9th Floor"
   nav_label: "Floor 9th"
-  tenants: "AON"
+  cores:
+    North: AON
+    West: AON
+    East: AON
 
 floor_10th:
   label: "10th Floor"
   nav_label: "Floor 10th"
-  tenants: "AON"
+  cores:
+    North: AON
+    West: AON
+    East: AON
 
 floor_11th:
   label: "11th Floor"
   nav_label: "Floor 11th"
-  tenants: "AON"
+  cores:
+    North: AON
+    West: AON
+    East: AON
 
 floor_12th:
   label: "12th Floor"
   nav_label: "Floor 12th"
-  tenants: "AON"
+  cores:
+    North: AON
+    West: AON
+    East: AON
 
 floor_13th:
   label: "13th Floor"
   nav_label: "Floor 13th"
-  tenants: "AON"
+  cores:
+    North: AON
+    West: AON
+    East: AON
 
 # Access limitation (per "List of tennants.xlsx"): COMS riser and AHU
 # access is through the tenant.
 floor_14th:
   label: "14th Floor"
   nav_label: "Floor 14th"
-  tenants: "RSH&P"
+  cores:
+    West: RSH&P
+    East: RSH&P
 
 # Access limitation (per "List of tennants.xlsx"): COMS riser and AHU
 # access is through the tenant.
 floor_15th:
   label: "15th Floor"
   nav_label: "Floor 15th"
-  tenants: "Virgin Money"
+  cores:
+    West: Virgin Money
+    East: Virgin Money
 
 floor_16th:
   label: "16th Floor"
   nav_label: "Floor 16th"
-  tenants: "KI Group Services"
+  cores:
+    West: KI Group Services
+    East: KI Group Services
 
 floor_17th:
   label: "17th Floor"
   nav_label: "Floor 17th"
-  tenants: "Brit Insurance"
+  cores:
+    West: Brit Insurance
+    East: Brit Insurance
 
 floor_18th:
   label: "18th Floor"
   nav_label: "Floor 18th"
-  tenants: "Brit Insurance"
+  cores:
+    West: Brit Insurance
+    East: Brit Insurance
 
 floor_19th:
   label: "19th Floor"
   nav_label: "Floor 19th"
-  tenants: "UIB"
+  cores:
+    West: UIB
+    East: UIB
 
 floor_20th:
   label: "20th Floor"
   nav_label: "Floor 20th"
-  tenants: "MS Amlin"
+  cores:
+    West: MS Amlin
+    East: MS Amlin
 
 floor_21st:
   label: "21st Floor"
   nav_label: "Floor 21st"
-  tenants: "MS Amlin"
+  cores:
+    West: MS Amlin
+    East: MS Amlin
 
 floor_22nd:
   label: "22nd Floor"
   nav_label: "Floor 22nd"
-  tenants: "MS Amlin"
+  cores:
+    West: MS Amlin
+    East: MS Amlin
 
 # Confirmed MS Amlin per "List of tennants.xlsx" (was previously inferred
 # from the contiguous 20th/21st/22nd/24th block; no "Tenants" tile in the
@@ -200,117 +364,163 @@ floor_22nd:
 floor_23rd:
   label: "23rd Floor"
   nav_label: "Floor 23rd"
-  tenants: "MS Amlin"
+  cores:
+    West: MS Amlin
+    East: MS Amlin
 
 floor_24th:
   label: "24th Floor"
   nav_label: "Floor 24th"
-  tenants: "MS Amlin"
+  cores:
+    West: MS Amlin
+    East: MS Amlin
 
 floor_25th:
   label: "25th Floor"
   nav_label: "Floor 25th"
-  tenants: "DRW"
+  cores:
+    West: DRW
+    East: DRW
 
 floor_26th:
   label: "26th Floor"
   nav_label: "Floor 26th"
-  tenants: "Aegon / Draft Kings"
+  cores:
+    West: Aegon / Draft Kings
+    East: Aegon / Draft Kings
 
 floor_27th:
   label: "27th Floor"
   nav_label: "Floor 27th"
-  tenants: "OMERS"
+  cores:
+    West: OMERS
+    East: OMERS
 
 floor_28th:
   label: "28th Floor"
   nav_label: "Floor 28th"
-  tenants: "OMERS"
+  cores:
+    West: OMERS
+    East: OMERS
 
 floor_29th:
   label: "29th Floor"
   nav_label: "Floor 29th"
-  tenants: "OMERS"
+  cores:
+    West: OMERS
+    East: OMERS
 
 floor_30th:
   label: "30th Floor"
   nav_label: "Floor 30th"
-  tenants: "Serve corp"
+  cores:
+    West: Serve corp
+    East: Serve corp
 
 floor_31st:
   label: "31st Floor"
   nav_label: "Floor 31st"
-  tenants: "Quadrature"
+  cores:
+    West: Quadrature
+    East: Quadrature
 
 floor_32nd:
   label: "32nd Floor"
   nav_label: "Floor 32nd"
-  tenants: "Quadrature"
+  cores:
+    West: Quadrature
+    East: Quadrature
 
 floor_33rd:
   label: "33rd Floor"
   nav_label: "Floor 33rd"
-  tenants: "Quadrature"
+  cores:
+    West: Quadrature
+    East: Quadrature
 
 floor_34th:
   label: "34th Floor"
   nav_label: "Floor 34th"
-  tenants: "Quadrature"
+  cores:
+    West: Quadrature
+    East: Quadrature
 
 floor_35th:
   label: "35th Floor"
   nav_label: "Floor 35th"
-  tenants: "DRW"
+  cores:
+    West: DRW
+    East: DRW
 
 floor_36th:
   label: "36th Floor"
   nav_label: "Floor 36th"
-  tenants: "DRW"
+  cores:
+    West: DRW
+    East: DRW
 
 floor_37th:
   label: "37th Floor"
   nav_label: "Floor 37th"
-  tenants: "DRW"
+  cores:
+    West: DRW
+    East: DRW
 
 floor_38th:
   label: "38th Floor"
   nav_label: "Floor 38th"
-  tenants: "DRW"
+  cores:
+    West: DRW
+    East: DRW
 
 floor_39th:
   label: "39th Floor"
   nav_label: "Floor 39th"
-  tenants: "Brit Insurance"
+  cores:
+    West: Brit Insurance
+    East: Brit Insurance
 
 floor_40th:
   label: "40th Floor"
   nav_label: "Floor 40th"
-  tenants: "FM Global"
+  cores:
+    West: FM Global
+    East: FM Global
 
 floor_41st:
   label: "41st Floor"
   nav_label: "Floor 41st"
-  tenants: "FM Global"
+  cores:
+    West: FM Global
+    East: FM Global
 
 floor_42nd:
   label: "42nd Floor"
   nav_label: "Floor 42nd"
-  tenants: "Xcite/ Landing 42"
+  cores:
+    West: Xcite
+    East: Xcite
 
 floor_43rd:
   label: "43rd Floor"
   nav_label: "Floor 43rd"
-  tenants: "Petredec"
+  cores:
+    West: Petredec
+    East: Petredec
 
 floor_44th:
   label: "44th Floor"
   nav_label: "Floor 44th"
-  tenants: "Affinity Shipping"
+  cores:
+    West: Affinity Shipping
+    East: Affinity Shipping
 
 floor_45th:
   label: "45th Floor"
   nav_label: "Floor 45th"
-  tenants: "D-Tek"
+  cores:
+    West: D-Tek
+    East: D-Tek
 
 # Plant floors — placeholder scaffolding only. Content (meters, layout) to
 # follow; these will end up in a different format than tenant floors once
@@ -322,7 +532,7 @@ floor_45th:
 floor_46th:
   label: "46th Floor"
   nav_label: "Floor 46th"
-  tenants: "Landlords"
+  # Landlords: no tenant cores.
 
 # No meters registered yet (cooling towers pending) — derive_layout would
 # refuse to render with nothing pinned, so this supplies an explicit empty
@@ -333,7 +543,7 @@ floor_46th:
 floor_47th:
   label: "47th Floor"
   nav_label: "Floor 47th"
-  tenants: "Landlords"
+  # Landlords: no tenant cores.
   floorplan_tab:
     image: "img/floors/floor_47th.png"
     layout:

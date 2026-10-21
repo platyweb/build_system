@@ -1,7 +1,7 @@
 # Riser diagrams — consumed by _build/build_risers.py
 #
 # A riser is any meter with function == "Riser-meter" in METER_REGISTRY (see
-# site/data/meters.csv — the CSV is the source of truth; the build reads it
+# 03_meters.yaml — the meters' source of truth; the build reads it
 # directly). Risers
 # are auto-discovered from the registry, NOT hand-listed here — this file
 # only supplies layout defaults and optional per-riser overrides, keyed by

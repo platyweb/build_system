@@ -35,7 +35,7 @@ def site(tmp_path: Path) -> Path:
 
 
 def test_roster_order_and_defaults(site: Path) -> None:
-    (site / "data" / "floors.yaml").write_text(ROSTER, encoding="utf-8")
+    build.data_path("floors.yaml").write_text(ROSTER, encoding="utf-8")
     levels = build.read_levels()
     assert [lv["key"] for lv in levels] == ["B1", "L00", "Mezz", "L01", "Roof"]
     by_key = {lv["key"]: lv for lv in levels}
@@ -48,14 +48,14 @@ def test_roster_order_and_defaults(site: Path) -> None:
 
 
 def test_sidebar_lists_page_levels_top_first(site: Path) -> None:
-    (site / "data" / "floors.yaml").write_text(ROSTER, encoding="utf-8")
+    build.data_path("floors.yaml").write_text(ROSTER, encoding="utf-8")
     assert [(i["_key"], i["label"]) for i in build._auto_floors()] == [
         ("L01", "L01"), ("Mezz", "Mezz"), ("L00", "Ground Floor"),
     ]
 
 
 def test_sort_floors_follows_roster_not_spelling(site: Path) -> None:
-    (site / "data" / "floors.yaml").write_text(ROSTER, encoding="utf-8")
+    build.data_path("floors.yaml").write_text(ROSTER, encoding="utf-8")
     rank = build.level_rank()
     assert build.sort_floors({"Roof", "L00", "B1", "Mezz"}, rank, "test") == ["B1", "L00", "Mezz", "Roof"]
     assert build.sort_floors({"L00", "L01"}, rank, "test", top_first=True) == ["L01", "L00"]
@@ -65,15 +65,16 @@ def test_sort_floors_follows_roster_not_spelling(site: Path) -> None:
 
 def test_check_catches_a_mistyped_floor(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert build.validate() == 0
-    csv = site / "data" / "meters.csv"
-    # "L0O" — letter O for zero — on an otherwise valid meter row.
-    csv.write_text(csv.read_text(encoding="utf-8")
-                   + "99,Typo Meter,30000,Modbus,0,0,1,L0O,0,West,3,Lighting,Electricity,,,\n", encoding="utf-8")
+    meters = build.data_path("meters.yaml")
+    # "L0O" — letter O for zero — holding an otherwise valid meter.
+    meters.write_text(meters.read_text(encoding="utf-8")
+                      + "\nfloor_L0O:\n  West:\n    - {id: 99, tag: Typo Meter, base: 30000, type: Modbus}\n",
+                      encoding="utf-8")
     assert build.validate() == 1
-    assert "meters.csv: floor 'L0O' (meter ids [99])" in capsys.readouterr().out
+    assert "03_meters.yaml: floor 'L0O' (meter ids [99])" in capsys.readouterr().out
 
 
 def test_level_keys_must_be_floor_prefixed(site: Path) -> None:
-    (site / "data" / "floors.yaml").write_text("lobby: {}\n", encoding="utf-8")
+    build.data_path("floors.yaml").write_text("lobby: {}\n", encoding="utf-8")
     with pytest.raises(SystemExit, match="must be written floor_<key>"):
         build.read_levels()

@@ -8,8 +8,10 @@
 #     cp -r examples/minimal site      # then edit site/, build, snapshot
 #
 # Everything about one building lives in its site directory:
-#   site.yaml   this file — identity, modules, BACnet addressing
-#   data/       floors.yaml (level roster), meters.csv, one YAML per module
+#   data/       numbered in the order to fill them in: 00_site.yaml (this
+#               file — identity, modules, BACnet addressing), 02_floors.yaml
+#               (level roster), 03_meters.yaml (meters by level → core), then
+#               one YAML per module (01_pages.yaml, frozen pages, isn't used here)
 #   pages/      frozen page fragments (none here)
 #   templates/  overrides of the engine's _templates/ (none here)
 #   assets/     site images copied over _assets/ (none here)
@@ -29,8 +31,8 @@ ems_name: "AD EMS"
 # Page families to build, from the engine's MODULES (build.py).
 modules: [floors, incomers, home, meters_hierarchy, building_performance, sidebar]
 
-# Utilities this site meters, in display order. The code is what meters.csv
-# utility cells resolve to (a code or label, any case; "Fluid energy" picks the
+# Utilities this site meters, in display order. The code is what a meter's
+# utility (data/03_meters.yaml) resolves to (a code or label, any case; "Fluid energy" picks the
 # thermal code named in the meter's function) and the CSS class .meter-<code>;
 # the label names it on pages; kind (electric | thermal | other) groups
 # utilities for the zone-card subtitles.
@@ -44,7 +46,7 @@ utilities:
 optergy_lib_version: "260228085300"
 
 # BACnet point addressing — "<device>|<object type>|<instance>|85|-1". A
-# meter's demand point is instance base + power_offset[its meters.csv type].
+# meter's demand point is instance base + power_offset[its type].
 bacnet:
   device: 300
   power_offset:

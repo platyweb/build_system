@@ -71,7 +71,7 @@ def test_every_engine_component_has_a_minimal_example_placement() -> None:
     # somewhere with only its required options, and the goldens freeze what
     # that renders. A new required option, or a default that changes the
     # output, fails here or in the golden check.
-    placements = [p for f in sorted((ROOT / "examples").glob("*/data/extras.yaml"))
+    placements = [p for f in sorted((ROOT / "examples").glob("*/data/*extras.yaml"))
                   for p in (yaml.safe_load(f.read_text(encoding="utf-8")) or {}).get("extras") or []]
     def minimal(p: dict, spec: dict) -> bool:
         """Only the required options, plus one option from each one_of group."""
@@ -166,7 +166,7 @@ def test_a_site_component_is_placed_like_an_engine_one(site: Path, tmp_path: Pat
     (badge / "component.yaml").write_text(
         "description: A coloured badge.\noptions:\n  text: {required: true, doc: Badge text}\n", encoding="utf-8")
     (badge / "component.html.j2").write_text('<span class="badge">{{ text|e }}</span>\n', encoding="utf-8")
-    extras = site / "data" / "extras.yaml"
+    extras = build.data_path("extras.yaml")
     extras.write_text(extras.read_text(encoding="utf-8")
                       + "  - {component: badge, pages: [floor], slot: top, text: Pilot site}\n", encoding="utf-8")
     assert build.validate() == 0
@@ -176,21 +176,21 @@ def test_a_site_component_is_placed_like_an_engine_one(site: Path, tmp_path: Pat
 
 
 def test_check_warns_when_a_placement_never_renders(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    yaml_file = site / "site.yaml"
+    yaml_file = build.BUILDING_FILE
     yaml_file.write_text(yaml_file.read_text(encoding="utf-8").replace("home, ", ""), encoding="utf-8")
     assert build.validate() == 0
     assert "placement 3 (html) doesn't appear on home — its module is off" in capsys.readouterr().out
 
 
 def test_check_reports_a_bad_placement(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    extras = site / "data" / "extras.yaml"
+    extras = build.data_path("extras.yaml")
     extras.write_text(extras.read_text(encoding="utf-8").replace("width: 480px", "widht: 480px"), encoding="utf-8")
     assert build.validate() == 1
     assert "extras.yaml placement 2 (image): unknown option 'widht'" in capsys.readouterr().out
 
 
 def test_check_catches_a_live_value_with_an_unknown_point(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    extras = site / "data" / "extras.yaml"
+    extras = build.data_path("extras.yaml")
     extras.write_text(extras.read_text(encoding="utf-8").replace("point: energy_intensity", "point: energy_intensty"),
                       encoding="utf-8")
     assert build.validate() == 1

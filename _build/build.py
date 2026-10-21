@@ -51,6 +51,7 @@ import components
 import generate_meter_registry
 import jsblocks
 import linkcheck
+import meters_yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = ROOT / "_templates"   # engine templates
@@ -68,8 +69,9 @@ OUTPUT_MARKER = ".build-output"
 # ─── Site + output paths ─────────────────────────────────────────────────────
 # Everything specific to one building lives under its site directory
 # (default site/):
-#   site.yaml   site/building identity (the `building` template global)
-#   data/       the YAML data files + meters.csv
+#   data/       the numbered data files, starting with 00_site.yaml: site/
+#               building identity (the `building` template global). An older
+#               site keeps its site.yaml at the site root.
 #   pages/      frozen page fragments rendered by build_pages()
 #   templates/  template overrides, searched before _templates/
 #   assets/     site images (floorplans, SVG backgrounds, logos), copied
@@ -81,7 +83,7 @@ OUTPUT_MARKER = ".build-output"
 # from this module at call time. Nothing here is evaluated at import time.
 SITE_ROOT: Path            # site/
 DATA_DIR: Path             # site/data/
-BUILDING_FILE: Path        # site/site.yaml
+BUILDING_FILE: Path        # site/data/00_site.yaml
 OUT_ROOT: Path             # project/
 SITE_DIR: Path             # project/<slug>/ — the deployed site
 # Tenant pages live directly under project/tenants/ — a sibling of SITE_DIR,
@@ -114,9 +116,9 @@ def configure(site_root: Path = DEFAULT_SITE_ROOT, out_root: Path = DEFAULT_OUT_
     global SUMMARY_ROLES, FLOOR_PAGE, TENANT_PAGE, BUILDINGS, CAMPUS
     SITE_ROOT = Path(site_root).resolve()
     DATA_DIR = SITE_ROOT / "data"
-    BUILDING_FILE = SITE_ROOT / "site.yaml"
-    if not BUILDING_FILE.exists():
-        raise SystemExit(f"{BUILDING_FILE} not found — is {SITE_ROOT} a site directory? "
+    BUILDING_FILE = site_file(SITE_ROOT)
+    if BUILDING_FILE is None:
+        raise SystemExit(f"{SITE_ROOT}/data/00_site.yaml not found — is {SITE_ROOT} a site directory? "
                          "(A new site starts as a copy of an example: cp -r examples/minimal site)")
     building = read_building()
     slug = building.get("slug")
@@ -177,13 +179,13 @@ def stage_output() -> None:
 
 def write_js_blocks() -> None:
     """Write the site's data into the staged runtime JS (see jsblocks.py):
-    METER_REGISTRY from data/meters.csv, POINTS from data/points.yaml,
+    METER_REGISTRY from the meters file (meters_file), POINTS from data/points.yaml,
     BACNET_CONFIG from site.yaml `bacnet:` and ReportUrls from
     data/reports.yaml `urls:`. SIDEBAR_HTML is written by build_sidebar(),
     which owns that rendering. live-points.js's OVERRIDE_FILE — the Optergy
     display that point overrides post to — is site.yaml
     `optergy_override_display` (left blank in the skeleton if unset)."""
-    meters = generate_meter_registry.read_csv(DATA_DIR / "meters.csv", UTILITIES)
+    meters = read_meter_rows()
     jsblocks.inject(METERS_JS, jsblocks.METER_REGISTRY, jsblocks.render_meter_registry(meters))
     jsblocks.inject(METERS_JS, jsblocks.POINTS, jsblocks.render_points(read_points()))
     jsblocks.inject(METERS_JS, jsblocks.BACNET_CONFIG, jsblocks.render_bacnet_config(BACNET))
@@ -200,6 +202,55 @@ def _rel(path: Path) -> str:
         return path.relative_to(ROOT).as_posix()
     except ValueError:
         return str(path)
+
+
+# ─── Data files ──────────────────────────────────────────────────────────────
+# A site's data/ files, in the order they're filled in for a new building.
+# A file may carry its number — its place in this list, data/02_floors.yaml —
+# so a directory listing shows that order; the build finds it either way.
+# Only site.yaml and the files the site's modules read are needed.
+DATA_FILES = (
+    "site.yaml",              # identity, modules, BACnet addressing, utilities, page config
+    "pages.yaml",             # frozen pages (bodies in pages/)
+    "floors.yaml",            # levels bottom → top, tenants, each level's cores
+    "meters.yaml",            # every meter, by level → core (or meters.csv)
+    "points.yaml",            # named BMS points that aren't meters
+    "bms_bindings.yaml",      # the live point behind each floor summary card
+    "incomers.yaml",
+    "home.yaml",
+    "meters_hierarchy.yaml",
+    "switchboards.yaml",
+    "risers.yaml",
+    "schematics.yaml",
+    "energy_flow.yaml",
+    "dials.yaml",
+    "reports.yaml",           # report cards placed on the pages above
+    "extras.yaml",            # components placed on the pages above
+    "sidebar.yaml",           # the menu over every page
+)
+# Also read, from sites that predate their replacement in DATA_FILES.
+LEGACY_DATA_FILES = ("meters.csv", "tenants.yaml")
+
+
+def data_path(name: str, data_dir: Path | None = None) -> Path:
+    """data/<name>, or its numbered form data/<NN>_<name> — whichever the
+    site has (the plain path if neither exists). Both is an error."""
+    data_dir = data_dir or DATA_DIR
+    found = [p for p in sorted(data_dir.glob(f"*_{name}")) if re.fullmatch(rf"\d+_{re.escape(name)}", p.name)]
+    if (data_dir / name).exists():
+        found.append(data_dir / name)
+    if len(found) > 1:
+        raise SystemExit(f"{_rel(data_dir)}: {', '.join(p.name for p in found)} are all {name} — keep one")
+    return found[0] if found else data_dir / name
+
+
+def site_file(site_root: Path) -> Path | None:
+    """A site directory's site.yaml — data/00_site.yaml, or site.yaml at the
+    root on a site that predates the move — or None: not a site directory."""
+    in_data, at_root = data_path("site.yaml", Path(site_root) / "data"), Path(site_root) / "site.yaml"
+    if in_data.exists() and at_root.exists():
+        raise SystemExit(f"{_rel(Path(site_root))}: both data/{in_data.name} and site.yaml — keep data/{in_data.name}")
+    return in_data if in_data.exists() else at_root if at_root.exists() else None
 
 
 # ─── BACnet point addresses ──────────────────────────────────────────────────
@@ -426,22 +477,30 @@ def relative_url(url: str, folder: str | None) -> str:
 #   heading   : the floor page's <h1>                — default: "<label> Overview"
 #   page      : false for a level with meters but no page of its own
 #               (plant basements, a roof)            — default: true
+#   cores     : {<core>: <tenant short name>} — which tenant holds each of
+#               the level's cores (see read_tenants). An unlisted core is
+#               the landlord's. Checked by --check only; no page shows it yet
 # Any other field is page data for build_floors (floorplan_tab, tabs, …).
 #   building  : the building it belongs to (site.yaml `buildings:` key) —
 #               required on a campus, where it picks the page's subfolder
-LEVEL_FIELDS = ("label", "nav_label", "heading", "page", "building")
+LEVEL_FIELDS = ("label", "nav_label", "heading", "page", "building", "cores")
+
+# floors.yaml's one top-level key that isn't a level: the tenant catalog.
+TENANTS_KEY = "tenants"
 
 
 def read_levels() -> list[dict]:
     """The level roster, bottom → top. Each level is
-    {key, page_key, label, nav_label, heading, page, data} — `data` holds the
-    entry's non-roster fields (the floor page's own overrides)."""
-    floors_file = DATA_DIR / "floors.yaml"
+    {key, page_key, label, nav_label, heading, page, building, cores, data} —
+    `data` holds the entry's non-roster fields (the floor page's own overrides)."""
+    floors_file = data_path("floors.yaml")
     if not floors_file.exists():
         return []
     levels: list[dict] = []
     for page_key, entry in (_load_yaml_unique_keys(floors_file) or {}).items():
         page_key = str(page_key)
+        if page_key == TENANTS_KEY:
+            continue
         if not page_key.startswith("floor_"):
             raise SystemExit(f"{_rel(floors_file)}: level '{page_key}' must be written floor_<key>")
         entry = dict(entry or {})
@@ -455,9 +514,111 @@ def read_levels() -> list[dict]:
             "heading":   str(entry.get("heading", f"{label} Overview")),
             "page":      entry.get("page", True) is not False,
             "building":  check_building(entry.get("building"), f"{_rel(floors_file)} '{page_key}'", level=True),
+            "cores":     _read_cores(entry.get("cores"), f"{_rel(floors_file)} '{page_key}'"),
             "data":      {k: v for k, v in entry.items() if k not in LEVEL_FIELDS},
         })
     return levels
+
+
+def _read_cores(cores, where: str) -> dict[str, str]:
+    """A level's `cores:` as {core: tenant short name}. Each listed core
+    names exactly one tenant; whether that tenant exists is --check's job."""
+    if cores is None:
+        return {}
+    if not isinstance(cores, dict):
+        raise SystemExit(f"{where}: `cores:` must map each core to a tenant's short name, "
+                         "e.g. cores: {East: <tenant>, West: <tenant>}")
+    out: dict[str, str] = {}
+    for core, tenant in cores.items():
+        if tenant is None or isinstance(tenant, (list, dict)) or not str(tenant).strip():
+            raise SystemExit(f"{where}: core '{core}' must name one tenant's short name "
+                             "(leave a landlord core out)")
+        out[str(core)] = str(tenant).strip()
+    return out
+
+
+# ─── Tenants ─────────────────────────────────────────────────────────────────
+# floors.yaml's `tenants:` block is the site's tenant catalog, keyed by each
+# tenant's SHORT NAME: the spelling meters.csv's `tenant` column uses and a
+# level's `cores:` refers to. Catalog order is the sidebar's tenant order.
+#
+# Tenant fields (all optional):
+#   name           : proper name, shown on the tenant pages and sidebar
+#                                                  — default: the short name
+#   slug           : output folder, project/tenants/<slug>/
+#                    — default: the short name lower-cased, each run of other
+#                      characters a "-" ("Acme & Co" → acme-co)
+#   index          : {} (or {page_title, title, reports}) adds index.htm
+#   extra_floors   : [<key>, …] floors with no meters tagged to the tenant
+#                    yet, given a page anyway
+#   exclude_floors : [<key>, …] floors a tagged meter would add, dropped
+#   floors         : {<key>: {heading, page_title, floorplan_tab_label,
+#                    floorplan_image, floorplan_after_column, <slot>_reports}}
+#
+# A site from before the catalog keeps data/tenants.yaml instead: keyed by
+# slug, with `display_name` (proper name, default the slug capitalised) and
+# `registry_tenant` (short name, or a list of them; default the slug).
+# read_tenants() reads either into one shape; a site may not have both.
+TENANT_FIELDS = ("name", "slug", "index", "extra_floors", "exclude_floors", "floors")
+
+
+def tenant_slug(short_name: str) -> str:
+    """The default output folder for a tenant: its short name lower-cased,
+    each run of anything but a-z/0-9 a "-"."""
+    return re.sub(r"[^a-z0-9]+", "-", short_name.lower()).strip("-")
+
+
+def read_tenants() -> list[dict]:
+    """The site's tenants in file order, each
+    {slug, name, short_names, where, data}: `short_names` are the meters.csv
+    `tenant` spellings that tag its meters, `where` names it in messages, and
+    `data` holds index / extra_floors / exclude_floors / floors."""
+    floors_file = data_path("floors.yaml")
+    legacy_file = data_path("tenants.yaml")
+    catalog = None
+    if floors_file.exists():
+        catalog = (_load_yaml_unique_keys(floors_file) or {}).get(TENANTS_KEY)
+    if catalog is not None and legacy_file.exists():
+        raise SystemExit(f"{_rel(legacy_file)}: tenants are in floors.yaml `{TENANTS_KEY}:` now — "
+                         "move any entries still here across and delete this file")
+
+    tenants: list[dict] = []
+    if catalog is not None:
+        if not isinstance(catalog, dict):
+            raise SystemExit(f"{_rel(floors_file)}: `{TENANTS_KEY}:` must map each tenant's short name to its fields")
+        for short, raw in catalog.items():
+            short = str(short)
+            where = f"{_rel(floors_file)} tenant '{short}'"
+            data = dict(raw or {})
+            unknown = sorted(set(data) - set(TENANT_FIELDS))
+            if unknown:
+                raise SystemExit(f"{where}: unknown field(s) {unknown} (known: {', '.join(TENANT_FIELDS)}; "
+                                 "the key is the short name, `name` the proper name)")
+            slug = str(data.pop("slug", None) or tenant_slug(short))
+            name = str(data.pop("name", None) or short)
+            tenants.append({"slug": slug, "name": name, "short_names": [short], "where": where, "data": data})
+    elif legacy_file.exists():
+        for slug, raw in (yaml.safe_load(legacy_file.read_text(encoding="utf-8")) or {}).items():
+            slug = str(slug)
+            data = dict(raw or {})
+            registry_tenant = data.pop("registry_tenant", slug)
+            tenants.append({
+                "slug":        slug,
+                "name":        data.pop("display_name", slug.capitalize()),
+                "short_names": [registry_tenant] if isinstance(registry_tenant, str) else list(registry_tenant),
+                "where":       f"tenants.yaml '{slug}'",
+                "data":        data,
+            })
+
+    seen: dict[str, str] = {}
+    for t in tenants:
+        if not t["slug"] or "/" in t["slug"] or t["slug"] in (".", ".."):
+            raise SystemExit(f"{t['where']}: slug '{t['slug']}' can't be a folder name — set `slug:`")
+        if t["slug"] in seen:
+            raise SystemExit(f"{t['where']}: slug '{t['slug']}' is also {seen[t['slug']]}'s — "
+                             "give one of them its own `slug:`")
+        seen[t["slug"]] = t["where"]
+    return tenants
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
@@ -506,24 +667,44 @@ def default_floorplan_image(floor_key: str) -> str:
 
 
 # ─── Meter registry ──────────────────────────────────────────────────────────
-# The source of truth is site/data/meters.csv. read_meters() reads it
-# directly; the build also writes it into the runtime's METER_REGISTRY block
-# (write_js_blocks) for the browser — nothing reads that block back.
+# The source of truth is the site's meters file: data/meters.yaml, laid out
+# level → core → meter (meters_yaml.py), or an older site's data/meters.csv.
+# read_meters() reads it directly; the build also writes it into the
+# runtime's METER_REGISTRY block (write_js_blocks) for the browser — nothing
+# reads that block back.
+
+def meters_file() -> Path:
+    """The site's meters: data/meters.yaml (level → core → meter), or an
+    older site's data/meters.csv. Both is an error — the CSV is an export to
+    re-import (_build/import_meters.py), not a second source."""
+    yaml_file, csv_file = data_path("meters.yaml"), data_path("meters.csv")
+    if yaml_file.exists() and csv_file.exists():
+        raise SystemExit(f"{_rel(DATA_DIR)}: both {yaml_file.name} and {csv_file.name} — keep {yaml_file.name}. "
+                         f"To bring in a new export: _build/import_meters.py <export.csv>, then delete the CSV")
+    return yaml_file if yaml_file.exists() else csv_file
+
+
+def read_meter_rows() -> list[dict]:
+    """The site's meters as normalised rows (generate_meter_registry's
+    shape), whichever file holds them."""
+    path = meters_file()
+    if not path.exists():
+        return []
+    if path.suffix == ".csv":
+        return generate_meter_registry.read_csv(path, UTILITIES)
+    return meters_yaml.read(path, UTILITIES, {lv["key"]: lv["cores"] for lv in read_levels()})
+
 
 def read_meters() -> list[dict]:
-    """meters.csv as a list of normalised meter dicts.
+    """The site's meters as a list of normalised meter dicts.
 
     Placement fields (column/zone/position/function/utility) only count for
     a meter placed on a floor: an unplaced meter gets the same empty
     defaults as a blank cell — matching METER_REGISTRY, which omits
     placement fields for meters with no `floor`.
     """
-    csv_file = DATA_DIR / "meters.csv"
-    if not csv_file.exists():
-        return []
-
     out: list[dict] = []
-    for row in generate_meter_registry.read_csv(csv_file, UTILITIES):
+    for row in read_meter_rows():
         placed = bool(row["floor"])
         out.append(
             {
@@ -576,7 +757,7 @@ def _check_meter_types(meters: list[dict]) -> None:
     if missing:
         raise SystemExit(
             f"{_rel(BUILDING_FILE)}: bacnet.power_offset has no entry for meter type(s) "
-            f"{missing} used in meters.csv"
+            f"{missing} used in {meters_file().name}"
         )
 
 
@@ -626,7 +807,7 @@ def _check_registry_integrity(meters: list[dict]) -> None:
 
 def _read_data(filename: str, key: str, default):
     """Top-level `key` of site/data/<filename>; `default` if the file or key is absent."""
-    path = DATA_DIR / filename
+    path = data_path(filename)
     if not path.exists():
         return default
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -931,7 +1112,7 @@ def extras_pages() -> dict[str, str]:
     """{page key: page kind} for every page an extra can name: the floor
     pages, the incomer pages and home."""
     pages = {lv["page_key"]: "floor" for lv in read_levels() if lv["page"]}
-    pages |= {str(key): "incomer" for key in (_read_yaml(DATA_DIR / "incomers.yaml") or {})}
+    pages |= {str(key): "incomer" for key in (_read_yaml(data_path("incomers.yaml")) or {})}
     pages["home"] = "home"
     return pages
 
@@ -948,7 +1129,7 @@ def render_fragment(ctx, name: str) -> str:
 
 
 def build_floors(env: Environment, only: str | None = None) -> list[Path]:
-    floors_file = DATA_DIR / "floors.yaml"
+    floors_file = data_path("floors.yaml")
     if not floors_file.exists():
         print(f"  (skip floors: {floors_file} not found)")
         return []
@@ -992,7 +1173,7 @@ def build_floors(env: Environment, only: str | None = None) -> list[Path]:
             fp_tab["layout"] = derive_layout(main_meters, floor_key, image, after_col)
             if not fp_tab["layout"]:
                 raise SystemExit(
-                    f"{key}: no meters pinned to floor={floor_key!r} in meters.csv "
+                    f"{key}: no meters pinned to floor={floor_key!r} in {meters_file().name} "
                     f"and no `layout:` in YAML — cannot render."
                 )
         if "image" in fp_tab:
@@ -1036,7 +1217,7 @@ def build_incomers(env: Environment, only: str | None = None) -> list[Path]:
     the rich form (+ stat_grids + headed report). An entry may name a
     different template with `template:` — e.g. a site override in
     site/templates/ for a bespoke layout."""
-    incomers_file = DATA_DIR / "incomers.yaml"
+    incomers_file = data_path("incomers.yaml")
     if not incomers_file.exists():
         print(f"  (skip incomers: {incomers_file} not found)")
         return []
@@ -1082,7 +1263,7 @@ def build_meters_hierarchy(env: Environment, only: str | None = None) -> list[Pa
     that carries no parent_id of its own."""
     if only and only != "meters_hierarchy":
         return []
-    data_file = DATA_DIR / "meters_hierarchy.yaml"
+    data_file = data_path("meters_hierarchy.yaml")
     if not data_file.exists():
         print(f"  (skip meters_hierarchy: {data_file} not found)")
         return []
@@ -1129,11 +1310,10 @@ def build_meters_hierarchy(env: Environment, only: str | None = None) -> list[Pa
 # `tenant` field contains the tenant slug AND whose `floor` matches the page.
 
 def build_tenants(env: Environment, only: str | None = None) -> list[Path]:
-    tenants_file = DATA_DIR / "tenants.yaml"
-    if not tenants_file.exists():
-        print(f"  (skip tenants: {tenants_file} not found)")
+    tenants = read_tenants()
+    if not tenants:
+        print(f"  (skip tenants: no `{TENANTS_KEY}:` in floors.yaml)")
         return []
-    tenants = yaml.safe_load(tenants_file.read_text(encoding="utf-8")) or {}
 
     meters = read_meters()
     reports = read_reports()
@@ -1145,26 +1325,17 @@ def build_tenants(env: Environment, only: str | None = None) -> list[Path]:
     sidebar_template = env.get_template("tenant_sidebar.js.j2")
     written: list[Path] = []
 
-    for slug, raw in tenants.items():
+    for tenant in tenants:
+        slug, display_name, data = tenant["slug"], tenant["name"], tenant["data"]
         if only and only != f"tenant_{slug}":
             continue
-        data = dict(raw or {})
-        display_name = data.get("display_name", slug.capitalize())
         tenant_dir = TENANTS_DIR / slug
         tenant_dir.mkdir(parents=True, exist_ok=True)
 
-        # METER_REGISTRY's `tenant` field holds the display string as typed
-        # in the CSV/registry (e.g. "MS Amlin", "Aegon / Draft Kings"), which
-        # is usually NOT a clean slug/folder name — so matching against the
-        # YAML key directly would miss most tenants (or break on embedded
-        # "/"). `registry_tenant` supplies the real registry string(s) to
-        # match on; defaults to the slug itself for tenants where they
-        # happen to coincide. Accepts a single string or a list (a tenant
-        # spelled more than one way across rows).
-        registry_tenant = data.get("registry_tenant", slug)
-        registry_names = (
-            [registry_tenant] if isinstance(registry_tenant, str) else list(registry_tenant)
-        )
+        # A meter is the tenant's when meters.csv's `tenant` column carries
+        # one of its short names (the catalog key; a legacy tenants.yaml's
+        # registry_tenant, which may list several spellings).
+        registry_names = tenant["short_names"]
 
         # Floors this tenant occupies (derived from registry), plus any
         # `extra_floors` the tenant YAML adds by hand (e.g. a Basement level
@@ -1178,7 +1349,7 @@ def build_tenants(env: Environment, only: str | None = None) -> list[Path]:
         tenant_meters = [m for m in meters if any(n in m["tenants"] for n in registry_names)]
         floor_keys = {f for m in tenant_meters for f in m["floors"]} | {str(f) for f in data.get("extra_floors") or []}
         floor_keys -= {str(f) for f in data.get("exclude_floors") or []}
-        floors_occupied = sort_floors(floor_keys, rank, f"tenants.yaml '{slug}'", top_first=True)
+        floors_occupied = sort_floors(floor_keys, rank, tenant["where"], top_first=True)
         if not floors_occupied:
             print(f"  WARNING: tenant {slug!r} has no meters in METER_REGISTRY — skipping")
             continue
@@ -1323,7 +1494,7 @@ def build_schematics(env: Environment, only: str | None = None) -> list[Path]:
 
     Each page is an SVG background + a list of positioned overlay widgets.
     """
-    data_file = DATA_DIR / "schematics.yaml"
+    data_file = data_path("schematics.yaml")
     if not data_file.exists():
         print(f"  (skip schematics: {data_file} not found)")
         return []
@@ -1367,7 +1538,7 @@ def _auto_floors() -> list[dict]:
 
 
 def _auto_incomers() -> list[dict]:
-    incomers_file = DATA_DIR / "incomers.yaml"
+    incomers_file = data_path("incomers.yaml")
     if not incomers_file.exists():
         return []
     data = yaml.safe_load(incomers_file.read_text(encoding="utf-8")) or {}
@@ -1389,7 +1560,7 @@ def _auto_incomers() -> list[dict]:
 
 def _auto_switchboards() -> list[dict]:
     """Switchboard sub-items: 'LV-01', 'LV-02', etc. Driven by switchboards.yaml."""
-    sb_file = DATA_DIR / "switchboards.yaml"
+    sb_file = data_path("switchboards.yaml")
     if not sb_file.exists():
         return []
     cfg = yaml.safe_load(sb_file.read_text(encoding="utf-8")) or {}
@@ -1429,28 +1600,16 @@ def _public(item: dict) -> dict:
 
 
 def _auto_tenants(meters: list[dict]) -> list[dict]:
-    """Tenant menu-items in tenants.yaml order; href varies by whether the
+    """Tenant menu-items in catalog order; href varies by whether the
     tenant has an index page or only a single floor view."""
-    t_file = DATA_DIR / "tenants.yaml"
-    if not t_file.exists():
-        return []
-    tenants = yaml.safe_load(t_file.read_text(encoding="utf-8")) or {}
     rank = level_rank()
     items: list[dict] = []
-    for slug, raw in tenants.items():
-        data = raw or {}
-        display_name = data.get("display_name", slug.capitalize())
-        # Match METER_REGISTRY's `tenant` field the same way build_tenants()
-        # does — it's the display string as typed in the registry (e.g. "MS
-        # Amlin"), which usually isn't the slug, so matching on slug alone
-        # silently finds nothing and every tenant falls back to /index.htm.
-        registry_tenant = data.get("registry_tenant", slug)
-        registry_names = (
-            [registry_tenant] if isinstance(registry_tenant, str) else list(registry_tenant)
-        )
-        tenant_meters = [m for m in meters if any(n in m["tenants"] for n in registry_names)]
-        floors_occupied = sort_floors({f for m in tenant_meters for f in m["floors"]}, rank,
-                                      f"tenants.yaml '{slug}'")
+    for tenant in read_tenants():
+        slug, display_name, data = tenant["slug"], tenant["name"], tenant["data"]
+        # Match meters.csv's `tenant` column on the short names, the same
+        # way build_tenants() does.
+        tenant_meters = [m for m in meters if any(n in m["tenants"] for n in tenant["short_names"])]
+        floors_occupied = sort_floors({f for m in tenant_meters for f in m["floors"]}, rank, tenant["where"])
         if "index" in data:
             href = f"/docs/tenants/{slug}/index.htm"
         elif floors_occupied:
@@ -1542,7 +1701,7 @@ SIDEBAR_RUNTIME_SCRIPT = 'script.src = "js/project/2.0/sidebar.js";'
 def build_sidebar(env: Environment, only: str | None = None) -> list[Path]:
     if only and only != "sidebar":
         return []
-    sidebar_file = DATA_DIR / "sidebar.yaml"
+    sidebar_file = data_path("sidebar.yaml")
     if not sidebar_file.exists():
         print(f"  (skip sidebar: {sidebar_file} not found)")
         return []
@@ -1604,7 +1763,7 @@ def build_home(env: Environment, only: str | None = None) -> list[Path]:
     """Render the home landing page from site/data/home.yaml (singleton)."""
     if only and only != "home":
         return []
-    home_file = DATA_DIR / "home.yaml"
+    home_file = data_path("home.yaml")
     if not home_file.exists():
         print(f"  (skip home: {home_file} not found)")
         return []
@@ -1646,7 +1805,7 @@ def build_energy_flow(env: Environment, only: str | None = None) -> list[Path]:
         unique meter once and sums it into every flow that references it."""
     if only and only != "energy_flow":
         return []
-    data_file = DATA_DIR / "energy_flow.yaml"
+    data_file = data_path("energy_flow.yaml")
     if not data_file.exists():
         print(f"  (skip energy_flow: {data_file} not found)")
         return []
@@ -1782,7 +1941,7 @@ def build_dials(env: Environment, only: str | None = None) -> list[Path]:
     rendered by the live_dial macro + js/project/2.0/energy-dials.js."""
     if only and only != "dials":
         return []
-    data_file = DATA_DIR / "dials.yaml"
+    data_file = data_path("dials.yaml")
     if not data_file.exists():
         print(f"  (skip dials: {data_file} not found)")
         return []
@@ -1809,7 +1968,7 @@ def build_pages(env: Environment, only: str | None = None) -> list[Path]:
     tail_scripts}.html (extracted once from the original hand-written pages,
     then hand maintained); pages.yaml carries only per-page metadata.
     """
-    pages_file = DATA_DIR / "pages.yaml"
+    pages_file = data_path("pages.yaml")
     if not pages_file.exists():
         print(f"  (skip pages: {pages_file} not found)")
         return []
@@ -1895,11 +2054,11 @@ def _building_page_files(building: str) -> set[str]:
     """The filenames the build writes into a campus building's folder (its
     floor, incomer, switchboard and pages.yaml pages, and its sidebar)."""
     files = {f"{lv['page_key']}.htm" for lv in read_levels() if lv["page"] and lv["building"] == building}
-    files |= {f"{key}.htm" for key, e in (_read_yaml(DATA_DIR / "incomers.yaml") or {}).items()
+    files |= {f"{key}.htm" for key, e in (_read_yaml(data_path("incomers.yaml")) or {}).items()
               if (e or {}).get("building") == building}
-    files |= {f"{key}.htm" for key, b in ((_read_yaml(DATA_DIR / "switchboards.yaml") or {}).get("boards") or {}).items()
+    files |= {f"{key}.htm" for key, b in ((_read_yaml(data_path("switchboards.yaml")) or {}).get("boards") or {}).items()
               if (b or {}).get("building") == building}
-    files |= {pg["out"] for pg in (_read_yaml(DATA_DIR / "pages.yaml") or {}).get("pages") or []
+    files |= {pg["out"] for pg in (_read_yaml(data_path("pages.yaml")) or {}).get("pages") or []
               if pg.get("building") == building}
     return files | {"sidebar-template.js"}
 
@@ -1913,6 +2072,57 @@ def _floor_group_keys(items: list[dict]):
                 yield g.get("from")
                 yield g.get("to")
         yield from _floor_group_keys(item.get("children") or [])
+
+
+def _check_cores(levels: list[dict], tenants: list[dict], meters: list[dict],
+                 problems: list[str], warnings: list[str]) -> None:
+    """floors.yaml `cores:` against the tenant catalog and the meters'
+    tenant tags. Skipped for a site that assigns no cores."""
+    if not any(lv["cores"] for lv in levels):
+        return
+    owner = {name: t for t in tenants for name in t["short_names"]}
+    cores: dict[str, dict[str, dict]] = {}   # level key → {core: tenant}
+    for lv in levels:
+        cores[lv["key"]] = {}
+        for core, short in lv["cores"].items():
+            if short in owner:
+                cores[lv["key"]][core] = owner[short]
+            else:
+                problems.append(f"floors.yaml '{lv['page_key']}': core '{core}' is '{short}', which isn't in "
+                                f"`{TENANTS_KEY}:` (short names: {', '.join(owner) or 'none'})")
+
+    # A meter tagged to a tenant belongs in a core that tenant holds: the
+    # core its zone names, or, for a meter outside the cores (a floor total),
+    # any core on its floor. Tags that aren't a catalog tenant (landlord
+    # areas) are left alone, as the tenant pages leave them.
+    stray: dict[tuple[str, str, str], list[int]] = defaultdict(list)
+    source = meters_file().name
+    for m in meters:
+        for floor in m["floors"]:
+            held = cores.get(floor, {})
+            for name in m["tenants"]:
+                if name not in owner:
+                    continue
+                slug = owner[name]["slug"]
+                if m["zone"] in held:
+                    if held[m["zone"]]["slug"] != slug:
+                        stray[(floor, name, m["zone"])].append(m["id"])
+                elif slug not in {t["slug"] for t in held.values()}:
+                    stray[(floor, name, "")].append(m["id"])
+    for (floor, name, core), ids in stray.items():
+        listed = f"{ids[:8]}{' …' if len(ids) > 8 else ''}"
+        if core:
+            holder = cores[floor][core]["short_names"][0]
+            warnings.append(f"{source}: meter(s) {listed} on '{floor}' are tagged '{name}' but sit in "
+                            f"core '{core}', which floors.yaml gives to '{holder}'")
+        else:
+            warnings.append(f"{source}: meter(s) {listed} tag '{name}' on '{floor}', but floors.yaml "
+                            "gives them no core there")
+
+    holders = {t["slug"] for held in cores.values() for t in held.values()}
+    for tenant in tenants:
+        if tenant["slug"] not in holders:
+            warnings.append(f"{tenant['where']}: holds no core on any floor (floors.yaml `cores:`)")
 
 
 def validate(modules: list[str] | None = None) -> int:
@@ -1984,16 +2194,17 @@ def validate(modules: list[str] | None = None) -> int:
 
     for floor in sorted({f for m in meters for f in m["floors"]} - level_keys):
         ids = [m["id"] for m in meters if floor in m["floors"]]
-        problems.append(f"meters.csv: floor '{floor}' (meter ids {ids[:8]}{' …' if len(ids) > 8 else ''}) "
+        problems.append(f"{meters_file().name}: floor '{floor}' (meter ids {ids[:8]}{' …' if len(ids) > 8 else ''}) "
                         "isn't a level in floors.yaml (typo? or add it, page: false if it has no page)")
     unknown_floors("bms_bindings.yaml", (f for _role, f in read_bms_bindings()))
     unknown_floors("reports.yaml placements", (r["floor"] for r in reports if "floor" in r))
-    for slug, t in (_read_yaml(DATA_DIR / "tenants.yaml") or {}).items():
-        t = t or {}
-        unknown_floors(f"tenants.yaml '{slug}'",
+    tenants = read_tenants()
+    for tenant in tenants:
+        t = tenant["data"]
+        unknown_floors(tenant["where"],
                        [*(t.get("extra_floors") or []), *(t.get("exclude_floors") or []), *(t.get("floors") or {})])
-    unknown_floors("energy_flow.yaml floors", (fl["key"] for fl in (_read_yaml(DATA_DIR / "energy_flow.yaml") or {}).get("floors") or []))
-    sidebar = _read_yaml(DATA_DIR / "sidebar.yaml") or {}
+    unknown_floors("energy_flow.yaml floors", (fl["key"] for fl in (_read_yaml(data_path("energy_flow.yaml")) or {}).get("floors") or []))
+    sidebar = _read_yaml(data_path("sidebar.yaml")) or {}
     for items in [sidebar.get("top_items"), sidebar.get("bottom_items"),
                   *(sec.get("items") for sec in sidebar.get("sections") or [])]:
         unknown_floors("sidebar.yaml floor groups", _floor_group_keys(items or []))
@@ -2003,15 +2214,15 @@ def validate(modules: list[str] | None = None) -> int:
     # through as-is by meters.csv normalisation, so it shows up here).
     for code in sorted({base_utility(m["utility"]) for m in meters if m["utility"]} - UTILITIES.keys()):
         ids = [m["id"] for m in meters if base_utility(m["utility"]) == code]
-        problems.append(f"meters.csv: utility '{code}' (meter ids {ids[:8]}{' …' if len(ids) > 8 else ''}) "
+        problems.append(f"{meters_file().name}: utility '{code}' (meter ids {ids[:8]}{' …' if len(ids) > 8 else ''}) "
                         f"isn't in site.yaml `utilities:` (known: {', '.join(UTILITIES)})")
 
     # 8. Every `building:` an incomer, page or switchboard names must be a
     # site.yaml building (levels are checked as floors.yaml is read).
-    placed = [("incomers.yaml", key, entry) for key, entry in (_read_yaml(DATA_DIR / "incomers.yaml") or {}).items()]
-    placed += [("pages.yaml", pg.get("key"), pg) for pg in (_read_yaml(DATA_DIR / "pages.yaml") or {}).get("pages") or []]
+    placed = [("incomers.yaml", key, entry) for key, entry in (_read_yaml(data_path("incomers.yaml")) or {}).items()]
+    placed += [("pages.yaml", pg.get("key"), pg) for pg in (_read_yaml(data_path("pages.yaml")) or {}).get("pages") or []]
     placed += [("switchboards.yaml", key, board)
-               for key, board in ((_read_yaml(DATA_DIR / "switchboards.yaml") or {}).get("boards") or {}).items()]
+               for key, board in ((_read_yaml(data_path("switchboards.yaml")) or {}).get("boards") or {}).items()]
     for source, key, entry in placed:
         try:
             check_building((entry or {}).get("building"), f"{source} '{key}'")
@@ -2021,6 +2232,13 @@ def validate(modules: list[str] | None = None) -> int:
     # Warnings — data that's harmless but does nothing (not counted as errors).
     warnings: list[str] = []
 
+    # A file in data/ the build doesn't know — a misspelt name (numbered or
+    # not) would otherwise be silently ignored.
+    known = set(DATA_FILES) | set(LEGACY_DATA_FILES)
+    for path in sorted(p for p in DATA_DIR.iterdir() if p.is_file()):
+        if re.sub(r"^\d+_", "", path.name) not in known:
+            warnings.append(f"{_rel(path)}: the build doesn't read this file (data files: {', '.join(DATA_FILES)})")
+
     # 9. Every extras.yaml placement must name a known component, page and
     # slot, and give the component's required options (and no unknown ones).
     placements = components.resolve(read_extras(), read_component_catalog(), extras_pages(), problems, warnings)
@@ -2029,7 +2247,7 @@ def validate(modules: list[str] | None = None) -> int:
     # resolve inside the folder and 404. A bare link to another page of the
     # same building (same folder) is fine.
     bare_url = re.compile(r'(?:src|href)="(?!\{\{|/|#|\.\./|[a-z]+:)([^"?#]+)')
-    for pg in (_read_yaml(DATA_DIR / "pages.yaml") or {}).get("pages") or []:
+    for pg in (_read_yaml(data_path("pages.yaml")) or {}).get("pages") or []:
         if page_folder(pg.get("building")):
             neighbours = _building_page_files(pg["building"])
             for frag in sorted((SITE_ROOT / "pages").glob(f"{pg['key']}.*.html")):
@@ -2055,6 +2273,7 @@ def validate(modules: list[str] | None = None) -> int:
             unused[role] += 1
     for role, n in sorted(unused.items()):
         warnings.append(f"bms_bindings.yaml: role '{role}' ({n} row(s)) isn't shown on any page")
+    _check_cores(levels, tenants, meters, problems, warnings)
 
     if problems:
         warnings.append("skipped the build checks (rendered data-point/meter ids, missing assets and links) "

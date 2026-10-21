@@ -228,7 +228,7 @@ def build_svg(L, width, height, busbar_y, boxes, incomer, col_step, busbar_x1, b
 def run(env, only: str | None = None) -> list[Path]:
     """The `switchboards` module: one page + busbar SVG per board in
     site/data/switchboards.yaml (`only`: a single board key)."""
-    cfg = yaml.safe_load((build.DATA_DIR / "switchboards.yaml").read_text(encoding="utf-8")) or {}
+    cfg = yaml.safe_load(build.data_path("switchboards.yaml").read_text(encoding="utf-8")) or {}
     defaults, boards = cfg.get("defaults", {}), cfg.get("boards", {})
 
     meters = build.read_meters()

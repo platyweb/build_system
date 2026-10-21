@@ -67,6 +67,12 @@ An older site must keep building, with identical output, on a newer engine:
 
 ## Gotchas
 
+- **Data files are numbered** in fill-in order (`site/data/03_meters.yaml`;
+  README "Data files and the order to fill them in"). Engine code opens them
+  with `build.data_path("<name>.yaml")`, finds `site.yaml` (`data/00_site.yaml`)
+  as `build.BUILDING_FILE`, and reads meters with `build.read_meter_rows()`. St Peters' meters are `03_meters.yaml`, laid out
+  level → core → meter; a new CSV export comes in through
+  `_build/import_meters.py`.
 - **Templates use `StrictUndefined`.** Guard optional fields with
   `|default(...)` or `is defined`. Builders pop any `building` key from a
   page's context, because it would shadow the `site.yaml` global.

@@ -51,7 +51,7 @@ def test_examples_reference_only_files_they_ship(example: str, tmp_path: Path,
 
 
 def test_unknown_point_on_a_rendered_page_is_an_error(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    _edit(site / "data" / "points.yaml", "  nabers_rating:", "  nabers_score:")
+    _edit(build.data_path("points.yaml"), "  nabers_rating:", "  nabers_score:")
     assert build.validate() == 1
     assert "data-point 'nabers_rating' (on building_performance.htm) isn't in points.yaml" in capsys.readouterr().out
 
@@ -59,21 +59,21 @@ def test_unknown_point_on_a_rendered_page_is_an_error(site: Path, capsys: pytest
 def test_a_template_the_site_doesnt_render_isnt_checked(site: Path) -> None:
     # Without the building_performance module (and the extra that shows a
     # named point), its points needn't exist.
-    _edit(site / "site.yaml", "building_performance, ", "")
-    _edit(site / "data" / "sidebar.yaml",
+    _edit(build.BUILDING_FILE, "building_performance, ", "")
+    _edit(build.data_path("sidebar.yaml"),
           '      - label: Performance\n        icon: bx-star\n        children:\n'
           '          - { label: "Building Performance", href: building_performance.htm }\n', "")
-    extras = site / "data" / "extras.yaml"
+    extras = build.data_path("extras.yaml")
     extras.write_text(extras.read_text(encoding="utf-8").split("  # A live value card from a named point")[0],
                       encoding="utf-8")
-    (site / "data" / "points.yaml").unlink()
+    build.data_path("points.yaml").unlink()
     assert build.validate() == 0
 
 
 def test_missing_pages_and_assets_are_warnings(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    _edit(site / "data" / "sidebar.yaml", '{ label: "Hierarchy tree", href: meters_hierarchy.htm }',
+    _edit(build.data_path("sidebar.yaml"), '{ label: "Hierarchy tree", href: meters_hierarchy.htm }',
           '{ label: "Hierarchy tree", href: meters_hierarchy.htm }\n          - { label: "Gone", href: gone.htm }')
-    _edit(site / "site.yaml", 'riser_card_link: "#"', 'riser_card_link: "/docs/other-site/risers.htm"')
+    _edit(build.BUILDING_FILE, 'riser_card_link: "#"', 'riser_card_link: "/docs/other-site/risers.htm"')
     (site / "assets" / "img" / "floors" / "floor_L00.png").unlink()
     assert build.validate() == 0
     warnings = _warnings(capsys.readouterr().out)
@@ -83,7 +83,7 @@ def test_missing_pages_and_assets_are_warnings(site: Path, capsys: pytest.Captur
 
 
 def test_a_build_failure_is_an_error(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    _edit(site / "site.yaml", 'postcode: "AB1 2CD"\n', "")   # building_performance shows it
+    _edit(build.BUILDING_FILE, 'postcode: "AB1 2CD"\n', "")   # building_performance shows it
     assert build.validate() == 1
     assert "the build fails: UndefinedError" in capsys.readouterr().out
 

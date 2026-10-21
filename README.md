@@ -14,7 +14,7 @@ Engine upgrades are pulled in from here (see
 - [Quick start](#quick-start)
 - [Handling differences between sites](#handling-differences-between-sites)
 - [How a build works](#how-a-build-works)
-- [The site directory](#the-site-directory): [`site.yaml`](#siteyaml), [`meters.csv`](#datameterscsv), [`floors.yaml`](#datafloorsyaml), [other data files](#other-data-files)
+- [The site directory](#the-site-directory): [`site.yaml`](#datasiteyaml), [fill-in order](#data-files-and-the-order-to-fill-them-in), [`floors.yaml`](#datafloorsyaml), [`meters.yaml`](#datametersyaml), [other data files](#other-data-files)
 - [Modules](#modules)
 - [Extras: one-off additions to pages](#extras-one-off-additions-to-pages)
 - [How to…](#how-to)
@@ -63,9 +63,11 @@ file). It won't wipe a directory it didn't make.
    ```bash
    cp -r examples/minimal site && rm -rf site/golden
    ```
-3. Edit `site/site.yaml`: `slug`, `name`, `bacnet`, `utilities`, `modules`.
-   Then edit `site/data/floors.yaml`, `site/data/meters.csv` and the data
-   files of the modules you enable.
+3. Fill in `site/data/` in [number order](#data-files-and-the-order-to-fill-them-in):
+   `00_site.yaml` (`slug`, `name`, `bacnet`, `utilities`, `modules`),
+   `01_pages.yaml` if the site has frozen pages, `02_floors.yaml`,
+   `03_meters.yaml` (or import a meters export with `_build/import_meters.py`),
+   then the files of the modules you enable.
 4. Run `build.py --check` until it reports no problems, then run `build.py`.
 5. Record the first golden with `regress.py snapshot --site site`, then commit.
 
@@ -84,7 +86,7 @@ to maintain.
 |---|---|---|
 | Fewer displays (no tenants, no dials, …) | Leave the module out | `site.yaml modules:` ([Modules](#modules)) |
 | Fewer pages of one kind (a level without a page, only some incomers) | List only those; `page: false` on a level | `floors.yaml`, `incomers.yaml`, … |
-| Different content on a standard page (meters, cards, reports, tabs) | Change the data | `meters.csv`, `reports.yaml`, `bms_bindings.yaml`, `site.yaml floor_page:` |
+| Different content on a standard page (meters, cards, reports, tabs) | Change the data | `meters.yaml`, `reports.yaml`, `bms_bindings.yaml`, `site.yaml floor_page:` |
 | Different navigation | Edit the sidebar | `sidebar.yaml` |
 | Different pictures, logos or styles | Add files, or replace engine files of the same name | `site/assets/` |
 | Something extra on a standard page (an image, a notice) | An extra | `extras.yaml` ([Extras](#extras-one-off-additions-to-pages)) |
@@ -106,7 +108,7 @@ to maintain.
 ## How a build works
 
 ```
-site/site.yaml + site/data/      ─┐
+site/data/                       ─┐
 _templates/ (+ site/templates/)  ─┼─ _build/build.py ─→ project/<slug>/   (served at /docs/<slug>/)
 _assets/    (+ site/assets/)     ─┘                     project/tenants/  (tenants module only)
 ```
@@ -122,7 +124,7 @@ _assets/    (+ site/assets/)     ─┘                     project/tenants/  (t
 
    | Block | File | From |
    |---|---|---|
-   | `METER_REGISTRY` | `js/project/2.0/meter-templates.js` | `data/meters.csv` |
+   | `METER_REGISTRY` | `js/project/2.0/meter-templates.js` | `data/meters.yaml` (or `meters.csv`) |
    | `POINTS` | `meter-templates.js` | `data/points.yaml` |
    | `BACNET_CONFIG` | `meter-templates.js` | `site.yaml bacnet:` |
    | `ReportUrls` | `js/project/2.0/reports.js` | `data/reports.yaml urls:` |
@@ -167,6 +169,8 @@ controller's own `/js/` libraries (cache-busted with `optergy_lib_version`).
 | `_build/build.py` | Engine: configure, data readers, layout derivation, page builders, `MODULES`, `--check`, CLI |
 | `_build/build_switchboards.py`, `build_risers.py` | The `switchboards` and `risers` modules |
 | `_build/jsblocks.py` | Renders and injects the generated JS blocks |
+| `_build/meters_yaml.py` | `meters.yaml` reader and writer |
+| `_build/import_meters.py` | Imports a `meters.csv` export into `meters.yaml` |
 | `_build/generate_meter_registry.py` | `meters.csv` reader and cell normalisers |
 | `_build/linkcheck.py` | `--check`'s checks on built pages |
 | `_build/components.py` | Extras: the component catalog, slots, placement checks |
@@ -185,8 +189,7 @@ controller's own `/js/` libraries (cache-busted with `optergy_lib_version`).
 
 ```
 site/
-  site.yaml     identity, modules, BACnet addressing, utilities, page config
-  data/         meters.csv, floors.yaml, one YAML per module (only those the site uses), extras.yaml
+  data/         one YAML per kind of data, numbered in fill-in order: 00_site.yaml, 01_pages.yaml, 02_floors.yaml, 03_meters.yaml, …
   pages/        HTML fragments: frozen pages (`pages` module) and `html` extras
   components/   the site's own components for extras (same format as _components/)
   templates/    overrides of _templates/ files, by name
@@ -198,7 +201,12 @@ Both examples are complete, working sites, and most data files open with a
 comment block describing their own schema. When in doubt, copy from an
 example.
 
-### `site.yaml`
+### `data/site.yaml`
+
+Identity, modules, BACnet addressing, utilities and page config: data file
+00, filled in first. It is what makes a directory a site directory. An older
+site keeps it at the site root (`site/site.yaml`); a site with both is an
+error.
 
 | Key | | Meaning |
 |---|---|---|
@@ -207,7 +215,7 @@ example.
 | `ems_name` | | Suffix for browser-tab titles (`"Ground Floor Overview · <ems_name>"`) |
 | `postcode`, `net_internal_area` | | Shown on the `building_performance` page |
 | `modules` | required | Page families to build, from [Modules](#modules) |
-| `bacnet` | required | `{device, power_offset: {<meters.csv type>: <offset>}}`. A meter's demand point is analog value `base + power_offset[type]`, its status is binary value `base`. Every meter type in `meters.csv` needs an offset |
+| `bacnet` | required | `{device, power_offset: {<meter type>: <offset>}}`. A meter's demand point is analog value `base + power_offset[type]`, its status is binary value `base`. Every meter type in the meters file needs an offset |
 | `utilities` | required | `{<code>: {label, kind}}` in display order. `code`: lowercase, also the CSS class `.meter-<code>`. `kind`: `electric`, `thermal` (heating and cooling) or `other` |
 | `buildings` | campus only | `[{key, name}]`. More than one turns on per-building folders |
 | `brand` | `sidebar` | Sidebar header: `{href, label, logo_src}` |
@@ -225,37 +233,42 @@ example.
 | `tabs` | none | Report tabs: `[{id, label, slot, roles}]`. Each shows its `roles`' summary cards, then the `reports.yaml` placements for `page: floor, floor: <key>, slot: <slot>` |
 | `report_titles` | none | Report-card titles by position within a tab, e.g. `[Demand, Consumption]` |
 | `summary_label` | `Summary` | Label of the first (floorplan) tab |
-| `summary_cards` | none | Cards beside the floorplan: `{total\|tenants\|landlords: <meters.csv function>}`. Each binds the floor's meter with that `function` |
+| `summary_cards` | none | Cards beside the floorplan: `{total\|tenants\|landlords: <meter function>}`. Each binds the floor's meter with that `function` |
 | `centre_zone` | none | Zone name whose column gets the "top card" style (e.g. a landlord riser) |
 | `zone_suffix` | `""` | `{centre, side}`: appended to the centre zone's card title and to the others |
 | `zone_subtitles` | by kind | Card subtitle per utility-kind mix: keys `electric`, `thermal`, `electric+thermal`, … Default: `Electricity`, `Heat Energy`, `Electrical & Heat Energy`, else the utility labels |
 | `riser_card_link` | `#` | Default link on the zone and riser card headers (`#` = none) |
 
-### `data/meters.csv`
+### Data files and the order to fill them in
 
-The meter source of truth: one row per meter. Columns, in order:
+Fill in `data/` in this order. Each file may carry its number
+(`data/02_floors.yaml`) so a directory listing shows the order; the build
+finds a file with or without it. Keep only `site.yaml` and the files your
+modules read, keeping their numbers, so a gap is a file the site doesn't use.
 
-| Column | Meaning |
-|---|---|
-| `id` | Unique integer. What `data-meter-id` and every other meter reference uses |
-| `tag` | Meter name (shown in the hierarchy, switchboard and riser widgets) |
-| `base` | BACnet instance base: energy is analog value `base`, status is binary value `base` |
-| `type` | Meter type, e.g. `Modbus`, `Calculation`. Picks `bacnet.power_offset` |
-| `daily`, `monthly` | Analog-value instances of the daily / monthly consumption points (blank = 0) |
-| `parent_id` | Parent meter: builds the meters hierarchy and switchboard/riser ways. `0` = a root; blank = not in the hierarchy |
-| `floor` | Level key(s) from `floors.yaml`. Several floors separated by `/` (`3rd/4th`) put the meter on each page |
-| `column` | Floor-page column (0, 1, …). Blank = not on the floor grid |
-| `zone` | Floor card the meter sits in (cards group by column + zone) |
-| `position` | Order within the column |
-| `function` | Short in-card label. Special values: summary-card functions named in `floor_page.summary_cards`; `Riser-meter` (the `risers` module) |
-| `utility` | A `site.yaml` utility code or label, any case. Add `-virtual` for a calculated meter (`lthw-virtual`, styled with a faded edge). `Fluid energy` resolves to the thermal code named in `function` |
-| `tenant` | Tenant name(s) as the `tenants.yaml` `registry_tenant` spells them, comma-separated |
-| `tenant_display` | `yes` = shown on tenant pages (default no) |
-| `main_display` | `no` = hidden from the main floor pages (default yes) |
+| # | File | What | Needed by |
+|---|---|---|---|
+| 00 | [`site.yaml`](#datasiteyaml) | Identity, modules, BACnet addressing, utilities, page config | every site |
+| 01 | `pages.yaml` | Frozen pages (bodies in `pages/`) | `pages` |
+| 02 | `floors.yaml` | Levels bottom → top, tenants, each level's cores | every site |
+| 03 | `meters.yaml` | Every meter, by level → core | every site |
+| 04 | `points.yaml` | Named BMS points that aren't meters | any page using `data-point` |
+| 05 | `bms_bindings.yaml` | The live point behind each floor summary card | `floors`, `tenants` |
+| 06 | `incomers.yaml` | Incomer pages | `incomers` |
+| 07 | `home.yaml` | The home page | `home` |
+| 08 | `meters_hierarchy.yaml` | The meters hierarchy page | `meters_hierarchy` |
+| 09 | `switchboards.yaml` | Switchboard diagrams | `switchboards` |
+| 10 | `risers.yaml` | Riser diagrams | `risers` |
+| 11 | `schematics.yaml` | SVG schematic pages | `schematics` |
+| 12 | `energy_flow.yaml` | The energy-flow Sankey | `energy_flow` |
+| 13 | `dials.yaml` | Live gauges | `dials` |
+| 14 | `reports.yaml` | Report cards, placed on the pages above | most pages |
+| 15 | `extras.yaml` | Components placed on the pages above | any |
+| 16 | `sidebar.yaml` | The menu over every page | `sidebar` |
 
-`n/a` in any cell except `id` and `base` counts as blank. Integer cells are
-validated, and duplicate ids are an error. So are two meters sharing a floor,
-column, zone and position.
+`--check` warns about a file in `data/` the build doesn't read, such as a
+misspelt name. An older site's unnumbered names, root `site.yaml`,
+`meters.csv` and `tenants.yaml` keep working.
 
 ### `data/floors.yaml`
 
@@ -271,6 +284,7 @@ Every floor named anywhere else must be a level here; `--check` enforces it.
 | `heading` | `"<label> Overview"` | Floor page heading |
 | `page` | `true` | `false` for a level with meters but no page (plant basement, roof) |
 | `building` | | Campus: the building the level belongs to (required there). Level keys are unique site-wide |
+| `cores` | | `{<core>: <tenant short name>}`: which tenant holds each of the level's cores. A core is a floor-page card, the groups `meters.yaml` lists a level's meters in. Its meters take its tenant. A core left out is the landlord's. No page shows cores yet |
 | anything else | | Passed to the floor page, e.g. `floorplan_image` (default `img/floors/floor_<key>.png`), `floorplan_tab: {floorplan_after_column, layout}` |
 
 A level with a page gets `floor_<key>.htm`, laid out from its meters:
@@ -279,6 +293,126 @@ A level with a page gets `floor_<key>.htm`, laid out from its meters:
 
 A page level with no meters and no explicit `floorplan_tab.layout` is an
 error.
+
+**Tenants.** The one top-level key that isn't a level is `tenants:`, the
+tenant catalog. Each entry is keyed by the tenant's **short name**: the
+spelling a meter's `tenant` uses, and the one a level's `cores:` names. Entry order is the sidebar's `auto: tenants` order.
+
+```yaml
+tenants:
+  Fern & Co:                   # short name
+    name: "Fern and Company"   # proper name
+    index: {}
+
+floor_L03:
+  label: "3rd Floor"
+  cores:
+    West: Fern & Co
+    East: Fern & Co
+```
+
+| Field | Default | Meaning |
+|---|---|---|
+| `name` | the short name | Proper name: the tenant pages' "Tenant" card, titles and sidebar |
+| `slug` | the short name lower-cased, other characters → `-` | Output folder, `project/tenants/<slug>/`. Set it when the default isn't the folder you want |
+| `index` | | `{}` (or `{page_title, title, reports}`) adds the tenant's `index.htm` |
+| `extra_floors` | | Floors with no meters tagged to the tenant yet that get a page anyway |
+| `exclude_floors` | | Floors a tagged meter would add that don't get a page |
+| `floors` | | `{<key>: {heading, page_title, floorplan_tab_label, floorplan_image, floorplan_after_column, <slot>_reports}}`: per-floor overrides |
+
+A tenant gets a page for each floor its tagged meters name. Each page shows
+that floor's meters tagged with the tenant's short name and
+`tenant_display: yes`, plus untagged ones with `tenant_display: yes`. With
+any `cores:` set, `--check` adds three checks:
+- every core must name a catalog tenant (error);
+- a tagged meter must sit in a core of its tenant's. A meter whose zone isn't
+  a core, such as a floor total, needs its tenant to hold some core on that
+  floor (warning);
+- every tenant must hold a core somewhere (warning).
+
+### `data/meters.yaml`
+
+Every meter, laid out the way the building is: **level → core → meter**.
+Fill it in after `floors.yaml`, whose levels and cores it uses.
+
+```yaml
+columns: {West: 0, North: 1, East: 2}   # floor-page column of each core's card
+
+floor_L03:                  # a level from floors.yaml
+  floor:                    # meters outside the cores: floor totals, …
+    - {id: 30, tag: Floor 3 Total, base: 20300, type: Calculation, function: Floor Total Electricity, utility: electricity}
+  West:                     # a core: the meters on its card, top to bottom
+    - {id: 31, tag: DB-03 Lighting, base: 10900, type: Modbus, parent: 1, function: Lighting, utility: electricity}
+    - {id: 32, tag: DB-03 Small Power, base: 11000, type: Modbus, parent: 1, function: Small Power, utility: electricity}
+
+unplaced:                   # meters on no level: site totals, gas and water incomers
+  - {id: 10, tag: Main Incomer - Gas, base: 11000, type: Modbus, parent: 0, function: Incomer, utility: gas}
+```
+
+| Field | Default | Meaning |
+|---|---|---|
+| `id` | required | Unique integer. What `data-meter-id` and every other meter reference uses |
+| `tag` | | Meter name (shown in the hierarchy, switchboard and riser widgets) |
+| `base` | required | BACnet instance base: energy is analog value `base`, status is binary value `base` |
+| `type` | | Meter type, e.g. `Modbus`, `Calculation`. Picks `bacnet.power_offset` |
+| `daily`, `monthly` | `0` | Analog-value instances of the daily / monthly consumption points |
+| `parent` | not in the hierarchy | Parent meter's `id`: builds the meters hierarchy and switchboard/riser ways. `0` = a root |
+| `function` | | Short in-card label. Special values: summary-card functions named in `floor_page.summary_cards`; `Riser-meter` (the `risers` module) |
+| `utility` | | A `site.yaml` utility code or label, any case. Add `-virtual` for a calculated meter (`lthw-virtual`, styled with a faded edge). `Fluid energy` resolves to the thermal code named in `function` |
+| `tenant` | the core's tenant | Tenant short name(s) from `floors.yaml tenants:`, comma-separated; `null` for none. A name that isn't a tenant (a landlord area) shows on no tenant page |
+| `tenant_display` | `no` | `yes` = shown on tenant pages |
+| `main_display` | `yes` | `no` = hidden from the main floor pages |
+| `column` | the core's `columns:` entry | A core's meters only: floor-page column |
+| `position` | one after the meter above it; `0` for the first | A core's meters only: order on the card |
+| `also_on` | | `[<level>, …]`: the meter also shows on these levels' pages, on the same card |
+
+**Tenants follow the cores.** A meter in a core takes the tenant
+`floors.yaml` gives that core. A meter in a level's `floor:` group takes the
+level's tenant when every core listed on the level is one tenant's. Write
+`tenant:` only for the exceptions, e.g. `tenant: null` for a landlord meter
+in a tenant's core.
+
+The file is listed level by level for reading; the build orders meters by
+`id`. Duplicate ids are an error, and so are two meters sharing a level,
+column, core and position.
+
+**Importing an export.** `_build/import_meters.py <export.csv> [--site DIR]`
+writes the site's meters YAML from a [`meters.csv`](#datameterscsv-the-import-format)
+export, numbered like the site's `floors.yaml` (`03_meters.yaml`). Fill in
+`floors.yaml`'s `cores:` first: the import writes `tenant:`, `column:` and
+`position:` only where the export differs from the defaults above. It reads
+its own output back and writes nothing unless that gives the export's meters
+exactly. Re-importing (`--replace`) replaces the whole file, including hand
+edits.
+
+### `data/meters.csv`: the import format
+
+A spreadsheet or controller export, one row per meter. `_build/import_meters.py`
+turns it into `meters.yaml` (above). An older site that still keeps
+`data/meters.csv` builds from it directly, with the same output; a site
+can't have both files. Columns, in order:
+
+| Column | Meaning |
+|---|---|
+| `id` | Unique integer. What `data-meter-id` and every other meter reference uses |
+| `tag` | Meter name (shown in the hierarchy, switchboard and riser widgets) |
+| `base` | BACnet instance base: energy is analog value `base`, status is binary value `base` |
+| `type` | Meter type, e.g. `Modbus`, `Calculation`. Picks `bacnet.power_offset` |
+| `daily`, `monthly` | Analog-value instances of the daily / monthly consumption points (blank = 0) |
+| `parent_id` | Parent meter: builds the meters hierarchy and switchboard/riser ways. `0` = a root; blank = not in the hierarchy |
+| `floor` | Level key(s) from `floors.yaml`. Several floors separated by `/` (`3rd/4th`) put the meter on each page |
+| `column` | Floor-page column (0, 1, …). Blank = not on the floor grid |
+| `zone` | The core whose card the meter sits in (cards group by column + zone). Blank = outside the cores |
+| `position` | Order within the column |
+| `function` | Short in-card label. Special values: summary-card functions named in `floor_page.summary_cards`; `Riser-meter` (the `risers` module) |
+| `utility` | A `site.yaml` utility code or label, any case. Add `-virtual` for a calculated meter (`lthw-virtual`, styled with a faded edge). `Fluid energy` resolves to the thermal code named in `function` |
+| `tenant` | Tenant short name(s), the `floors.yaml` `tenants:` keys, comma-separated. A name that isn't a tenant (a landlord area) shows on no tenant page |
+| `tenant_display` | `yes` = shown on tenant pages (default no) |
+| `main_display` | `no` = hidden from the main floor pages (default yes) |
+
+`n/a` in any cell except `id` and `base` counts as blank. Integer cells are
+validated, and duplicate ids are an error. So are two meters sharing a floor,
+column, zone and position.
 
 ### Other data files
 
@@ -295,9 +429,9 @@ files are needed.
 | `meters_hierarchy.yaml` | `meters_hierarchy` | `heading`, `subtitle`, `search_placeholder`, `root_meter_ids: [ … ]` (one tree per root) |
 | `sidebar.yaml` | `sidebar` | `top_items`, `sections: [{header, items}]`, `bottom_items`; see below |
 | `pages.yaml` | `pages` | `pages: [{key, out, page_title, heading, building?}]`, plus optional shell settings `container_class`, `container_style`, `layout_mode` and `no_optergy: true` (skips the controller's `/js/` libraries). Body from `pages/<key>.body.html`, plus optional `<key>.styles.html`, `.extra_scripts.html`, `.tail_scripts.html` |
-| `switchboards.yaml` | `switchboards` | `defaults: {default_rating, layout}`, `boards: {<key>: {incomer_id, heading, ways: {<meter id>: {rating, ct}}, bus_tie?, nav_label?, building?}}`. A board's ways are every meter whose `parent_id` is its `incomer_id` |
+| `switchboards.yaml` | `switchboards` | `defaults: {default_rating, layout}`, `boards: {<key>: {incomer_id, heading, ways: {<meter id>: {rating, ct}}, bus_tie?, nav_label?, building?}}`. A board's ways are every meter whose `parent` is its `incomer_id` |
 | `risers.yaml` | `risers` | `defaults: {default_rating, floors_per_page, layout}`, `overrides: {<meter id>: …}`. Risers are the meters with `function: Riser-meter`; their floor taps are their child meters |
-| `tenants.yaml` | `tenants` | `<slug>: {display_name, registry_tenant, index?, extra_floors?, exclude_floors?, floors?}`. Pages go to `project/tenants/<slug>/`; see the file's header |
+| `tenants.yaml` | `tenants` | Older sites only: the tenant catalog before it moved into `floors.yaml`. `<slug>: {display_name, registry_tenant, …}`, where `registry_tenant` is the short name (or a list of spellings). Still read, with the same output, when `floors.yaml` has no `tenants:`; a site can't have both |
 | `energy_flow.yaml` | `energy_flow` | Live Sankey: `nodes`, `floors: [{key, node}]`, `floor_end_uses`, `landlord_flows`, optional `gas` + `heat_flows`. Its topology (Electricity → Tenants/Landlord, Gas → Boilers) is fixed in `build_energy_flow` |
 | `dials.yaml` | `dials` | `dials: [{bacnet, label, format, min, max, …}]`: live segmented gauges |
 | `extras.yaml` | any | `extras: [{component, pages, slot, <options>}]`: components added to pages; see [Extras](#extras-one-off-additions-to-pages) |
@@ -327,18 +461,18 @@ this order:
 
 | Module | Writes | Reads |
 |---|---|---|
-| `floors` | `floor_<key>.htm` per page level | `floors.yaml`, `meters.csv`, `bms_bindings.yaml`, `reports.yaml` |
+| `floors` | `floor_<key>.htm` per page level | `floors.yaml`, `meters.yaml`, `bms_bindings.yaml`, `reports.yaml` |
 | `incomers` | `<key>.htm` per incomer | `incomers.yaml` |
 | `home` | `home.htm` | `home.yaml` |
-| `meters_hierarchy` | `meters_hierarchy.htm` | `meters_hierarchy.yaml`, `meters.csv` |
+| `meters_hierarchy` | `meters_hierarchy.htm` | `meters_hierarchy.yaml`, `meters.yaml` |
 | `schematics` | `<key>.htm` per schematic | `schematics.yaml` |
 | `building_performance` | `building_performance.htm` | `points.yaml`, `reports.yaml` (page `building_performance`, slots `pie` and `right`) |
 | `pages` | `<out>` per frozen page | `pages.yaml`, `pages/` |
-| `tenants` | `../tenants/<slug>/{index,floor_<key>}.htm` + a sidebar per tenant | `tenants.yaml`, `meters.csv` |
+| `tenants` | `../tenants/<slug>/{index,floor_<key>}.htm` + a sidebar per tenant | `floors.yaml` (`tenants:`), `meters.yaml` |
 | `energy_flow` | `energy_flow.htm` | `energy_flow.yaml` |
 | `dials` | `dials.htm` | `dials.yaml` |
-| `switchboards` | `<key>.htm` + `img/<key>.svg` per board | `switchboards.yaml`, `meters.csv` |
-| `risers` | `riser_<id>[_pN].htm` + SVGs | `risers.yaml`, `meters.csv` |
+| `switchboards` | `<key>.htm` + `img/<key>.svg` per board | `switchboards.yaml`, `meters.yaml` |
+| `risers` | `riser_<id>[_pN].htm` + SVGs | `risers.yaml`, `meters.yaml` |
 | `sidebar` | the `SIDEBAR_HTML` block (+ one sidebar per campus building folder) | `sidebar.yaml` |
 
 `building_performance` uses seven named points: `hdd_15_5`, `cdd_15_5`,
@@ -411,29 +545,30 @@ Each component's `component.yaml` documents its options.
 ## How to…
 
 ### Add a level
-Add `floor_<key>:` to `floors.yaml` in its physical position, and give its
-meters `floor: <key>` in `meters.csv`. Use `page: false` for a level with
+Add `floor_<key>:` to `floors.yaml` in its physical position, and list its
+meters under `floor_<key>:` in `meters.yaml`. Use `page: false` for a level with
 meters but no page. If the level has a page, add a floorplan at
 `site/assets/img/floors/floor_<key>.png`.
 
 ### Add a meter
-Add a row to `meters.csv` with a new `id`.
-- **On a floor page:** give it `floor`, `column`, `zone`, `position`,
-  `function` and `utility`.
-- **In the hierarchy or a switchboard:** give it a `parent_id`.
+Add it to `meters.yaml` with a new `id`, under its level.
+- **On a floor page:** put it in its core's list, where it should appear on
+  the card, and give it a `function` and `utility`.
+- **Outside the cores** (a floor total): put it in the level's `floor:` list.
+- **In the hierarchy or a switchboard:** give it a `parent`.
 
 A new meter `type` needs a `bacnet.power_offset` entry.
 
 ### Add a utility
 Add `<code>: {label, kind}` to `site.yaml utilities:`, use the code (or its
-label) in `meters.csv`'s `utility` column, and add a `.meter-<code>` CSS rule
+label) as a meter's `utility`, and add a `.meter-<code>` CSS rule
 (`--check` warns when one is missing). Zone headers take their colour from
 that class. For an incomer page, add `incomer_<code>` to `incomers.yaml`.
 
 ### Enable a module
 Add it to `site.yaml modules:` and create its data file, starting from an
 example's or from the table above. Then run `--check`. If the module draws
-from meters (`switchboards`, `risers`), the meters need the right `parent_id`
+from meters (`switchboards`, `risers`), the meters need the right `parent`
 or `function`.
 
 ### Add a building (campus)
@@ -495,9 +630,9 @@ modules into a temp directory and checks what got rendered:
   pages nobody builds and assets you haven't added yet. `/docs/<other site>/`
   links can't be checked, so they always show here.
 
-Other warnings: a utility with no `.meter-<code>` CSS rule; a
-`bms_bindings.yaml` role no page shows; a campus fragment URL missing
-`{{ path_prefix }}`.
+Other warnings: a file in `data/` the build doesn't read; a utility with no
+`.meter-<code>` CSS rule; a `bms_bindings.yaml` role no page shows; a campus
+fragment URL missing `{{ path_prefix }}`.
 
 ---
 

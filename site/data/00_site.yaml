@@ -1,10 +1,11 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # SITE / BUILDING FACTS — the single source of truth for building identity.
 #
-# This file is what makes a directory a site directory (build.py --site DIR,
-# default site/). Everything else for this building lives beside it: data/
-# (YAML + meters.csv), pages/ (frozen fragments), templates/ (overrides of
-# _templates/), assets/ (images copied over _assets/).
+# DATA FILE 00 — fill in first. This file is what makes a directory a site
+# directory (build.py --site DIR, default site/). The other data files follow
+# it in number order; the rest of the building lives beside data/: pages/
+# (frozen fragments), templates/ (overrides of _templates/), assets/ (images
+# copied over _assets/).
 #
 # Available to every template as the `building` global (set in make_env), and
 # consumed by:
@@ -42,16 +43,16 @@ ems_name: "SP EMS"
 #   pages tenants energy_flow dials switchboards risers sidebar
 # (`build.py --modules a,b` overrides this list for one run.) Not enabled here:
 #   - home, schematics: nothing to build — home.htm and the riser/tariff
-#     schematics are frozen fragments in data/pages.yaml.
-#   - tenants: tenant pages not yet reconciled (data/tenants.yaml).
+#     schematics are frozen fragments in data/01_pages.yaml.
+#   - tenants: tenant pages not yet reconciled (data/02_floors.yaml `tenants:`).
 #   - energy_flow, dials: those pages don't exist on this site.
 #   - switchboards, risers: LV-01/02 and the risers are frozen fragments in
-#     data/pages.yaml; the switchboards module would write the same
+#     data/01_pages.yaml; the switchboards module would write the same
 #     swb_lv01/02.htm, which the build refuses.
 modules: [floors, incomers, meters_hierarchy, building_performance, pages, sidebar]
 
-# Utilities this site meters, in display order. The code is what meters.csv
-# utility cells resolve to (a code or label, any case; "Fluid energy" picks the
+# Utilities this site meters, in display order. The code is what a meter's
+# utility (data/03_meters.yaml) resolves to (a code or label, any case; "Fluid energy" picks the
 # thermal code named in the meter's function) and the CSS class .meter-<code>;
 # the label names it on pages; kind (electric | thermal | other) groups
 # utilities for the zone-card subtitles.
@@ -73,8 +74,8 @@ optergy_lib_version: "260228085300"
 optergy_override_display: "/usr/local/Optergy/Displays//tlb/test.xml"
 
 # BACnet point addressing — "<device>|<object type>|<instance>|85|-1".
-# A meter's demand point is instance base + power_offset[its meters.csv
-# type]; every type used in meters.csv needs an entry. Used by the page
+# A meter's demand point is instance base + power_offset[its type]; every
+# meter type in data/03_meters.yaml needs an entry. Used by the page
 # generators (build.py bacnet_address/demand_address) and written into the
 # runtime's BACNET_CONFIG for meter-templates.js.
 bacnet:
@@ -120,7 +121,7 @@ floor_page:
   # First tab: floor summary + floorplan + the riser/zone cards.
   summary_label: Summary
   # Floor-level cards beside the floorplan, each bound to the meter whose
-  # meters.csv `function` is this name on that floor (also the card title):
+  # `function` is this name on that floor (also the card title):
   # total (beside the image), tenants / landlords (the row below). Omit a key
   # to drop its card.
   summary_cards:

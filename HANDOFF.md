@@ -40,7 +40,8 @@ byte-identical through every phase, except for explicitly approved re-baselines.
 | Topic | Decision |
 |---|---|
 | Repo model | Starter template, one repo per site. **This repo becomes St Peters' site repo**; the template is split off as a fresh repo in Phase 7 |
-| Meter source of truth | `site/data/meters.csv`. The `METER_REGISTRY` that used to be committed in the JS had drifted (129 of 652 rows) and was discarded |
+| Meter source of truth | `site/data/03_meters.yaml`, laid out level → core → meter (2026-10-20; was `meters.csv`). The owner's meters come from an external export: `_build/import_meters.py` turns a `meters.csv` export into the YAML. The `METER_REGISTRY` that used to be committed in the JS had drifted (129 of 652 rows) and was discarded |
+| Data file names | Numbered in fill-in order (`00_site.yaml`, `01_pages.yaml` … `16_sidebar.yaml`, `build.DATA_FILES`; `site.yaml` moved into `data/` and frozen pages put first, both at the owner's request); the build finds a file with or without its number. Unnumbered names, root `site.yaml`, `meters.csv` and `tenants.yaml` still work for older sites |
 | Data flow | Site data files → build → JS. The build never reads data back out of JS |
 | Regression bar | St Peters byte-identical every phase. Re-baselines only when pre-approved, each the only change in its step, logged in `site/golden/CHANGELOG` |
 | St Peters' frozen pages | Risers, switchboards, tariffs, system and landlord pages stay frozen HTML in `site/pages/`. Data-driven generators serve new sites |
@@ -78,6 +79,8 @@ _build/build.py              engine: configure(), readers, layout derivation, bu
 _build/jsblocks.py           renders/injects generated JS blocks (METER_REGISTRY, POINTS, BACNET_CONFIG, REPORT_URLS, SIDEBAR_HTML)
                              + set_string_property (live-points.js OVERRIDE_FILE)
 _build/linkcheck.py          --check's output checks: data-point/meter ids on built pages; referenced-but-missing files
+_build/meters_yaml.py        meters.yaml reader + writer (level → core → meter; rows identical to the CSV reader's)
+_build/import_meters.py      meters.csv export → the site's meters YAML, checked by reading it back
 _build/generate_meter_registry.py   meters.csv reader + normalisers (name is historical: it no longer generates anything itself)
 _build/build_switchboards.py, build_risers.py   the `switchboards` / `risers` modules (run(env, only))
 _build/regress.py            golden regression harness (multi-site)
@@ -86,18 +89,21 @@ _templates/                  engine templates + partials/macros.j2
 _assets/                     engine runtime skeleton (project JS, vendor libs, generic images). Copied into every build.
                              Site-neutral: its generated blocks are empty (the build fills the staged copy)
 site/                        St Peters — everything specific to this building
-  site.yaml                  identity, modules, bacnet, utilities, summary_roles, floor_page, tenant_page (buildings: n/a)
-  data/                      floors.yaml (level roster), meters.csv, incomers, sidebar, pages, tenants, switchboards,
-                             risers, energy_flow, dials, meters_hierarchy, bms_bindings, points, reports, schematics
+  data/                      numbered in fill-in order: 00_site (identity, modules, bacnet, utilities, summary_roles,
+                             floor_page, tenant_page; buildings: n/a), 01_pages, 02_floors (level roster + tenant catalog + cores),
+                             03_meters (level → core → meter), 04_points, 05_bms_bindings, 06_incomers, 08_meters_hierarchy,
+                             09_switchboards, 10_risers, 11_schematics, 12_energy_flow, 13_dials, 14_reports, 16_sidebar
   pages/                     frozen page fragments (<key>.body.html …)
   templates/                 overrides of _templates/ (incomer_electricity, building_performance)
   assets/img/                St Peters images overlaid on _assets/ (floorplans, LV/riser SVGs, logos, sidebar photo)
   golden/                    regression manifests + CHANGELOG
-examples/minimal/            "Acme Depot": single storey, electricity/solar/gas/water, building performance, no tenants (+ golden)
+examples/minimal/            "Acme Depot": single storey, electricity/solar/gas/water, building performance, no tenants (+ golden).
+                             Numbered data files + meters.yaml: what a new site starts from
+                             (examples/campus keeps the older root site.yaml, unnumbered names and meters.csv, proving they still build)
 examples/campus/             "Riverside Campus": 2 buildings, subfolders, switchboards with cross-building bus tie (+ golden)
                              (both have placeholder floorplans in assets/img/floors/)
 tests/                       test_golden (wraps regress check), test_jsblocks, test_levels, test_site_config, test_campus,
-                             test_check (--check), test_engine_neutral (no client data in engine/examples)
+                             test_check (--check), test_tenants, test_meters_yaml, test_engine_neutral (no client data in engine/examples)
 _baseline/                   (gitignored, ~45 MB) full copy of each last golden build. Used only to print readable diffs
 ```
 
@@ -105,8 +111,9 @@ _baseline/                   (gitignored, ~45 MB) full copy of each last golden 
 
 ## 4. How a site is described (cheat sheet)
 
-**`site.yaml`.** The full examples are `site/site.yaml` (office tower),
-`examples/minimal/site.yaml` and `examples/campus/site.yaml`.
+**`site.yaml`.** The full examples are `site/data/00_site.yaml` (office tower),
+`examples/minimal/data/00_site.yaml` and `examples/campus/site.yaml` (an older
+site's root location, kept as the backward-compatibility proof).
 
 | Key | Meaning |
 |---|---|
@@ -115,21 +122,26 @@ _baseline/                   (gitignored, ~45 MB) full copy of each last golden 
 | `modules` | Page families to build: `floors incomers home meters_hierarchy schematics building_performance pages tenants energy_flow dials switchboards risers sidebar` |
 | `buildings` | Campus only: `[{key, name}]`. More than one → per-building folders |
 | `utilities` | `{code: {label, kind: electric\|thermal\|other}}`. The code is the CSS class `.meter-<code>` |
-| `bacnet` | `{device, power_offset: {<meters.csv type>: <offset>}}`. Address = `<device>\|<objtype>\|<instance>\|85\|-1` |
+| `bacnet` | `{device, power_offset: {<meter type>: <offset>}}`. Address = `<device>\|<objtype>\|<instance>\|85\|-1` |
 | `optergy_lib_version`, `brand`, `footer` | Controller lib cache-bust, sidebar header/footer |
 | `optergy_override_display` | Optional. The Optergy display file that live-points.js point overrides post to (`OVERRIDE_FILE`). Blank if unset |
 | `summary_roles` | Summary-card catalog `{role: {title, format}}`. Live point from `bms_bindings.yaml` by (role, floor) |
-| `floor_page` | `tabs` (`[{id, label, slot, roles}]`), `summary_cards` (`total`/`tenants`/`landlords` → meters.csv `function`), `centre_zone`, `zone_suffix`, `zone_subtitles`, `report_titles`, `summary_label`, `riser_card_link` |
+| `floor_page` | `tabs` (`[{id, label, slot, roles}]`), `summary_cards` (`total`/`tenants`/`landlords` → a meter's `function`), `centre_zone`, `zone_suffix`, `zone_subtitles`, `report_titles`, `summary_label`, `riser_card_link` |
 | `tenant_page` | `summary_label`, `tabs` (subset of floor_page tab ids) |
 
 **`data/floors.yaml` is the level roster:**
 - One `floor_<key>:` entry per level, **bottom → top**; file order is the
   physical order.
-- Optional fields: `label`, `nav_label`, `heading`, `page: false`, `building`.
+- Optional fields: `label`, `nav_label`, `heading`, `page: false`, `building`, `cores`.
+- The one other top-level key, `tenants:`, is the tenant catalog.
 - Any other field is page data (e.g. `floorplan_tab`).
 - Every floor named anywhere else must be a level here; `--check` enforces it.
 
-**`data/meters.csv`** columns:
+**`data/meters.yaml`**: `columns: {<core>: <column>}`, then `floor_<key>:` → `floor:` (outside the cores) and
+`<core>:` lists of meters, then `unplaced:`. A meter inherits its core's tenant, its core's column and
+the next position; the file only states exceptions. Reads into the same rows as the CSV.
+
+**`data/meters.csv`** (the import format, and older sites) columns:
 `id,tag,base,type,daily,monthly,parent_id,floor,column,zone,position,function,utility,tenant,tenant_display,main_display`.
 - `floor` may list several levels, separated by `/`.
 - `utility` may be a code or a label in any case, or "Fluid energy". Fluid
@@ -153,6 +165,8 @@ edit, build, then run `regress.py snapshot --site site`.
 | 5 | Heat-panel normalisation (re-baseline 3). `utilities:` catalog. Config-driven floor/tenant tabs, summary cards (each optional), centre zone, suffixes. `report_tab_panel` macro. Minimal example gained a Solar PV tab |
 | 6 | Campus support: `buildings:`, level `building:`, per-building folders, `relative_url`/`site_href`, a per-folder `sidebar-template.js`, `auto: buildings` + `building:` filters, `nav_label` on incomers/boards, duplicate-key check on floors.yaml. `examples/campus` |
 | Extras (2026-10-03) | Site-specific one-offs without template overrides: `_components/` catalog (`image`, `html`, `live_value`), `site/components/` for a site's own, `data/extras.yaml` placements into slots on the floor/incomer/home pages (`components.SLOTS`; empty slots render nothing). `--check` validates placements and warns when one never renders. Backward compatibility: `_components/published.yaml` + `tests/test_components.py`, with `aliases`/`retired` for renamed and removed options. St Peters byte-identical; examples use every component |
+| Tenants (2026-10-19) | `site/data/tenants.yaml` merged into `floors.yaml`: a top-level `tenants:` catalog keyed by short name (the `meters.csv` spelling, was `registry_tenant`) with `name` (proper name, was `display_name`) and `slug` (output folder, only where the default from the short name differs). Each level has `cores: {<core>: <short name>}`, derived for St Peters from the meters' North/West/East zones. `read_tenants()` also reads an older site's `tenants.yaml`, with identical output (`tests/test_tenants.py`). `--check` holds cores against the catalog and the meters' tenant tags. Cores aren't rendered yet. Every golden identical |
+| Meters YAML (2026-10-20) | Data files numbered in fill-in order, `site.yaml` moved in as `00_site.yaml` (`build.site_file()`; a root `site.yaml` still works), `01_pages.yaml` next (`build.DATA_FILES`, `data_path()`; `--check` warns about a file it doesn't read). Meters moved from `meters.csv` to `03_meters.yaml` (level → core → meter), read by `meters_yaml.py` into the same rows, ordered by id; tenants inherited from cores, so 31 of St Peters' 652 meters state one. `_build/import_meters.py` imports a CSV export. St Peters and campus goldens identical; minimal converted too (re-baselined: only `METER_REGISTRY` row order, meter 8 before 9) |
 | 7 (part 1) | `_assets/` site-neutral: empty generated blocks; `OVERRIDE_FILE` blank, set from site.yaml `optergy_override_display` (St Peters sets its old `tlb` path); a neutral default `img/sidebar-bg.png`. Engine `building_performance.html.j2` uses `data-point` names and loads meter-templates.js. `--check` adds a trial build in a temp dir (`build_site()` shared with `main()`) and `linkcheck.py` checks on it: an unknown data-point/meter id on a rendered page is an error, a missing file is a warning. This replaced the template scan, which held overridden and unrendered templates to the site's data. Client names reworded out of engine and example comments. Examples: placeholder floorplans; minimal gained `building_performance` |
 
 ### Approved re-baselines (all in `site/golden/CHANGELOG`)
@@ -194,6 +208,12 @@ logged in each example's `golden/CHANGELOG`.
 
 ## 6. Things that will bite you
 
+- **Data file paths.** Read a data file through `build.data_path("x.yaml")`,
+  never `DATA_DIR / "x.yaml"`: a site's file may be numbered (`04_x.yaml`).
+  `site.yaml` is `build.BUILDING_FILE` (`data/00_site.yaml`, or the root
+  `site.yaml` of an older site; `build.site_file()` finds it).
+  Meters go through `build.read_meter_rows()`, which picks `meters.yaml` or
+  `meters.csv`.
 - **Two copies of `build`.** `python _build/build.py` runs `main()` on the
   importable `build` module, not on `__main__`. Without that, the switchboard
   and riser modules (`import build`) would see a second, unconfigured copy.
@@ -264,6 +284,9 @@ logged in each example's `golden/CHANGELOG`.
   - the home page text says "98 meters across 5 floors";
   - placeholder facts in `site.yaml` (postcode `TBD`).
 - **Not finished:** tenants module off (tenant data not reconciled).
+- **Ground-floor cores are inferred:** `floor_ground` gives East to Brit Insurance and
+  West to Black Sheep, from meters 112/113 ("Mezz Retail Unit East/West", zone n/a).
+  They're retail units rather than core space. Confirm with the owner.
 - **`--check` warnings:** 3 `bms_bindings.yaml` roles (`floor_demand_*`) aren't
   shown on any page. Their cards were computed but never rendered, and the
   dead code was removed in Phase 3.

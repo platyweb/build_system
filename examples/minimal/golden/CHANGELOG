@@ -14,3 +14,5 @@
   site: 5 changed, 1 added, 0 removed
 2026-10-03  acme-depot: Extras: new live_value component — example places a meter card (Site Demand, meter 1; only required options + one source) on home top, and a named-point card (energy_intensity, 1 decimal) on floor_L00 bottom. Verified: the diff only adds the two cards (0 lines removed); St Peters goldens identical.
   site: 2 changed, 0 added, 0 removed
+2026-10-20  acme-depot: Example moved to numbered data files and data/02_meters.yaml (level → core → meter), imported from its meters.csv with an exact round-trip. Proof: only js/project/2.0/meter-templates.js changed, and only by METER_REGISTRY row order: meter 8 now precedes meter 9 (the YAML reader lists meters in id order; the CSV had 9 before 8). Row contents identical.
+  site: 1 changed, 0 added, 0 removed

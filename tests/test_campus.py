@@ -96,7 +96,7 @@ def test_campus_levels_need_a_known_building(tmp_path: Path) -> None:
     site = tmp_path / "site"
     shutil.copytree(ROOT / "examples" / "campus", site, ignore=shutil.ignore_patterns("golden"))
     build.configure(site, tmp_path / "project")
-    floors = site / "data" / "floors.yaml"
+    floors = build.data_path("floors.yaml")
     floors.write_text(floors.read_text(encoding="utf-8") + "floor_x-l00: {label: X}\n", encoding="utf-8")
     with pytest.raises(SystemExit, match="'floor_x-l00': needs `building:`"):
         build.read_levels()

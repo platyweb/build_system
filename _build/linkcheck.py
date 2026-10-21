@@ -143,4 +143,4 @@ def unknown_names(out_root: Path, site_dir: Path, points: Iterable[str], meter_i
         return ", ".join(shown[:3]) + (f" (+{len(shown) - 3} more)" if len(shown) > 3 else "")
 
     return ([f"data-point '{n}' (on {used_by(bad_points[n])}) isn't in points.yaml" for n in sorted(bad_points)]
-            + [f"meter id {m} (on {used_by(bad_meters[m])}) isn't in meters.csv" for m in sorted(bad_meters)])
+            + [f"meter id {m} (on {used_by(bad_meters[m])}) isn't a meter in the meters file" for m in sorted(bad_meters)])

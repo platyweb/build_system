@@ -1,0 +1,41 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# METERS: every meter in the building, laid out level → core → meter. Fill in
+# after floors.yaml, which this file's levels, cores and tenants come from.
+#
+#   columns: {<core>: <column>}  the floor-page column each core's card sits in
+#   floor_<key>:                  a level from floors.yaml
+#     floor:  [ … ]               meters outside the cores (floor totals, …)
+#     <core>: [ … ]               the meters on that core's card, top to bottom
+#   unplaced: [ … ]               meters on no level (site totals, …)
+#
+# A meter is {id, tag, base, type, daily, monthly, parent, function, utility,
+# tenant, tenant_display, main_display, column, position, also_on}. Only id
+# and base are required; README.md "data/meters.yaml" gives every default. A
+# meter takes its core's tenant from floors.yaml `cores:`. `tenant:` overrides
+# it, and `tenant: null` means none.
+#
+# Imported from meters.csv by _build/import_meters.py. Edit it here: a
+# re-import replaces the whole file.
+# ─────────────────────────────────────────────────────────────────────────────
+
+columns: {West: 0, North: 1, East: 2, Roof Array: 2}
+
+floor_L00:
+  floor:
+    - {id: 1, tag: Main Incomer - Electricity, base: 10000, type: Modbus, daily: 2000001, monthly: 2000002, parent: 0, function: Incomer, utility: electricity}
+    - {id: 8, tag: Floor Total Electricity, base: 20000, type: Calculation, function: Floor Total Electricity, utility: electricity}
+  West:
+    - {id: 2, tag: DB-01 Lighting, base: 10100, type: Modbus, parent: 1, function: Lighting, utility: electricity, position: 1}
+    - {id: 3, tag: DB-01 Small Power, base: 10200, type: Modbus, parent: 1, function: Small Power, utility: electricity}
+  North:
+    - {id: 4, tag: Mechanical Plant, base: 10300, type: Modbus, parent: 1, function: Mechanical Plant, utility: electricity, position: 1}
+    - {id: 5, tag: Dock Doors, base: 10400, type: Modbus, parent: 1, function: Dock Doors, utility: electricity}
+  East:
+    - {id: 6, tag: DB-02 Lighting, base: 10500, type: Modbus, parent: 1, function: Lighting, utility: electricity, position: 1}
+    - {id: 7, tag: DB-02 Small Power, base: 10600, type: Modbus, parent: 1, function: Small Power, utility: electricity}
+  Roof Array:
+    - {id: 9, tag: Solar PV Inverter, base: 10700, type: Modbus, daily: 2000031, monthly: 2000032, parent: 1, function: Solar PV, utility: solar, position: 3}
+
+unplaced:
+  - {id: 10, tag: Main Incomer - Gas, base: 11000, type: Modbus, daily: 2000011, monthly: 2000012, parent: 0, function: Incomer, utility: gas}
+  - {id: 11, tag: Main Incomer - Water, base: 11100, type: Modbus, daily: 2000021, monthly: 2000022, parent: 0, function: Incomer, utility: water}

@@ -9,7 +9,7 @@ site's golden/ directory. Any difference — changed, added or removed file —
 fails.
 
 Sites: site/ (this repo's building, if any) and every examples/<name>/ — any
-directory with a site.yaml. --site DIR limits a run to one (repeatable).
+directory with a site.yaml (data/00_site.yaml). --site DIR limits a run to one (repeatable).
 
 Usage:
     python _build/regress.py check                     # fresh builds vs golden
@@ -48,7 +48,7 @@ from pathlib import Path
 
 import yaml
 
-from build import MODULES, OUTPUT_MARKER
+from build import MODULES, OUTPUT_MARKER, site_file
 
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE_DIR = ROOT / "_baseline"
@@ -72,13 +72,13 @@ DIFF_LINES_TOTAL = 400
 # ─── Sites ───────────────────────────────────────────────────────────────────
 def discover_sites() -> list[Path]:
     """site/ (if present), then every examples/<name>/ — each a directory
-    holding a site.yaml."""
-    sites = [ROOT / "site"] if (ROOT / "site" / "site.yaml").exists() else []
-    return sites + sorted(p.parent for p in (ROOT / "examples").glob("*/site.yaml"))
+    holding a site.yaml (data/00_site.yaml, or site.yaml on an older site)."""
+    sites = [ROOT / "site"] if site_file(ROOT / "site") else []
+    return sites + sorted(p for p in (ROOT / "examples").iterdir() if p.is_dir() and site_file(p))
 
 
 def _site_slug(site: Path) -> str:
-    building = yaml.safe_load((site / "site.yaml").read_text(encoding="utf-8")) or {}
+    building = yaml.safe_load(site_file(site).read_text(encoding="utf-8")) or {}
     return building["slug"]
 
 
@@ -317,7 +317,7 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args(argv)
     sites = [s.resolve() for s in args.site] if args.site else discover_sites()
     for site in sites:
-        if not (site / "site.yaml").exists():
+        if not site_file(site):
             raise SystemExit(f"regress: {site} has no site.yaml")
     variants = tuple(args.variant) if args.variant else None
 

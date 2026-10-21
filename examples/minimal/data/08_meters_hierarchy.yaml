@@ -1,4 +1,4 @@
-# meters_hierarchy.htm — the tree comes from meters.csv parent_id; this file
+# meters_hierarchy.htm — the tree comes from each meter's `parent`; this file
 # only names the page and the root meter of each tree (one per utility here).
 
 page_title: "Meters Hierarchy"
