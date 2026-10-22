@@ -1,19 +1,15 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# Named non-meter BACnet points (BMS calculation points: NABERS rating,
-# degree days, energy intensity, site sensors, …). Pages reference a point
-# by name with `data-point="<name>"`; the build writes this table into the
-# runtime's POINTS block (meter-templates.js), whose resolver fills in
-# data-bacnet + data-format on load (mirroring data-meter-id).
-#
-# Schema: <name>: { bacnet: "<device>|<object type>|<instance>|85|-1", format: "<fmt>" }
-#   format ∈ number | energy | power | percentage | temperature | nabers | status
-# ─────────────────────────────────────────────────────────────────────────────
+# Data file 04: every BMS point site1's pages show, grouped by page (README
+# "data/points.yaml"). So far only the incomer page, whose cards read meters
+# from meters.csv: 389 is the main incomer, 363 and 362 transformers TX1 and
+# TX2. Add named points, floor summary cards and a home page here as they
+# come.
 
-points:
-  hdd_15_5:           { bacnet: "300|2|89|85|-1", format: "number" }
-  cdd_15_5:           { bacnet: "300|2|90|85|-1", format: "number" }
-  occupancy_above_20: { bacnet: "300|2|91|85|-1", format: "number" }
-  annual_electricity: { bacnet: "300|2|87|85|-1", format: "energy" }
-  annual_gas:         { bacnet: "300|2|88|85|-1", format: "energy" }
-  energy_intensity:   { bacnet: "300|2|84|85|-1", format: "number" }
-  nabers_rating:      { bacnet: "300|2|99|85|-1", format: "nabers" }
+incomers:
+  incomer_electricity:
+    heading: "Electricity Main Incomer"
+    summary_cards:
+      - { title: "Demand",              meter_id: 389, meter_field: demand }
+      - { title: "Today's Consumption", meter_id: 389, meter_field: daily }
+      - { title: "Monthly Consumption", meter_id: 389, meter_field: monthly }
+      - { title: "TX1 Demand",          meter_id: 363, meter_field: demand }
+      - { title: "TX2 Demand",          meter_id: 362, meter_field: demand }

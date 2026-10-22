@@ -11,6 +11,7 @@
       energy_intensity, nabers_rating
    ──────────────────────────────────────────────────────────────────────── -#}
 {% extends "base.html.j2" %}
+{%- from 'partials/macros.j2' import report_card -%}
 {% block content %}
                     <!-- Columns Section with Grid Layout -->
                     <div class="performance-columns">
@@ -35,7 +36,7 @@
                                         The following data is used for the performance rating calculation:
                                     </p>
 
-                                    <h4 style="margin-bottom: 8px; margin-top: 20px; color: #0c1e35;">Building Data</h4>
+                                    <h4 style="margin-bottom: 8px; margin-top: 20px; color: var(--color-dark);">Building Data</h4>
                                     <ul style="margin-left: 20px; margin-bottom: 15px;">
                                         <li style="margin-bottom: 5px;">Building Postcode: {{ building.postcode }}</li>
                                         <li style="margin-bottom: 5px;">HDD@15.5: <div id="live-hdd"
@@ -51,7 +52,7 @@
                                         <li style="margin-bottom: 5px;">Net Internal Building Area: <strong>{{ building.net_internal_area }}</strong></li>
                                     </ul>
 
-                                    <h4 style="margin-bottom: 8px; margin-top: 20px; color: #0c1e35;">Last 12 Month
+                                    <h4 style="margin-bottom: 8px; margin-top: 20px; color: var(--color-dark);">Last 12 Month
                                         Rolling Energy Data</h4>
                                     <ul style="margin-left: 20px; margin-bottom: 15px;">
                                         <li style="margin-bottom: 5px;">Electricity consumption: <div id="live-elec"
@@ -64,7 +65,7 @@
                                         <li style="margin-bottom: 5px;">District Cooling: <strong>N/A</strong></li>
                                     </ul>
 
-                                    <h4 style="margin-bottom: 8px; margin-top: 20px; color: #0c1e35;">Performance
+                                    <h4 style="margin-bottom: 8px; margin-top: 20px; color: var(--color-dark);">Performance
                                         Metrics</h4>
                                     <p style="margin-bottom: 10px;">
                                         <strong>Energy Intensity (kWh/m²):</strong>
@@ -74,8 +75,7 @@
                                     <strong>Water Usage:</strong> <strong>N/A</strong>
                                     </p>
 
-                                    <p
-                                        style="padding: 15px; background-color: #e8f4f8; border-radius: 6px; border-left: 4px solid #27B4E8; margin-top: 60px; width: 100%; font-size: 13px; color: #3f4750;">
+                                    <p class="performance-note">
                                         <i><strong>Note:</strong>The findings and calculations presented in this report
                                             are for informational and benchmarking purposes only and do not constitute
                                             an official NABERS UK rating. Only ratings issued through the official
@@ -105,42 +105,16 @@
 
                             <!-- Pie Chart Report (Bottom 50%) -->
 {%- for r in pie_reports %}
-                            <a href="/utilityReports/UtilityReports.html?libraryItemId={{ r.library_item_id }}" target="_blank"
-                                rel="noopener noreferrer" class="floor-card">
-                                <div class="report-placeholder">
-                                    <div class="report-header">
-                                        <div class="report-title">{{ r.title }}</div>
-                                        <div class="report-subtitle">{{ r.subtitle }}</div>
-                                    </div>
-                                    <div class="report-content">
-                                        <img data-image-ref="{{ r.image_ref }}"
-                                            alt="{{ r.alt }}"
-                                            style="max-width: 100%; height: auto; display: block;">
-                                    </div>
-                                </div>
-                            </a>
-{% endfor %}
+{{ report_card(r, 28) }}
+{%- endfor %}
                         </div>
 
                         <!-- Right Column (40%) - Two Report Placeholders -->
                         <div class="column-right" style="height: 100%;">
                             <!-- Top Report (50%) -->
 {%- for r in right_reports %}
-                            <a href="/utilityReports/UtilityReports.html?libraryItemId={{ r.library_item_id }}" target="_blank"
-                                rel="noopener noreferrer" class="floor-card">
-                                <div class="report-placeholder">
-                                    <div class="report-header">
-                                        <div class="report-title">{{ r.title }}</div>
-                                        <div class="report-subtitle">{{ r.subtitle }}</div>
-                                    </div>
-                                    <div class="report-content">
-                                        <img data-image-ref="{{ r.image_ref }}"
-                                            alt="{{ r.alt }}"
-                                            style="max-width: 100%; height: auto; display: block;">
-                                    </div>
-                                </div>
-                            </a>
-{% endfor %}
+{{ report_card(r, 28) }}
+{%- endfor %}
                         </div>
                     </div>
 {% endblock %}

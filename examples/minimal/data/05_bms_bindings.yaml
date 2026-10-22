@@ -1,8 +1,0 @@
-# BMS bindings — the live point behind each summary card, by (role, floor).
-# Roles are site.yaml `summary_roles:`; a floor with no row for a role shows
-# "N/A" on that card.
-
-bindings:
-  - { role: "floor_today_electricity", floor: "L00", id: "live-l00-elec-today",   bacnet: "300|0|2000001|85|-1" }
-  - { role: "floor_solar_demand",      floor: "L00", id: "live-l00-solar-demand", bacnet: "300|0|10740|85|-1" }
-  - { role: "floor_today_solar",       floor: "L00", id: "live-l00-solar-today",  bacnet: "300|0|2000031|85|-1" }

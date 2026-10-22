@@ -1,0 +1,31 @@
+# Data file 05: site1's tenant catalog (README "data/tenants.yaml"). One entry
+# per tenant, keyed by its short name: the spelling a meter's `tenant` column
+# uses in meters.csv, and the one a level's `cores:` names in floors.yaml.
+# Entry order is the menu's tenant order (01_pages.yaml `pages: tenants`).
+#
+# DUMMY TENANTS: placeholders until the real ones are known. meters.csv tags
+# no meter with a tenant yet (every `tenant` cell is n/a), so each takes its
+# floors from `extra_floors`, and its pages show the floor's reports but no
+# meters. Replace them with the real tenants and tag their meters' `tenant`
+# (and `tenant_display: yes`) in meters.csv; a tenant then gets a page for
+# each floor its meters name.
+#
+#   tenants:
+#     Fern & Co:                   # short name
+#       name: "Fern and Company"   # proper name (default: the short name)
+#       index: {}                  # adds the tenant's index.htm
+#       # slug, extra_floors, exclude_floors, floors: see README
+
+tenants:
+  Tenant A:
+    name: "Tenant A Ltd"
+    index: {}
+    extra_floors: [ground, 2nd]
+  Tenant B:
+    name: "Tenant B Ltd"
+    index: {}
+    extra_floors: [3rd]
+  Tenant C:
+    name: "Tenant C Ltd"
+    index: {}
+    extra_floors: [4th, 5th]

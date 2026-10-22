@@ -1,6 +1,23 @@
 // Live Points Widget System
 // Simplified version based on point-widget.htm for dashboard integration
 
+// One MutationObserver per value element, shared by the formatter and the
+// freshness tracker: whenever the Optergy library (or a formatter) changes
+// what the element shows, its callbacks run in the order they were added.
+const valueWatchers = new WeakMap();
+
+function onValueChange(node, callback) {
+    let callbacks = valueWatchers.get(node);
+    if (!callbacks) {
+        callbacks = [];
+        valueWatchers.set(node, callbacks);
+        new MutationObserver(function () {
+            callbacks.forEach(function (cb) { cb(); });
+        }).observe(node, { childList: true, characterData: true, subtree: true });
+    }
+    callbacks.push(callback);
+}
+
 class LivePointWidget {
     constructor(elementId, bacnetAddress, options = {}) {
         this.elementId = elementId;
@@ -109,7 +126,7 @@ class LivePointWidget {
         const textSpan = document.getElementById(textSpanId);
         if (!textSpan) return;
 
-        const observer = new MutationObserver(() => {
+        onValueChange(textSpan, () => {
             const currentValue = textSpan.textContent;
             if (currentValue && currentValue !== 'Loading...' && currentValue !== 'Error') {
                 const formattedValue = this.options.format(currentValue);
@@ -122,12 +139,6 @@ class LivePointWidget {
                     }
                 }
             }
-        });
-
-        observer.observe(textSpan, {
-            childList: true,
-            characterData: true,
-            subtree: true
         });
     }
 
@@ -735,14 +746,13 @@ const LivePointFreshness = {
         if (!element.classList.contains('lp-error')) element.classList.add('lp-loading');
 
         var self = this;
-        var observer = new MutationObserver(function () {
+        onValueChange(span, function () {
             if (!self._hasValue(span)) return;
             rec.lastUpdate = Date.now();
             element.classList.remove('lp-loading', 'lp-stale', 'lp-error');
             element.setAttribute('title', 'Updated just now');
             self.evaluateThresholds(element, span);
         });
-        observer.observe(span, { childList: true, characterData: true, subtree: true });
 
         // Value may already be present by the time we register.
         if (this._hasValue(span)) {
@@ -778,9 +788,13 @@ const LivePointFreshness = {
     }
 };
 
-// Auto-initialize widgets with data-bacnet attribute when DOM is ready
+// Auto-initialize widgets with data-bacnet attribute when DOM is ready.
+// This handler runs before those of the scripts loaded after this one, and
+// some of them fill in or create data-bacnet elements in theirs
+// (meter-templates.js, energy-dials.js): a zero timeout binds once every
+// DOMContentLoaded handler has run. The Optergy libraries load before the
+// page is parsed (in <head>).
 document.addEventListener('DOMContentLoaded', function() {
-    // Wait a bit to ensure Optergy libraries are loaded
     setTimeout(function() {
         const elements = document.querySelectorAll('[data-bacnet]');
 
@@ -868,5 +882,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Begin freshness / stale monitoring once all widgets are registered
         LivePointFreshness.start();
-    }, 500);
+    }, 0);
 });

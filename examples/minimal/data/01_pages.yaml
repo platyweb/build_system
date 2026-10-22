@@ -1,0 +1,39 @@
+# Data file 01: every page the site builds, laid out as its sidebar menu
+# (SIDEBAR_HTML in js/project/2.0/sidebar-template.js). Only what's listed
+# here is built. brand + footer come from 00_site.yaml.
+#
+#   { label, page: <key> }            one page: a generated one (home,
+#                                     meters_hierarchy, building_performance,
+#                                     a floor or incomer page, …) or the site's
+#                                     own — site/templates/<key>.html.j2, else
+#                                     an empty page (header, menu, scripts)
+#   { label, icon, pages: <family> }  a sub-menu of a family, all built:
+#                                     floors, incomers, switchboards, risers,
+#                                     tenants (also only:, groups:)
+#   { label, href }                   an outside link
+#   { label, icon, children: [ … ] }  a sub-menu
+#   { kind: theme_toggle }            theme switcher
+# unlisted: pages built but not in the menu. See README "data/pages.yaml".
+
+top_items:
+  - { label: Home, icon: bxs-home, page: home }
+
+bottom_items:
+  - { label: Logout, icon: bxs-user, href: "/Login.html?logout", class: menu-logout }
+
+sections:
+  - header: METERING
+    items:
+      - { label: Floors,   icon: bxs-building,       pages: floors }
+      - { label: Incomers, icon: bxs-building-house, pages: incomers }
+      - label: Meters
+        icon: bx-tachometer
+        children:
+          - { label: "Hierarchy tree", page: meters_hierarchy }
+      - label: Performance
+        icon: bx-star
+        children:
+          - { label: "Building Performance", page: building_performance }
+  - header: SETTINGS
+    items:
+      - { kind: theme_toggle }

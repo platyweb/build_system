@@ -78,6 +78,7 @@ def test_no_bacnet_addresses_in_engine_code() -> None:
     ("meter-templates.js", jsblocks.POINTS, "const POINTS = {};"),
     ("meter-templates.js", jsblocks.BACNET_CONFIG, "const BACNET_CONFIG = { device: null, powerOffset: {} };"),
     ("reports.js", jsblocks.REPORT_URLS, "const ReportUrls = { reports: {} };"),
+    ("reports.js", jsblocks.REPORT_CARDS, "const REPORT_CARDS = {};"),
     ("sidebar-template.js", jsblocks.SIDEBAR_HTML, "const SIDEBAR_HTML = ``;"),
 ])
 def test_skeleton_generated_blocks_are_empty(js: str, markers: tuple[str, str], body: str) -> None:

@@ -11,6 +11,8 @@
     This is the catch-all for one-off pages that aren't driven by a data
     registry (landlord services, documents, a report viewer, …). To edit one of
     these pages, edit its body fragment and rebuild — the shell stays central.
+    A page listed in a pages.yaml menu with no fragments and no template of
+    its own renders as the shell alone: header, menu and scripts.
    ──────────────────────────────────────────────────────────────────────── -#}
 {% extends "base.html.j2" %}
 {% block extra_styles %}{{ extra_styles_html|default('') }}{% endblock %}

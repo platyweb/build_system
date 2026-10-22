@@ -176,7 +176,7 @@ def js_syntax_problems(workspace: Path) -> list[str]:
     problems: list[str] = []
     for js in sorted(out_root.rglob("*.js")):
         rel = js.relative_to(out_root).as_posix()
-        if "/bootstrap/" in f"/{rel}" or rel.endswith(".min.js"):
+        if rel.endswith(".min.js"):
             continue
         proc = subprocess.run([node, "--check", str(js)], capture_output=True, text=True)
         if proc.returncode != 0:

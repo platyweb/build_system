@@ -1,15 +1,16 @@
 # build_system
 
 This repo holds an engine that builds an Optergy EMS dashboard (static `.htm`
-pages plus generated runtime JS blocks) from a site directory. St Peters, the
-reference site, lives in `site/`. Everything outside `site/` is **engine**;
-it becomes the starter template that every other building forks.
+pages plus generated runtime JS blocks) from a site directory. The building
+being built lives in `site/`: today `site1`, built from its meters export
+(`site/data/meters.csv`). Everything outside `site/` is **engine**; it becomes
+the starter template that every building forks.
 
 - `README.md` is the engine reference: every site file and field, the modules,
   `--check`, and the regression and upgrade workflows. Read it before changing
   site data, a template or a module.
-- `HANDOFF.md` is the templatisation history: approved re-baselines, St
-  Peters' known data issues and the open items. Read it before any re-baseline,
+- `HANDOFF.md` is the templatisation history: approved re-baselines, the
+  site's known data issues and the open items. Read it before any re-baseline,
   or when asked why something is the way it is.
 
 ## Done means
@@ -17,14 +18,14 @@ it becomes the starter template that every other building forks.
 Run these with `.venv/bin/python`:
 1. `_build/regress.py check`: every golden identical.
 2. `-m pytest -q tests/`: green.
-3. `_build/build.py --check`: 0 errors. St Peters' known warnings are listed
+3. `_build/build.py --check`: 0 errors. The site's known warnings are listed
    in HANDOFF.md.
 
 ## Goldens are the regression bar
 
-St Peters' output stays **byte-identical**. Any change to a site's output is a
+The site's output stays **byte-identical**. Any change to a site's output is a
 **re-baseline**:
-- A St Peters re-baseline needs the owner's approval before you make it.
+- A re-baseline of `site/`'s golden needs the owner's approval before you make it.
 - Make it the only change in its step.
 - Decide the proof first, e.g. "identical once comments are stripped" or
   "only these files changed". Verify it, then accept with
@@ -37,8 +38,8 @@ prints the diff.
 
 ## Engine and site
 
-- **Building data lives in `site/`:** `data/`, `pages/`, template overrides
-  in `templates/`, and `assets/`. The engine stays **site-neutral**:
+- **Building data lives in `site/`:** `data/`, template overrides in
+  `templates/`, and `assets/`. The engine stays **site-neutral**:
   `tests/test_engine_neutral.py` catches client names, and literal BACnet
   addresses in engine code. The examples use invented data.
 - **Data flows one way:** site files → build → `project/`. `project/` is
@@ -48,11 +49,9 @@ prints the diff.
 - **A one-off addition** to a standard page is an extra: a component placed
   in a slot through `site/data/extras.yaml`. Use the `html` component for
   anything new, and make it a component once it recurs (README "Extras").
-- **St Peters-only changes to existing markup** go in `site/templates/`, as
-  an override with the same name. An **engine fix** goes in `_templates/`,
-  `_build/` or `_components/` and must keep St Peters byte-identical.
-- **St Peters' frozen pages** (`site/pages/`) stay frozen. Its known data
-  issues get fixed one reviewed re-baseline at a time.
+- **Site-only changes to existing markup** go in `site/templates/`, as an
+  override with the same name. An **engine fix** goes in `_templates/`,
+  `_build/` or `_components/` and must keep every golden byte-identical.
 
 ## Backward compatibility
 
@@ -67,17 +66,26 @@ An older site must keep building, with identical output, on a newer engine:
 
 ## Gotchas
 
-- **Data files are numbered** in fill-in order (`site/data/03_meters.yaml`;
+- **Data files are numbered** in fill-in order (`site/data/02_floors.yaml`;
   README "Data files and the order to fill them in"). Engine code opens them
   with `build.data_path("<name>.yaml")`, finds `site.yaml` (`data/00_site.yaml`)
-  as `build.BUILDING_FILE`, and reads meters with `build.read_meter_rows()`. St Peters' meters are `03_meters.yaml`, laid out
-  level → core → meter; a new CSV export comes in through
-  `_build/import_meters.py`.
+  as `build.BUILDING_FILE`, and reads meters with `build.read_meter_rows()`:
+  a site's meters are `meters.csv`, an export read as it is (site1), or
+  `meters.yaml`, laid out level → core → meter. The tenant catalog is
+  `05_tenants.yaml` (`build.read_tenants()`). `04_points.yaml` holds every BMS point, grouped by
+  page (`named`, `floors`, `incomers`, `home`): read it with `read_points()`,
+  `read_bms_bindings()`, `read_incomers()` and `read_home()`, never the file,
+  since an older site keeps those in separate files.
+- **`data/01_pages.yaml` is the menu** (README "data/pages.yaml"): it lists
+  every page the site builds, and the build derives the modules and the
+  sidebar from it (`build.read_menu()`). Read the sidebar with
+  `build.sidebar_cfg()` and the site's own pages with `build.own_pages()`:
+  an older site still has `sidebar.yaml`, `modules:` and a frozen `pages:` list.
 - **Templates use `StrictUndefined`.** Guard optional fields with
   `|default(...)` or `is defined`. Builders pop any `building` key from a
   page's context, because it would shadow the `site.yaml` global.
-- **URLs:** templates write asset and page URLs as `{{ _pp }}…`; `site/pages/`
-  fragments write them as `{{ path_prefix }}…`. That prefix supplies the
+- **URLs:** templates write asset and page URLs as `{{ _pp }}…`; a site's
+  `pages/` fragments (the `pages` module) write them as `{{ path_prefix }}…`. That prefix supplies the
   `../` a campus building folder needs.
 - **Module imports:** `build_switchboards.py` and `build_risers.py` do
   `import build`. `build.py` imports them lazily, and its `__main__` runs the

@@ -1,5 +1,5 @@
 {% extends 'base.html.j2' %}
-{%- from 'partials/macros.j2' import info_bar_item, report_card_headed -%}
+{%- from 'partials/macros.j2' import info_bar_item, report_card -%}
 
 {#- ────────────────────────────────────────────────────────────────────────
     home.html.j2 — landing page.
@@ -11,7 +11,7 @@
       top_reports      : 2 headed reports inside the 3-column row
       reports          : N more headed reports stacked below
 
-    Driven by `site/data/home.yaml`.
+    Driven by data/points.yaml `home:`.
    ──────────────────────────────────────────────────────────────────────── -#}
 
 {% block content %}{{ slot('top') }}
@@ -42,14 +42,18 @@
                                 </div>
                             </div>
 {%- for report in top_reports %}
-{{ report_card_headed(report) }}
+{{ report_card(report) }}
 {%- endfor %}
 
                         </div>
 
 {%- for report in reports %}
-
-{{ report_card_headed(report) }}
+{{ report_card(report) }}
 {%- endfor %}{{ slot('bottom') }}
                     </div>
 {% endblock %}
+
+{% block tail_scripts %}
+    <!-- Load meter templating (resolves data-meter-id from METER_REGISTRY) -->
+    <script src="{{ _pp }}js/project/2.0/meter-templates.js"></script>
+{%- endblock %}

@@ -100,6 +100,33 @@
 {%- endmacro %}
 
 
+{# ── The floorplan image on a floor / tenant-floor page (floor_page.floorplan) ── #}
+{# floorplan_right: beside the summary cards, in their first row (hidden on    #}
+{# narrow screens); floorplan_top: above them, full width.                    #}
+{%- macro floorplan_right(image) %}                                    <div class="floor-summary-image">
+                                        <img src="{{ image }}" alt="Floor Plan" class="floor-summary-img">
+                                    </div>
+{%- endmacro %}
+
+{%- macro floorplan_top(image) %}                                <!-- Floorplan image -->
+                                <div class="text-center">
+                                    <img src="{{ image }}" alt="Floor Plan" class="floor-summary-plan-img img-fluid rounded">
+                                </div>
+{%- endmacro %}
+
+
+{# ── riser_grid_open: the riser grid's opening tag (close it with </div>) ── #}
+{# `columns` is the page's resolved floor_page.meter_columns; the grid has 3  #}
+{# columns, and floor-grid-cols-<n> (style.css) gives it any other count.     #}
+{%- macro riser_grid_open(columns) %}
+{%- if columns == 3 %}                            <!-- 3 Column Layout: Left | Center (top card) | Right -->
+                            <div class="floor-three-column-grid">
+{%- else %}                            <!-- {{ columns }} Column Layout -->
+                            <div class="floor-three-column-grid floor-grid-cols-{{ columns }}">
+{%- endif %}
+{%- endmacro %}
+
+
 {# ── riser_card: zone card built from data-floor-meter auto-widgets ────── #}
 {# Lighter-weight sibling of floor_card: each meter is a single              #}
 {# `data-floor-meter` placeholder that meter-templates.js expands client-    #}
@@ -150,7 +177,6 @@
                         </div>
 {%- endif %}
 {%- for report in tab.reports %}
-
 {{ report_card(report) }}
 {%- endfor %}
                     </div>
@@ -305,69 +331,20 @@
 {%- endmacro %}
 
 
-{# ── report_card_headed: report-placeholder variant with a header band ── #}
-{# Used by incomer_electricity for the Monthly Electricity Demand report. #}
-{%- macro report_card_headed(report) %}                        <a href="/utilityReports/UtilityReports.html?libraryItemId={{ report.library_item_id }}" target="_blank"
-                            rel="noopener noreferrer" class="floor-stats-group-link">
-                            <div class="report-placeholder">
-                                <div class="report-header">
-                                    <div class="floor-title">{{ report.title }}</div>
-                                </div>
-                                <div class="report-content">
-                                    <img data-image-ref="{{ report.image_ref }}" alt="{{ report.alt|default('Report') }}"
-                                        style="max-width: 100%; height: auto; display: block;">
-                                </div>
-                            </div>
-                        </a>
+{# ── report_card: a report card, by name ───────────────────────────────── #}
+{# reports.js builds the card on load: its chart from ReportUrls.reports,  #}
+{# and the rest from REPORT_CARDS, which the build writes from reports.yaml #}
+{# placements: the style (plain; headed on home; titled on building        #}
+{# performance; a placement's `kind` overrides), title, subtitle, alt text #}
+{# and report-library link (#, without an id).                             #}
+{%- macro report_card(report, indent=24) %}{{ ' ' * indent }}<div data-report="{{ report.image_ref.removeprefix('reports.') }}"></div>
 {%- endmacro %}
 
 
-{# ── report_card: clickable image card linking to a UtilityReports page ── #}
-{# Without library_item_id (e.g. on tenant pages), the href is "#" and the  #}
-{# target/rel attrs are omitted. When report.title is set (e.g. "Demand" /  #}
-{# "Consumption" on floor report tabs), a header band is rendered above the #}
-{# image; omitted entirely for callers that don't pass a title.            #}
-{%- macro report_card(report) %}
-{%- if report.library_item_id is defined %}                        <a href="/utilityReports/UtilityReports.html?libraryItemId={{ report.library_item_id }}" target="_blank"
-                            rel="noopener noreferrer" class="floor-card">
-{%- else %}                        <a href="#" class="floor-card">
-{%- endif %}
-                            <div class="floorplan-viewer">
-                                <div class="floorplan-placeholder">
-{%- if report.title is defined %}
-                                    <div class="report-header">
-                                        <div class="floor-title">{{ report.title }}</div>
-                                    </div>
-{%- endif %}
-                                    <div class="report-content">
-                                        <img data-image-ref="{{ report.image_ref }}"
-                                            alt="{{ report.alt|default('Report') }}"
-                                            style="max-width: 100%; height: auto; display: block;">
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-{%- endmacro %}
-
-
-{# ── report_card_titled: clickable image card with a title + subtitle ──── #}
-{# Used where a report needs a two-line header (building_performance). The    #}
-{# report dict carries library_item_id, image_ref, title, subtitle, alt.     #}
-{%- macro report_card_titled(report) %}                            <a href="/utilityReports/UtilityReports.html?libraryItemId={{ report.library_item_id }}" target="_blank"
-                                rel="noopener noreferrer" class="floor-card">
-                                <div class="report-placeholder">
-                                    <div class="report-header">
-                                        <div class="report-title">{{ report.title }}</div>
-                                        <div class="report-subtitle">{{ report.subtitle }}</div>
-                                    </div>
-                                    <div class="report-content">
-                                        <img data-image-ref="{{ report.image_ref }}"
-                                            alt="{{ report.alt|default('Report') }}"
-                                            style="max-width: 100%; height: auto; display: block;">
-                                    </div>
-                                </div>
-                            </a>
-{%- endmacro %}
+{# The card's style is in REPORT_CARDS now; these names stay for a site    #}
+{# template that still imports them.                                       #}
+{%- macro report_card_headed(report, indent=24) %}{{ report_card(report, indent) }}{%- endmacro %}
+{%- macro report_card_titled(report, indent=28) %}{{ report_card(report, indent) }}{%- endmacro %}
 
 
 {# ── floorplan_viewer: centre image in the layout ──────────────────────── #}

@@ -1,5 +1,5 @@
 {% extends 'base.html.j2' %}
-{%- from 'partials/macros.j2' import floor_summary_card, riser_card, report_tab_panel -%}
+{%- from 'partials/macros.j2' import floor_summary_card, floorplan_right, floorplan_top, riser_grid_open, riser_card, report_tab_panel -%}
 
 {#- ────────────────────────────────────────────────────────────────────────
     tenant_floor.html.j2 — per-tenant floor view.
@@ -39,6 +39,9 @@
                     <!-- Floorplan Tab Content -->
                     <div id="floorplan-tab" class="tab-content active" role="tabpanel"
                         aria-labelledby="tab-floorplan" tabindex="0">
+{%- set plan = floorplan_tab.floorplan %}
+{%- set has_total = floorplan_tab.total_card is defined %}
+{%- if plan != 'none' or has_total %}
                         <!-- Section 1: Floor Summary — only Total Electricity + the
                              floorplan image on tenant pages; Floor Tenants/Landlords
                              Electricity (floor.html.j2's Line 2) are intentionally
@@ -46,26 +49,31 @@
                              row a min-height (style.css) so the floorplan image — sized
                              to fit a 2-row summary on floor.html.j2 — doesn't overhang
                              this shorter, 1-row tenant version. -->
-                        <div class="floor-section floor-section-summary floor-section-summary--single-row">
+                        <div class="floor-section floor-section-summary{{ ' floor-section-summary--single-row' if plan == 'right' else '' }}">
                             <div class="floor-summary-section">
+{%- if plan == 'top' %}
+{{ floorplan_top(floorplan_tab.image) }}
+{%- endif %}
+{%- if has_total or plan == 'right' %}
                                 <div class="floor-summary-row">
-{%- if floorplan_tab.total_card is defined %}
+{%- if has_total %}
 
 {{ floor_summary_card(floorplan_tab.total_card) }}
 {%- endif %}
+{%- if plan == 'right' %}
 
-                                    <div class="floor-summary-image">
-                                        <img src="{{ floorplan_tab.image }}" alt="Floor Plan" class="floor-summary-img">
-                                    </div>
+{{ floorplan_right(floorplan_tab.image) }}
+{%- endif %}
                                 </div>
+{%- endif %}
                             </div>
                         </div>
+{%- endif %}
 
                         <!-- Section 2: Riser Meters -->
                         <div class="floor-section floor-section-risers">
                             <div class="floor-summary-subtitle">Physical Riser Meters</div>
-                            <!-- 3 Column Layout: Left | Center (top card) | Right -->
-                            <div class="floor-three-column-grid">
+{{ riser_grid_open(floorplan_tab.columns) }}
 {%- for col in floorplan_tab.layout if col.type == 'cards' %}
 {%- set is_center = col.cards and col.cards[0].title == floor_page.centre_zone %}
                                 <div class="{{ 'center-column' if is_center else 'riser-column' }}">

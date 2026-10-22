@@ -7,7 +7,9 @@ template for a module the site doesn't enable, or one its own override
 replaces, never is):
   - every data-point / data-meter-id names a known point / meter;
   - every local URL a page uses — src/href attributes, the links in the
-    sidebar it loads, a stylesheet's url()s — exists in the build.
+    sidebar it loads, a stylesheet's url()s — exists in the build;
+  - every page loads the runtime scripts its markup needs (data-meter-id
+    needs meter-templates.js, …).
 
 Stdlib only; nothing here reads build.py's globals.
 """
@@ -33,7 +35,22 @@ SCRIPT_SRC = re.compile(r'<script\b[^>]*\bsrc="([^"]+)"')
 SIDEBAR_HTML = re.compile(r"const SIDEBAR_HTML = `(.*?)`;", re.S)
 DATA_POINT = re.compile(r'data-point="([^"]+)"')
 DATA_METER_ID = re.compile(r'data-(?:meter-id|swb-meter)="(\d+)"')
+DATA_REPORT = re.compile(r'data-report="([^"]+)"')
 SCHEME = re.compile(r"[a-zA-Z][a-zA-Z0-9+.-]*:")   # http:, mailto:, javascript:, data:, …
+
+# The attributes the runtime scripts act on: attribute → (the script, what the
+# elements carrying it miss on a page that doesn't load that script).
+RUNTIME_SCRIPTS = {
+    "data-meter-id":    ("meter-templates.js",  "never get a live value"),
+    "data-point":       ("meter-templates.js",  "never get a live value"),
+    "data-floor-meter": ("meter-templates.js",  "are never built"),
+    "data-floor-stats": ("meter-templates.js",  "are never built"),
+    "data-swb-meter":   ("meter-templates.js",  "are never built"),
+    "data-bacnet":      ("live-points.js",      "never get a live value"),
+    "data-report":      ("reports.js",          "never become report cards"),
+    "data-position":    ("position-handler.js", "are never positioned"),
+    "data-dial-bacnet": ("energy-dials.js",     "never become dials"),
+}
 
 
 def resolve(url: str, base: Path, out_root: Path) -> Path | None:
@@ -124,23 +141,53 @@ def missing_references(out_root: Path, site_dir: Path) -> list[str]:
     return lines
 
 
-def unknown_names(out_root: Path, site_dir: Path, points: Iterable[str], meter_ids: Iterable[int]) -> list[str]:
-    """One line per data-point / data-meter-id (or data-swb-meter) on a
-    built page that names no point in points.yaml / meter in meters.csv."""
+def _pages_shown(pages: set[Path], out_root: Path, site_dir: Path) -> str:
+    """Up to three of `pages`, as a site author reads them, and how many more."""
+    shown = [_shown(p, out_root, site_dir) for p in sorted(pages)]
+    return ", ".join(shown[:3]) + (f" (+{len(shown) - 3} more)" if len(shown) > 3 else "")
+
+
+def unloaded_scripts(out_root: Path, site_dir: Path) -> list[str]:
+    """One line per runtime script that pages need but don't load: an element
+    with data-meter-id, data-report, … (RUNTIME_SCRIPTS) does nothing unless
+    its page loads the script that acts on it. A site template override that
+    leaves the script out would otherwise fail silently, on the controller."""
     out_root, site_dir = out_root.resolve(), site_dir.resolve()
-    points, meter_ids = set(points), set(meter_ids)
+    missing: dict[tuple[str, str], set[Path]] = defaultdict(set)
+    for page in sorted(out_root.rglob("*.htm")):
+        text = page.read_text(encoding="utf-8")
+        loaded = {src.split("?")[0].rsplit("/", 1)[-1] for src in SCRIPT_SRC.findall(text)}
+        for attr, (script, _effect) in RUNTIME_SCRIPTS.items():
+            if script not in loaded and re.search(rf'(?<![\w-]){attr}="', text):
+                missing[(attr, script)].add(page)
+    return [f"{_pages_shown(pages, out_root, site_dir)}: {attr} elements, but the page doesn't load "
+            f"{script}, so they {RUNTIME_SCRIPTS[attr][1]}"
+            for (attr, script), pages in sorted(missing.items())]
+
+
+def unknown_names(out_root: Path, site_dir: Path, points: Iterable[str], meter_ids: Iterable[int],
+                  report_urls: Iterable[str] = ()) -> list[str]:
+    """One line per data-point / data-meter-id (or data-swb-meter) /
+    data-report on a built page that names no point in points.yaml / meter
+    in meters.csv / chart URL in reports.yaml `urls:`."""
+    out_root, site_dir = out_root.resolve(), site_dir.resolve()
+    points, meter_ids, report_urls = set(points), set(meter_ids), set(report_urls)
     bad_points: dict[str, set[Path]] = defaultdict(set)
     bad_meters: dict[int, set[Path]] = defaultdict(set)
+    bad_reports: dict[str, set[Path]] = defaultdict(set)
     for page in sorted(out_root.rglob("*.htm")):
         text = page.read_text(encoding="utf-8")
         for name in set(DATA_POINT.findall(text)) - points:
             bad_points[name].add(page)
         for mid in {int(m) for m in DATA_METER_ID.findall(text)} - meter_ids:
             bad_meters[mid].add(page)
+        for name in set(DATA_REPORT.findall(text)) - report_urls:
+            bad_reports[name].add(page)
 
     def used_by(pages: set[Path]) -> str:
-        shown = [_shown(p, out_root, site_dir) for p in sorted(pages)]
-        return ", ".join(shown[:3]) + (f" (+{len(shown) - 3} more)" if len(shown) > 3 else "")
+        return _pages_shown(pages, out_root, site_dir)
 
     return ([f"data-point '{n}' (on {used_by(bad_points[n])}) isn't in points.yaml" for n in sorted(bad_points)]
-            + [f"meter id {m} (on {used_by(bad_meters[m])}) isn't a meter in the meters file" for m in sorted(bad_meters)])
+            + [f"meter id {m} (on {used_by(bad_meters[m])}) isn't a meter in the meters file" for m in sorted(bad_meters)]
+            + [f"data-report '{n}' (on {used_by(bad_reports[n])}) has no chart URL in reports.yaml `urls:`"
+               for n in sorted(bad_reports)])

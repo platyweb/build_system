@@ -1,12 +1,12 @@
 {% extends 'base.html.j2' %}
-{%- from 'partials/macros.j2' import summary_card, report_card, report_card_headed, mini_stat_card -%}
+{%- from 'partials/macros.j2' import summary_card, report_card, mini_stat_card -%}
 
 {#- ────────────────────────────────────────────────────────────────────────
     incomer.html.j2 — utility main-incomer pages.
 
     Single tab. Summary cards across the top, then optional stat_grids
     (rows of mini stat-cards used by incomer_electricity), then N report
-    cards stacked. Driven entirely by `site/data/incomers.yaml`:
+    cards stacked. Driven entirely by data/points.yaml `incomers:`:
 
         heading        : page <h1>
         summary_cards  : list of { title, [id, bacnet, format, decimal_places] | value }
@@ -33,9 +33,13 @@
                         </div>
 {% endfor %}
 {%- for report in reports %}
-
-{% if report.kind|default('') == 'headed' %}{{ report_card_headed(report) }}{% else %}{{ report_card(report) }}{% endif %}
+{{ report_card(report) }}
 {%- endfor %}{{ slot('bottom') }}
 
                     </div>
 {% endblock %}
+
+{% block tail_scripts %}
+    <!-- Load meter templating (resolves data-meter-id from METER_REGISTRY) -->
+    <script src="{{ _pp }}js/project/2.0/meter-templates.js"></script>
+{%- endblock %}

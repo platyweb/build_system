@@ -1,7 +1,8 @@
-"""Tenants live in floors.yaml: a `tenants:` catalog keyed by short name
-(the spelling a meter's `tenant` uses), and each level's `cores:` naming who holds each
-core. An older site's data/tenants.yaml still builds the same pages, and
---check holds the cores against the catalog and the meters' tenant tags."""
+"""Tenants: a `tenants:` catalog keyed by short name (the spelling a meter's
+`tenant` uses), in tenants.yaml (or, before it had its own file, floors.yaml),
+and each level's `cores:` in floors.yaml naming who holds each core. An older
+site's slug-keyed tenants.yaml still builds the same pages, and --check holds
+the cores against the catalog and the meters' tenant tags."""
 from __future__ import annotations
 
 import shutil
@@ -175,3 +176,37 @@ def test_a_site_without_cores_isnt_checked_for_them(site: Path, capsys: pytest.C
     _write(site, LEGACY_FLOORS, LEGACY_TENANTS)
     assert build.validate() == 0
     assert not [w for w in _warnings(capsys.readouterr().out) if "core" in w]
+
+
+def _split_catalog() -> tuple[str, str]:
+    """CATALOG as its own tenants.yaml: (floors.yaml, tenants.yaml)."""
+    tenants, floors = CATALOG.split("\nfloor_L00:", 1)
+    return "floor_L00:" + floors, tenants
+
+
+def test_the_catalog_in_its_own_file_builds_the_same_pages(site: Path, tmp_path: Path) -> None:
+    def tenant_pages() -> dict[str, bytes]:
+        out = tmp_path / "project" / "tenants"
+        shutil.rmtree(out, ignore_errors=True)
+        build.build_site(["tenants"])
+        return {p.relative_to(out).as_posix(): p.read_bytes() for p in sorted(out.rglob("*")) if p.is_file()}
+
+    _write(site, CATALOG)
+    in_floors = tenant_pages(), build.read_tenants()
+    floors, tenants = _split_catalog()
+    _write(site, floors, tenants)
+    assert build.data_path("tenants.yaml").read_text(encoding="utf-8").startswith("\ntenants:")
+    assert [{**t, "where": None} for t in build.read_tenants()] == [{**t, "where": None} for t in in_floors[1]]
+    assert build.read_tenants()[0]["where"].endswith("tenants.yaml tenant 'Fern & Co'")
+    assert tenant_pages() == in_floors[0]
+    assert build.validate() == 0
+
+
+@pytest.mark.parametrize(("floors", "tenants", "error"), [
+    (CATALOG, _split_catalog()[1], "`tenants:` is in .*tenants.yaml now"),
+    (_split_catalog()[0], _split_catalog()[1] + "\nnotes: {}\n", r"unknown key\(s\) \['notes'\]"),
+])
+def test_the_catalog_lives_in_one_place(site: Path, floors: str, tenants: str, error: str) -> None:
+    _write(site, floors, tenants)
+    with pytest.raises(SystemExit, match=error):
+        build.read_tenants()

@@ -1,5 +1,5 @@
 {% extends 'base.html.j2' %}
-{%- from 'partials/macros.j2' import floor_summary_card, riser_card, report_tab_panel -%}
+{%- from 'partials/macros.j2' import floor_summary_card, floorplan_right, floorplan_top, riser_grid_open, riser_card, report_tab_panel -%}
 
 {#- ────────────────────────────────────────────────────────────────────────
     floor.html.j2 — generic floor page.
@@ -17,6 +17,13 @@
     One entry per populated column. A column whose first card is the site's
     floor_page.centre_zone (e.g. the landlord/mechanical riser's zone)
     renders with the "top card" styling; zone titles get floor_page.zone_suffix.
+
+    The page's layout (site.yaml floor_page, or the level's own; see
+    FLOOR_LAYOUT in build.py) arrives resolved on `floorplan_tab`:
+        floorplan      : right | top | none — where the floorplan image goes
+        columns        : the riser grid's width (meter_columns, auto resolved)
+        summary_layout : split | row — the summary cards in two rows or one
+    Their defaults (right, 3, split) write the page as it always was.
    ──────────────────────────────────────────────────────────────────────── -#}
 
 {% block content %}{{ slot('top') }}
@@ -34,21 +41,45 @@
                     <!-- Floorplan Tab Content -->
                     <div id="floorplan-tab" class="tab-content active" role="tabpanel"
                         aria-labelledby="tab-floorplan" tabindex="0">
+{%- set plan = floorplan_tab.floorplan %}
+{%- set has_total = floorplan_tab.total_card is defined %}
+{%- set has_pair = floorplan_tab.tenants_card is defined or floorplan_tab.landlords_card is defined %}
+{%- if plan != 'none' or has_total or has_pair %}
                         <!-- Section 1: Floor Summary -->
                         <div class="floor-section floor-section-summary">
                             <div class="floor-summary-section">
-                                <!-- Line 1: Total Electricity block + Floorplan image -->
+{%- if plan == 'top' %}
+{{ floorplan_top(floorplan_tab.image) }}
+{%- endif %}
+{%- if floorplan_tab.summary_layout == 'row' %}
+                                <!-- Floor summary cards in one row{{ ' + Floorplan image' if plan == 'right' else '' }} -->
                                 <div class="floor-summary-row">
-{%- if floorplan_tab.total_card is defined %}
+{%- if has_total or has_pair %}
+                                    <div class="floor-summary-dual-block{{ '' if plan == 'right' else ' w-100' }}">
+{%- for key in ('total_card', 'tenants_card', 'landlords_card') if floorplan_tab[key] is defined %}
+{{ floor_summary_card(dict(floorplan_tab[key], wrapper_class='floor-card')) }}
+{%- endfor %}
+                                    </div>
+{%- endif %}
+{%- if plan == 'right' %}
+{{ floorplan_right(floorplan_tab.image) }}
+{%- endif %}
+                                </div>
+{%- else %}
+{%- if has_total or plan == 'right' %}
+                                <!-- Line 1: Total Electricity block{{ ' + Floorplan image' if plan == 'right' else '' }} -->
+                                <div class="floor-summary-row">
+{%- if has_total %}
 
 {{ floor_summary_card(floorplan_tab.total_card) }}
 {%- endif %}
+{%- if plan == 'right' %}
 
-                                    <div class="floor-summary-image">
-                                        <img src="{{ floorplan_tab.image }}" alt="Floor Plan" class="floor-summary-img">
-                                    </div>
+{{ floorplan_right(floorplan_tab.image) }}
+{%- endif %}
                                 </div>
-{%- if floorplan_tab.tenants_card is defined or floorplan_tab.landlords_card is defined %}
+{%- endif %}
+{%- if has_pair %}
 
                                 <!-- Line 2: Floor Tenants Electricity & Floor Landlords Electricity -->
                                 <div class="floor-summary-row">
@@ -64,14 +95,15 @@
                                     </div>
                                 </div>
 {%- endif %}
+{%- endif %}
                             </div>
-                        </div>{{ slot('after_summary') }}
+                        </div>
+{%- endif %}{{ slot('after_summary') }}
 
                         <!-- Section 2: Riser Meters -->
                         <div class="floor-section floor-section-risers">
                             <div class="floor-summary-subtitle">Physical Riser Meters</div>
-                            <!-- 3 Column Layout: Left | Center (top card) | Right -->
-                            <div class="floor-three-column-grid">
+{{ riser_grid_open(floorplan_tab.columns) }}
 {%- for col in floorplan_tab.layout if col.type == 'cards' %}
 {%- set is_center = col.cards and col.cards[0].title == floor_page.centre_zone %}
                                 <div class="{{ 'center-column' if is_center else 'riser-column' }}">

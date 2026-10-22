@@ -22,9 +22,9 @@ Meter fields: id and base (required, whole numbers); tag; type; daily and
 monthly (default 0); parent (the parent meter's id, 0 for a hierarchy root;
 default: not in the hierarchy); function; utility (a site.yaml utility code
 or label, optionally -virtual); tenant; tenant_display (default no);
-main_display (default yes). In a core only: column (default the core's
-`columns:` entry) and position (default one after the meter above it, 0 for
-the first). also_on: [<level>, …] puts the meter on further levels' pages
+main_display (default yes); position: in a core, default one after the
+meter above it (0 for the first), elsewhere default none. In a core only:
+column (default the core's `columns:` entry). also_on: [<level>, …] puts the meter on further levels' pages
 too, in the same core and position.
 
 A meter's tenant defaults to whoever holds its core (floors.yaml `cores:`);
@@ -48,7 +48,7 @@ COLUMNS = "columns"      # top-level {core: floor-page column}
 LEVEL_PREFIX = "floor_"
 FIELDS = ("id", "tag", "base", "type", "daily", "monthly", "parent", "function", "utility",
           "tenant", "tenant_display", "main_display", "column", "position", "also_on")
-CORE_ONLY = ("column", "position")
+CORE_ONLY = ("column",)
 
 
 class _UniqueKeyLoader(yaml.SafeLoader):
@@ -96,7 +96,7 @@ def read(path: Path, utilities: dict[str, dict], cores: dict[str, dict[str, str]
         if key == UNPLACED:
             for entry in _meter_list(value, f"{name} `{UNPLACED}:`"):
                 rows.append(_row(entry, f"{name} `{UNPLACED}:`", utilities, floor="", zone="",
-                                 tenant="", column=None, position=None))
+                                 tenant="", column=None, position=entry.get("position")))
             continue
         if not key.startswith(LEVEL_PREFIX):
             raise SystemExit(f"{name}: '{key}' isn't a level (floor_<key>), `{COLUMNS}:` or `{UNPLACED}:`")
@@ -110,7 +110,7 @@ def read(path: Path, utilities: dict[str, dict], cores: dict[str, dict[str, str]
             if group == OUTSIDE:
                 for entry in _meter_list(entries, where):
                     rows.append(_row(entry, where, utilities, floor=level, zone="",
-                                     tenant=_floor_tenant(level_cores), column=None, position=None))
+                                     tenant=_floor_tenant(level_cores), column=None, position=entry.get("position")))
                 continue
             position = 0
             for entry in _meter_list(entries, where):
@@ -256,6 +256,8 @@ def dump(rows: list[dict], cores: dict[str, dict[str, str]], level_order: list[s
             position = 0
             for r in sorted(groups[group], key=order):
                 placement = {}
+                if group == OUTSIDE and r["position"] is not None:
+                    placement["position"] = r["position"]
                 if group != OUTSIDE:
                     if r["column"] != columns[group]:
                         placement["column"] = r["column"]
@@ -266,7 +268,7 @@ def dump(rows: list[dict], cores: dict[str, dict[str, str]], level_order: list[s
     if unplaced:
         out.append(f"\n{UNPLACED}:\n")
         for r in sorted(unplaced, key=lambda r: r["id"]):
-            out.append(_line("  ", _entry(r, "", {})))
+            out.append(_line("  ", _entry(r, "", {} if r["position"] is None else {"position": r["position"]})))
     return "".join(out)
 
 

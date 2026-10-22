@@ -176,8 +176,9 @@ def test_a_site_component_is_placed_like_an_engine_one(site: Path, tmp_path: Pat
 
 
 def test_check_warns_when_a_placement_never_renders(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    yaml_file = build.BUILDING_FILE
-    yaml_file.write_text(yaml_file.read_text(encoding="utf-8").replace("home, ", ""), encoding="utf-8")
+    pages = build.data_path("pages.yaml")        # no home page
+    pages.write_text(pages.read_text(encoding="utf-8").replace(
+        "top_items:\n  - { label: Home, icon: bxs-home, page: home }\n", "top_items: []\n"), encoding="utf-8")
     assert build.validate() == 0
     assert "placement 3 (html) doesn't appear on home — its module is off" in capsys.readouterr().out
 

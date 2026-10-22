@@ -17,7 +17,8 @@ import generate_meter_registry  # noqa: E402
 import import_meters  # noqa: E402
 import meters_yaml  # noqa: E402
 
-SITES = [ROOT / "site", ROOT / "examples" / "minimal", ROOT / "examples" / "campus"]
+# site/ only where it exists: the engine template ships without it.
+SITES = [d for d in (ROOT / "site", ROOT / "examples" / "minimal", ROOT / "examples" / "campus") if d.exists()]
 
 FLOORS = """
 tenants:
@@ -123,7 +124,7 @@ def test_fields_default_like_blank_csv_cells(site: Path) -> None:
 
 @pytest.mark.parametrize(("meters", "error"), [
     ("floor_L00:\n  West:\n    - {id: 1, base: 1, colour: red}\n", r"unknown field\(s\) \['colour'\]"),
-    ("floor_L00:\n  floor:\n    - {id: 1, base: 1, position: 2}\n", r"sets \['position'\], which only a core's"),
+    ("floor_L00:\n  floor:\n    - {id: 1, base: 1, column: 2}\n", r"sets \['column'\], which only a core's"),
     ("floor_L00:\n  Atrium:\n    - {id: 1, base: 1}\n", "no column for core 'Atrium'"),
     ("floor_L00:\n  West:\n    - {id: 1}\n", "a meter has no base"),
     ("level_L00:\n  West: []\n", "'level_L00' isn't a level"),
@@ -165,7 +166,7 @@ def test_site_yaml_is_data_file_00_or_at_an_older_sites_root(site: Path, tmp_pat
 
 
 def test_check_warns_about_a_data_file_it_doesnt_read(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    build.data_path("bms_bindings.yaml").rename(site / "data" / "05_bms_binding.yaml")
+    (site / "data" / "05_bms_binding.yaml").write_text("bindings: []\n", encoding="utf-8")   # misspelt
     build.validate()
     assert "05_bms_binding.yaml: the build doesn't read this file" in capsys.readouterr().out
 

@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "_build"))
@@ -45,9 +46,7 @@ def test_examples_reference_only_files_they_ship(example: str, tmp_path: Path,
                                                  capsys: pytest.CaptureFixture[str]) -> None:
     build.configure(ROOT / "examples" / example, tmp_path / "project")
     assert build.validate() == 0
-    # The engine's project CSS isn't in _assets/ yet (HANDOFF.md open items)
-    # — drop this exemption once it is.
-    assert [w for w in _warnings(capsys.readouterr().out) if not w.startswith("css/project/")] == []
+    assert _warnings(capsys.readouterr().out) == []
 
 
 def test_unknown_point_on_a_rendered_page_is_an_error(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -57,22 +56,24 @@ def test_unknown_point_on_a_rendered_page_is_an_error(site: Path, capsys: pytest
 
 
 def test_a_template_the_site_doesnt_render_isnt_checked(site: Path) -> None:
-    # Without the building_performance module (and the extra that shows a
+    # Without the building_performance page (and the extra that shows a
     # named point), its points needn't exist.
-    _edit(build.BUILDING_FILE, "building_performance, ", "")
-    _edit(build.data_path("sidebar.yaml"),
+    _edit(build.data_path("pages.yaml"),
           '      - label: Performance\n        icon: bx-star\n        children:\n'
-          '          - { label: "Building Performance", href: building_performance.htm }\n', "")
+          '          - { label: "Building Performance", page: building_performance }\n', "")
     extras = build.data_path("extras.yaml")
     extras.write_text(extras.read_text(encoding="utf-8").split("  # A live value card from a named point")[0],
                       encoding="utf-8")
-    build.data_path("points.yaml").unlink()
+    points = build.data_path("points.yaml")      # no named points
+    grouped = yaml.safe_load(points.read_text(encoding="utf-8"))
+    del grouped["named"]
+    points.write_text(yaml.safe_dump(grouped, sort_keys=False), encoding="utf-8")
     assert build.validate() == 0
 
 
 def test_missing_pages_and_assets_are_warnings(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    _edit(build.data_path("sidebar.yaml"), '{ label: "Hierarchy tree", href: meters_hierarchy.htm }',
-          '{ label: "Hierarchy tree", href: meters_hierarchy.htm }\n          - { label: "Gone", href: gone.htm }')
+    _edit(build.data_path("pages.yaml"), '{ label: "Hierarchy tree", page: meters_hierarchy }',
+          '{ label: "Hierarchy tree", page: meters_hierarchy }\n          - { label: "Gone", href: gone.htm }')
     _edit(build.BUILDING_FILE, 'riser_card_link: "#"', 'riser_card_link: "/docs/other-site/risers.htm"')
     (site / "assets" / "img" / "floors" / "floor_L00.png").unlink()
     assert build.validate() == 0
@@ -80,6 +81,28 @@ def test_missing_pages_and_assets_are_warnings(site: Path, capsys: pytest.Captur
     assert "gone.htm — not in the build; referenced by 1 file(s), e.g. js/project/2.0/sidebar-template.js" in warnings
     assert "img/floors/: floor_L00.png — not in the build; referenced by 1 file(s), e.g. floor_L00.htm" in warnings
     assert any(w.startswith("/docs/other-site/: risers.htm — not in the build") for w in warnings), warnings
+
+
+def test_a_page_without_the_script_its_markup_needs_is_a_warning(
+        site: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    # An older site's incomer override, without the meter-templates.js line:
+    # its meter_id summary cards would never show a value.
+    engine = (ROOT / "_templates" / "incomer.html.j2").read_text(encoding="utf-8")
+    (site / "templates").mkdir(exist_ok=True)
+    (site / "templates" / "incomer.html.j2").write_text(engine.split("{% block tail_scripts %}")[0],
+                                                       encoding="utf-8")
+    assert build.validate() == 0
+    assert ("incomer_electricity.htm, incomer_gas.htm, incomer_water.htm: data-meter-id elements, but the page "
+            "doesn't load meter-templates.js, so they never get a live value") in _warnings(capsys.readouterr().out)
+
+
+def test_unloaded_scripts_matches_the_script_by_file_name(tmp_path: Path) -> None:
+    site = tmp_path / "site"
+    site.mkdir()
+    (site / "a.htm").write_text('<div data-report="x"></div><script src="js/reports.js?v=1"></script>'
+                                '<div data-dial-bacnet="1|2|3|85|-1"></div>', encoding="utf-8")
+    assert linkcheck.unloaded_scripts(tmp_path, site) == [
+        "a.htm: data-dial-bacnet elements, but the page doesn't load energy-dials.js, so they never become dials"]
 
 
 def test_a_build_failure_is_an_error(site: Path, capsys: pytest.CaptureFixture[str]) -> None:

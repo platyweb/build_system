@@ -32,6 +32,10 @@ REPORT_URLS = (  # reports.js
     "// ── BEGIN GENERATED REPORT_URLS ── DO NOT EDIT BY HAND ──",
     "// ── END GENERATED REPORT_URLS ──",
 )
+REPORT_CARDS = (  # reports.js
+    "// ── BEGIN GENERATED REPORT_CARDS ── DO NOT EDIT BY HAND ──",
+    "// ── END GENERATED REPORT_CARDS ──",
+)
 BACNET_CONFIG = (  # meter-templates.js
     "// ── BEGIN GENERATED BACNET_CONFIG ── DO NOT EDIT BY HAND ──",
     "// ── END GENERATED BACNET_CONFIG ──",
@@ -184,4 +188,27 @@ def render_report_urls(urls: dict[str, str]) -> str:
         comma = "," if i < len(items) - 1 else ""
         lines.append(f"        {ref}: {js_value(url)}{comma}")
     lines += ["    }", "};"]
+    return "\n".join(lines)
+
+
+# ─── REPORT_CARDS ────────────────────────────────────────────────────────────
+REPORT_CARD_FIELDS = (("kind", "kind"), ("title", "title"), ("subtitle", "subtitle"), ("alt", "alt"),
+                      ("library_item_id", "libraryItemId"))
+
+
+def render_report_cards(cards: dict[str, dict]) -> str:
+    """`const REPORT_CARDS = { <name>: { kind, title, subtitle, alt, libraryItemId }, … };`
+    from build.report_cards(): what the runtime needs to build the card a
+    page asks for with <div data-report="<name>">. A field that isn't set
+    is left out (no kind: a plain card; no title: no header band; no id:
+    the card links to #)."""
+    if not cards:
+        return "const REPORT_CARDS = {};"
+    items = list(cards.items())
+    lines = ["const REPORT_CARDS = {"]
+    for i, (name, card) in enumerate(items):
+        fields = ", ".join(f"{js}: {js_value(card[key])}" for key, js in REPORT_CARD_FIELDS if key in card)
+        comma = "," if i < len(items) - 1 else ""
+        lines.append(f"    {name}: {{ {fields} }}{comma}")
+    lines.append("};")
     return "\n".join(lines)

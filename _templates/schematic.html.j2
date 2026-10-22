@@ -18,11 +18,6 @@
     each overlay on its (x,y) coordinate at runtime.
    ──────────────────────────────────────────────────────────────────────── -#}
 
-{% block extra_styles %}
-    <link rel="stylesheet" href="{{ _pp }}css/project/2.0/switchboard.css">
-    <link rel="stylesheet" href="{{ _pp }}css/project/2.0/diagrams.css">
-{%- endblock %}
-
 {% block content %}
                     <div class="switchboard-card-no-animation primary">
                         <div class="floorplan-viewer">
@@ -40,4 +35,9 @@
 {% block extra_scripts %}
     <!-- Load position handler for data-position attributes -->
     <script src="{{ _pp }}js/project/2.0/position-handler.js"></script>
+{%- endblock %}
+
+{% block tail_scripts %}
+    <!-- Load meter templating (resolves data-meter-id from METER_REGISTRY) -->
+    <script src="{{ _pp }}js/project/2.0/meter-templates.js"></script>
 {%- endblock %}

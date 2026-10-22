@@ -1,4 +1,4 @@
-# Data file 02, after 00_site.yaml (this site has no 01_pages.yaml). 03_meters.yaml then lists
+# Data file 02, after 01_pages.yaml. 03_meters.yaml then lists
 # each level's meters, core by core.
 #
 # Level roster, bottom → top — one `floor_<key>:` entry per level; the order

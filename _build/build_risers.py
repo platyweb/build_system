@@ -2,8 +2,8 @@
 r"""
 Generate riser diagram pages from METER_REGISTRY + site/data/risers.yaml.
 
-A riser is any meter with function == "Riser-meter" (see site/data/meters.csv
-— edit there and rebuild). Risers
+A riser is any meter with function == "Riser-meter" in the site's meters
+file (data/meters.yaml). Risers
 are auto-discovered from the registry, not hand-listed: this mirrors
 _build/build_switchboards.py's "ways are every meter whose parent_id equals
 the incomer id" approach, one tier further down — a riser's floor tap-offs
@@ -63,12 +63,10 @@ def make_box(meter, cx, cy, w, h, default_rating, is_incomer=False):
 
 
 # ─── layout ──────────────────────────────────────────────────────────────────
-def compute_pages(riser, kids, cfg, defaults, default_rating, floor_rank):
-    """Group a riser's children by floor, split into page-chunks, and lay out
-    each chunk. Returns a list of (page_key_suffix, ctx, svg)."""
-    L = deep_merge(defaults["layout"], cfg.get("layout", {}))
+def floor_chunks(kids, cfg, defaults, floor_rank):
+    """A riser's tap-offs by floor, and its floors (bottom → top) split into
+    one chunk per page. Returns (by_floor, skipped, chunks)."""
     floors_per_page = cfg.get("floors_per_page", defaults.get("floors_per_page", 20))
-
     by_floor = defaultdict(list)
     skipped = []
     for m in kids:
@@ -77,25 +75,39 @@ def compute_pages(riser, kids, cfg, defaults, default_rating, floor_rank):
             by_floor[f].append(m)
         else:
             skipped.append(m)
-    if skipped:
-        print(f"    WARNING: {len(skipped)} children have no single floors.yaml level as their floor, skipped: "
-              f"{[m['tag'] for m in skipped]}")
-    for f in by_floor:
-        by_floor[f].sort(key=lambda m: (m["position"] if m["position"] is not None else 0, m["id"]))
-
     floor_labels = sorted(by_floor.keys(), key=lambda f: floor_rank[f])  # bottom -> top
     if not floor_labels:
-        return []
+        return by_floor, skipped, []
 
     # Balance chunk sizes across however many pages are needed, rather than
     # greedily filling floors_per_page and leaving a near-empty remainder
     # page (e.g. 21 floors / 20-per-page => 20+1, not a sensible 11+10).
     n_pages = math.ceil(len(floor_labels) / floors_per_page)
     chunk_size = math.ceil(len(floor_labels) / n_pages)
-    chunks = [floor_labels[i:i + chunk_size] for i in range(0, len(floor_labels), chunk_size)]
+    return by_floor, skipped, [floor_labels[i:i + chunk_size] for i in range(0, len(floor_labels), chunk_size)]
+
+
+def page_suffix(chunks, i):
+    """Page i's key suffix: none for a one-page riser, else _p1, _p2, …"""
+    return "" if len(chunks) == 1 else f"_p{i + 1}"
+
+
+def compute_pages(riser, kids, cfg, defaults, default_rating, floor_rank):
+    """Group a riser's children by floor, split into page-chunks, and lay out
+    each chunk. Returns a list of (page_key_suffix, ctx, svg)."""
+    L = deep_merge(defaults["layout"], cfg.get("layout", {}))
+    by_floor, skipped, chunks = floor_chunks(kids, cfg, defaults, floor_rank)
+    if skipped:
+        print(f"    WARNING: {len(skipped)} children have no single floors.yaml level as their floor, skipped: "
+              f"{[m['tag'] for m in skipped]}")
+    for f in by_floor:
+        by_floor[f].sort(key=lambda m: (m["position"] if m["position"] is not None else 0, m["id"]))
+    if not chunks:
+        return []
+
     pages = []
     for i, chunk in enumerate(chunks):
-        suffix = "" if len(chunks) == 1 else f"_p{i + 1}"
+        suffix = page_suffix(chunks, i)
         ctx, svg = compute_page(riser, chunk, by_floor, L, default_rating,
                                  is_first=(i == 0), is_last=(i == len(chunks) - 1))
         pages.append((suffix, ctx, svg))
@@ -280,9 +292,40 @@ def build_svg(L, width, height, busbar_x, busbar_top_y, busbar_bottom_y,
 
 
 # ─── driver ──────────────────────────────────────────────────────────────────
+def sidebar_items() -> list[dict]:
+    """The sidebar's `auto: risers` items: one per riser, linking to its
+    first page and labelled like its heading (risers.yaml `overrides:
+    <id>: {nav_label}` to rename one)."""
+    risers_file = build.data_path("risers.yaml")
+    cfg_all = (yaml.safe_load(risers_file.read_text(encoding="utf-8")) or {}) if risers_file.exists() else {}
+    defaults = cfg_all.get("defaults", {})
+    overrides = cfg_all.get("overrides", {}) or {}
+    meters = build.read_meters()
+    children = defaultdict(list)
+    for m in meters:
+        if m["parent_id"] is not None:
+            children[m["parent_id"]].append(m)
+    floor_rank = build.level_rank()
+    level_building = {lv["key"]: lv["building"] for lv in build.read_levels()}
+    items = []
+    for riser in sorted((m for m in meters if m["function"] == "Riser-meter"), key=lambda m: m["id"]):
+        cfg = overrides.get(riser["id"], {})
+        _, _, chunks = floor_chunks(children.get(riser["id"], []), cfg, defaults, floor_rank)
+        if not chunks:
+            continue
+        key = f"riser_{riser['id']}"
+        building = level_building.get(riser.get("floor") or "")
+        items.append({
+            "_key": key, "_building": building,
+            "label": str(cfg.get("nav_label") or TAG_PREFIX_RE.sub("", riser["tag"])),
+            "href": build.site_href(building, f"{key}{page_suffix(chunks, 0)}.htm"),
+        })
+    return items
+
+
 def run(env, only: str | None = None) -> list[Path]:
     """The `risers` module: one or more linked pages + SVGs per riser meter
-    (function == "Riser-meter") in meters.csv (`only`: a single riser key)."""
+    (function == "Riser-meter") in the meters file (`only`: a single riser key)."""
     cfg_all = yaml.safe_load(build.data_path("risers.yaml").read_text(encoding="utf-8")) or {}
     defaults = cfg_all.get("defaults", {})
     overrides = cfg_all.get("overrides", {}) or {}

@@ -1,4 +1,16 @@
 # ─────────────────────────────────────────────────────────────────────────────
+# DATA FILE 04 — every BMS point Acme Depot's pages show, grouped by page. A meter's
+# own points (demand, status, daily, monthly) come from 03_meters.yaml; these are
+# the rest: BMS calculation points and sensors.
+#
+#   named:    points any page names with data-point="<name>"
+#   floors:   the live point behind each floor summary card
+#   incomers: the incomer pages, one per <key>.htm
+#   home:     the home page
+#
+# Addresses are "<device>|<object type>|<instance>|85|-1".
+# ─────────────────────────────────────────────────────────────────────────────
+
 # Named non-meter BACnet points (BMS calculation points: NABERS rating,
 # degree days, energy intensity, site sensors, …). Pages reference a point
 # by name with `data-point="<name>"`; the build writes this table into the
@@ -9,9 +21,7 @@
 #   format ∈ number | energy | power | percentage | temperature | nabers | status
 #
 # The building_performance page shows the seven points below.
-# ─────────────────────────────────────────────────────────────────────────────
-
-points:
+named:
   hdd_15_5:           { bacnet: "300|2|80|85|-1", format: "number" }
   cdd_15_5:           { bacnet: "300|2|81|85|-1", format: "number" }
   occupancy_above_20: { bacnet: "300|2|82|85|-1", format: "number" }
@@ -19,3 +29,67 @@ points:
   annual_gas:         { bacnet: "300|2|84|85|-1", format: "energy" }
   energy_intensity:   { bacnet: "300|2|85|85|-1", format: "number" }
   nabers_rating:      { bacnet: "300|2|86|85|-1", format: "nabers" }
+
+# Floor summary cards: floor_<key> → <summary role> → {id, bacnet}. The roles
+# are 00_site.yaml `summary_roles:` (each card's title and format); id is the
+# HTML element id the live updaters fill. A level with no entry for a role
+# shows "N/A" on that card.
+floors:
+  floor_L00:
+    floor_today_electricity: { id: live-l00-elec-today,    bacnet: "300|0|2000001|85|-1" }
+    floor_solar_demand:      { id: live-l00-solar-demand,  bacnet: "300|0|10740|85|-1" }
+    floor_today_solar:       { id: live-l00-solar-today,   bacnet: "300|0|2000031|85|-1" }
+
+# One page per incomer (<key>.htm) through the engine's incomer.html.j2.
+# Summary cards can bind a registry meter (meter_id + meter_field: status |
+# demand | energy | daily | monthly) or a raw BACnet point (id, bacnet, format).
+# stat_grids (optional) add rows of small stat cards — see incomer_electricity.
+incomers:
+  incomer_electricity:
+    heading: "Electricity Main Incomer"
+    summary_cards:
+      - { title: "Demand",              meter_id: 1, meter_field: demand }
+      - { title: "Today's Consumption", meter_id: 1, meter_field: daily }
+      - { title: "Monthly Consumption", meter_id: 1, meter_field: monthly }
+    stat_grids:
+      - columns: 2
+        cards:
+          - title: "Supply Quality"
+            location: "Main incomer"
+            link: "/meters/MeterDisplay.html?meter.id=1"
+            stats:
+              - { label: "Average Phase Voltage", id: live-incomer-voltage, bacnet: "300|2|40|85|-1", format: voltage }
+              - { label: "Average Power Factor",  id: live-incomer-pf,      bacnet: "300|2|41|85|-1", format: number, decimal_places: 2 }
+          - title: "Costs"
+            stats:
+              - { label: "This Month", id: live-elec-cost-month, bacnet: "300|2|42|85|-1", format: cost, wrap_span: true }
+
+  incomer_gas:
+    heading: "Gas Main Incomer"
+    summary_cards:
+      - { title: "Today's Consumption", meter_id: 10, meter_field: daily }
+      - { title: "Monthly Consumption", meter_id: 10, meter_field: monthly }
+
+  incomer_water:
+    heading: "Water Main Incomer"
+    summary_cards:
+      - { title: "Today's Consumption", meter_id: 11, meter_field: daily }
+      - { title: "Monthly Consumption", meter_id: 11, meter_field: monthly }
+
+# home.htm through the engine's home.html.j2. Report cards come from
+# reports.yaml placements (page=home, slot=top / main).
+home:
+  page_title: "Home · AD EMS"
+  heading: "Acme Depot Energy Management System"
+
+  info_bar:
+    - { label: "Electricity Demand", link: incomer_electricity.htm, id: live-home-elec-demand, bacnet: "300|0|10040|85|-1", format: power }
+    - { label: "Gas Today",          link: incomer_gas.htm,         id: live-home-gas-today,   bacnet: "300|0|2000011|85|-1", format: gas }
+    - { label: "Water Today",        link: incomer_water.htm,       id: live-home-water-today, bacnet: "300|0|2000021|85|-1", format: water }
+    - { label: "Floor Plan",         link: floor_L00.htm,           value: "Ground Floor" }
+
+  welcome_title: "Welcome"
+  bullet_points:
+    - "Live electricity, gas and water from the main incomers."
+    - "The floor page shows every distribution-board meter by zone."
+    - "The meters hierarchy traces each meter back to its incomer."
