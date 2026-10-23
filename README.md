@@ -45,6 +45,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # jinja2, p
 | `_build/build.py --modules a,b` / `all` | Build these modules instead of `site.yaml`'s, for one run |
 | `_build/regress.py check` | Compare each site's fresh build with its golden |
 | `_build/regress.py snapshot --site DIR [--accept "reason"]` | Record or update a site's golden |
+| `_build/regress.py diff --against REF` | Build each site with the engine at git `REF` and with the working tree's, and show what differs |
 | `.venv/bin/python -m pytest -q tests/` | Unit tests + the golden check |
 
 Run the `_build/` scripts with `.venv/bin/python`. A full build deletes and recreates its
@@ -69,7 +70,12 @@ file). It won't wipe a directory it didn't make.
    `03_meters.yaml` (or drop a meters export in as `data/meters.csv`),
    then the data files of the pages you listed.
 4. Run `build.py --check` until it reports no problems, then run `build.py`.
-5. Record the first golden with `regress.py snapshot --site site`, then commit.
+5. Record the first golden with `regress.py snapshot --site site`.
+6. Turn on the pre-commit hook (see [Regression testing](#regression-testing)),
+   then commit:
+   ```bash
+   git config core.hooksPath .githooks
+   ```
 
 Live values need the controller. Opened locally, the pages show their layout
 and links, with "Loading..." in place of live values.
@@ -119,8 +125,9 @@ _assets/    (+ site/assets/)     ─┘                     project/tenants/  (t
    `site/assets/` over it, so a site file replaces an engine file of the same
    name.
 3. **Write the generated JS blocks.** These sit between `BEGIN`/`END` marker
-   comments in the staged copy. `_assets/` itself ships them empty and is
-   never modified.
+   comments in the staged copy. `_assets/` itself ships them empty (or at
+   their default) and is never modified. A site that keeps its own copy of
+   one of these files in `site/assets/` needs the file's blocks in it.
 
    | Block | File | From |
    |---|---|---|
@@ -130,9 +137,8 @@ _assets/    (+ site/assets/)     ─┘                     project/tenants/  (t
    | `ReportUrls` | `js/project/2.0/reports.js` | `data/reports.yaml urls:` |
    | `REPORT_CARDS` | `reports.js` | `data/reports.yaml placements:`: each report's style, title, subtitle, alt text and library id |
    | `SIDEBAR_HTML` | `js/project/2.0/sidebar-template.js` | `data/pages.yaml` (the `sidebar` module; older sites: `sidebar.yaml`) |
-
-   `live-points.js`'s `OVERRIDE_FILE` line is set from
-   `site.yaml optergy_override_display`.
+   | `SIDEBAR_RUNTIME` | `sidebar-template.js` | Where it loads `sidebar.js` from; a campus building folder's copy points up a level |
+   | `OVERRIDE_FILE` | `js/project/2.0/live-points.js` | `site.yaml optergy_override_display` |
 4. **Run the modules** the pages in `pages.yaml` need, in the engine's fixed
    order (see [Modules](#modules)). Each renders pages through the Jinja
    templates. Two modules writing the same file is an error.
@@ -167,7 +173,8 @@ controller's own `/js/` libraries (cache-busted with `optergy_lib_version`).
 
 | Path | Contents |
 |---|---|
-| `_build/build.py` | Engine: configure, data readers, layout derivation, page builders, `MODULES`, `--check`, CLI |
+| `_build/build.py` | Engine: staging, layout derivation, page builders, the menu, `MODULES`, `--check`, CLI |
+| `_build/site_data.py` | The configured site: `configure()`, the data readers, page locations, `render_page()` |
 | `_build/build_switchboards.py`, `build_risers.py` | The `switchboards` and `risers` modules |
 | `_build/jsblocks.py` | Renders and injects the generated JS blocks |
 | `_build/meters_yaml.py` | `meters.yaml` reader and writer |
@@ -180,8 +187,10 @@ controller's own `/js/` libraries (cache-busted with `optergy_lib_version`).
 | `_assets/` | Runtime skeleton copied into every build. Site-neutral |
 | `_components/` | The component catalog for [extras](#extras-one-off-additions-to-pages), and `published.yaml`, its compatibility contract |
 | `examples/minimal/` | *Acme Depot*: one storey, electricity/solar/gas/water, building performance |
-| `examples/campus/` | *Riverside Campus*: two buildings, per-building folders, switchboards with a cross-building bus tie |
-| `tests/` | Unit tests, `--check` tests, the golden check, the engine-neutrality check |
+| `examples/campus/` | *Riverside Campus*: two buildings, per-building folders, switchboards with a cross-building bus tie, a riser split over two pages |
+| `examples/tower/` | *Northgate House*: four storeys, two tenants with their own pages (one ships a Docs PDF), an SVG schematic |
+| `tests/` | Unit tests, `--check` tests, the golden check, the engine-neutrality check, the template coverage check |
+| `.githooks/` | The pre-commit hook (see [Regression testing](#regression-testing)) |
 | `site/` | **Your building** (not in the template) |
 
 ---
@@ -198,7 +207,7 @@ site/
   golden/       regression manifests + CHANGELOG (written by regress.py)
 ```
 
-Both examples are complete, working sites, and most data files open with a
+The examples are complete, working sites, and most data files open with a
 comment block describing their own schema. When in doubt, copy from an
 example.
 
@@ -525,6 +534,7 @@ tenants:
 | `extra_floors` | | Floors with no meters tagged to the tenant yet that get a page anyway |
 | `exclude_floors` | | Floors a tagged meter would add that don't get a page |
 | `floors` | | `{<key>: {heading, page_title, floorplan_tab_label, floorplan_image, floorplan_after_column, <slot>_reports}}`: per-floor overrides |
+| `docs` | `docs/<slug>-submetering.pdf` in the tenant's folder | The menu's Docs link. A path such as `docs/fern-co.pdf` is a file the site ships in `assets/`; a URL (`https://…`) or `/docs/…` path is used as written; `false` drops the Docs item. The default is a file the build can't put there, so `--check` warns until it's set |
 
 A tenant gets a page for each floor its tagged meters name. Each page shows
 that floor's meters tagged with the tenant's short name and
@@ -744,7 +754,9 @@ To **add** something to a standard page, use an
 already draws, copy the template from `_templates/` to `site/templates/`
 under the same name and edit it. `--check` lists the overrides in use. Keep
 them few: an overridden template no longer picks up engine fixes, and it has
-no slots unless you keep them.
+no slots unless you keep them. Write its asset and page URLs as
+`{{ path_prefix }}…` (or `{{ _pp }}…`, `base.html.j2`'s short alias), so they
+resolve from a campus building's folder too.
 
 ---
 
@@ -786,15 +798,31 @@ Each site has **goldens** in its `golden/` directory: sha256 manifests of
 every file in its build output. `regress.py` builds each site in a throwaway
 copy of the repo and compares. A changed, added or removed file fails the
 check, and `regress.py` prints a readable diff when a local copy of the last
-golden build exists (`_baseline/`, gitignored).
+golden build exists (`_baseline/`, gitignored). A copy that no longer matches
+the golden is reported as stale instead of diffed.
 
 - **Sites:** `site/` and every `examples/<name>/`; limit a run with `--site DIR`.
+  Between them, the examples render every engine template
+  (`tests/test_template_coverage.py`), so their goldens cover every page
+  type. Dials and energy flow wait for the d3 files. A new template needs an
+  example that renders it.
 - **Variants:**
   - `site`: the pages the site's `pages.yaml` lists (an older site: its
     `modules:`), which is what gets deployed;
   - `extra` (optional): every module except `pages`, to keep the modules a
     site doesn't use from rotting.
-- **`check`** must pass before every commit. `pytest` runs it too.
+- **`check`** must pass before every commit. `pytest` runs it too, and so
+  does the pre-commit hook in `.githooks/`, with `test_engine_neutral`.
+  Turn the hook on once per clone with `git config core.hooksPath .githooks`.
+  It checks the working tree, not only what's staged; `git commit --no-verify`
+  skips it for one commit.
+- **`diff --against REF`** builds each site's data twice: with the engine as
+  committed at git `REF` (a commit, branch or tag) and with the working
+  tree's. It prints every file that differs, and needs no golden or
+  `_baseline/`. `--against HEAD` shows what an uncommitted engine change does
+  to every site, which is where a re-baseline's proof starts. `--keep` keeps
+  both builds, e.g. for `stylediff.py`. An engine older than the site's data
+  layout can't build it.
 - **`snapshot`** builds twice with different hash seeds, fails if the two
   builds differ, then writes the manifests. Overwriting an existing golden
   needs `--accept "reason"`. The reason is appended to `golden/CHANGELOG`
@@ -874,6 +902,9 @@ git pull template main
 .venv/bin/python _build/regress.py check     # did the site's output change?
 .venv/bin/python _build/build.py --check
 ```
+
+`regress.py diff --against ORIG_HEAD` shows the same change as a diff,
+your site built by the engine before and after the pull.
 
 - **If the goldens still match,** commit.
 - **If they changed,** read the diff. A deliberate engine change (one the

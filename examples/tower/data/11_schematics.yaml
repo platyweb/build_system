@@ -1,0 +1,21 @@
+# SVG schematic pages (the `schematics` module): each key is a page,
+# <key>.htm, listed in 01_pages.yaml as `page: <key>`. `background` is an
+# image under assets/; each overlay is a live widget centred on
+# `position: "x,y"` in the image's pixels.
+#
+#   kind: meter   a meter's value: meter_id, field (default demand)
+#   kind: status  online/offline: a meter's (meter_id) or a point's (bacnet)
+#   kind: raw     a BACnet point shown with its format
+#   kind: link    a clickable area: link, width, height
+
+plant_schematic:
+  heading: "Plant Room Schematic"
+  background: img/plant_schematic.svg
+  overlays:
+    - { kind: meter,  meter_id: 1, position: "150,95" }
+    - { kind: meter,  meter_id: 2, position: "150,255" }
+    - { kind: meter,  meter_id: 1, field: daily, position: "450,255" }
+    - { kind: status, meter_id: 2, position: "70,255" }
+    - { kind: status, bacnet: "300|2|82|85|-1", position: "530,95" }
+    - { kind: raw,    bacnet: "300|2|85|85|-1", format: number, position: "450,95" }
+    - { kind: link,   link: meters_hierarchy.htm, position: "150,95", width: 200, height: 70 }

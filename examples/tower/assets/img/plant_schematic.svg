@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="340" viewBox="0 0 600 340">
+  <!-- Placeholder schematic for the tower example: the overlays in
+       data/11_schematics.yaml sit on these boxes. -->
+  <rect width="600" height="340" fill="#f8fafc"/>
+  <g fill="#ffffff" stroke="#6d28d9" stroke-width="3">
+    <rect x="50" y="60" width="200" height="70" rx="6"/>
+    <rect x="350" y="60" width="200" height="70" rx="6"/>
+    <rect x="50" y="220" width="200" height="70" rx="6"/>
+    <rect x="350" y="220" width="200" height="70" rx="6"/>
+  </g>
+  <g stroke="#6d28d9" stroke-width="3">
+    <line x1="150" y1="130" x2="150" y2="220"/>
+    <line x1="150" y1="175" x2="450" y2="175"/>
+    <line x1="450" y1="175" x2="450" y2="220"/>
+  </g>
+  <g font-family="sans-serif" font-size="13" fill="#334155" text-anchor="middle">
+    <text x="150" y="52">Main Incomer</text>
+    <text x="450" y="52">Energy Intensity</text>
+    <text x="150" y="212">Plant Room DB</text>
+    <text x="450" y="212">Incomer (today)</text>
+  </g>
+</svg>

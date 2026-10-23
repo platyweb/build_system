@@ -25,7 +25,7 @@ buildings:
   - { key: north, name: "North Tower" }
   - { key: south, name: "South Annex" }
 
-modules: [floors, incomers, home, meters_hierarchy, pages, switchboards, sidebar]
+modules: [floors, incomers, home, meters_hierarchy, pages, switchboards, risers, sidebar]
 
 utilities:
   electricity: {label: Electricity, kind: electric}

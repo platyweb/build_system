@@ -1,0 +1,14 @@
+# Data file 05: the tenant catalog, keyed by short name (what 02_floors.yaml
+# `cores:` names). Entry order is the menu's. A tenant gets a page for each
+# floor its meters are on, under project/tenants/<slug>/; `index: {}` adds an
+# index page. `docs:` is the menu's Docs link: a file in assets/, or false for
+# no Docs item.
+
+tenants:
+  Fern & Co:
+    name: "Fern and Company"
+    index: {}
+    docs: docs/fern-co-submetering.pdf
+  Brook Studio:
+    name: "Brook Studio Ltd"
+    docs: false

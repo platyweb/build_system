@@ -1,0 +1,51 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# TOWER EXAMPLE SITE — a four-storey office building with two tenants.
+#
+# It renders the page types the other examples don't: tenant pages (a page
+# per floor each tenant holds, and a tenant index page) and an SVG schematic
+# with live values over it. Start a new building from examples/minimal; copy
+# what you need from here.
+#
+# The tenants come from data/05_tenants.yaml; data/02_floors.yaml says which
+# tenant holds each core, and the meters in data/03_meters.yaml follow their
+# core's tenant.
+# ─────────────────────────────────────────────────────────────────────────────
+
+slug: "northgate-house"
+
+name: "Northgate House"
+short_name: "NH"
+postcode: "CD3 4EF"
+net_internal_area: "5,600 m²"
+ems_name: "NH EMS"
+
+utilities:
+  electricity: {label: Electricity, kind: electric}
+
+optergy_lib_version: "260228085300"
+
+bacnet:
+  device: 300
+  power_offset:
+    Modbus: 40
+    Calculation: 82
+
+brand:
+  href: floor_L00.htm
+  label: "Northgate House"
+  logo_src: img/favicon.png
+footer:
+  logo: img/favicon.png
+  logo_alt: "Northgate"
+  email: facilities@example.com
+
+summary_roles:
+  floor_today_electricity: {title: "Today's Consumption", format: energy}
+
+floor_page:
+  riser_card_link: "#"
+  summary_cards:
+    total: "Floor Total Electricity"
+  report_titles: [Demand, Consumption]
+  tabs:
+    - { id: electricity-report, label: "Electricity", slot: electricity, roles: [floor_today_electricity] }

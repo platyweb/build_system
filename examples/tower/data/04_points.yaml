@@ -1,0 +1,12 @@
+# Data file 04: BMS points by page. `floors:` gives each floor page's
+# summary-card points, by the roles 00_site.yaml's floor_page tabs list.
+
+floors:
+  floor_L00:
+    floor_today_electricity: { id: live-l00-elec-today, bacnet: "300|0|2000101|85|-1" }
+  floor_L01:
+    floor_today_electricity: { id: live-l01-elec-today, bacnet: "300|0|2000111|85|-1" }
+  floor_L02:
+    floor_today_electricity: { id: live-l02-elec-today, bacnet: "300|0|2000121|85|-1" }
+  floor_L03:
+    floor_today_electricity: { id: live-l03-elec-today, bacnet: "300|0|2000131|85|-1" }

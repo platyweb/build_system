@@ -20,6 +20,10 @@ sections:
     items:
       - { label: "Site Gas Incomer", icon: bxs-building-house, href: incomer_gas.htm }
       - { label: "North Plant Room", icon: bx-cog, href: north/plant_room.htm }
+      - label: "North Riser"
+        icon: bx-git-commit
+        children:
+          - { auto: risers, building: north }
       - { label: "Meters Hierarchy", icon: bx-tachometer, href: meters_hierarchy.htm }
 
   - header: SETTINGS

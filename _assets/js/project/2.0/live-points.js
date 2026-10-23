@@ -267,6 +267,13 @@ const DashboardLivePoints = {
 //   <div id="live-demand" data-bacnet="300|0|19682|85|-1" data-format="power"
 //        data-context-menu="all">Loading...</div>
 
+// The Optergy display file point overrides post to: site.yaml
+// optergy_override_display, blank if the site sets none. All overridable
+// points must exist in this compiled display.
+// ── BEGIN GENERATED OVERRIDE_FILE ── DO NOT EDIT BY HAND ──
+const LIVE_POINTS_OVERRIDE_FILE = "";
+// ── END GENERATED OVERRIDE_FILE ──
+
 const LivePointContextMenu = {
     _menuCounter: 0,
     _initialized: false,
@@ -577,10 +584,8 @@ const LivePointContextMenu = {
     //         data-override-hash="<ph value from step 2>"
     //         data-context-menu="change-value"
 
-    // Default Optergy display file used for all overrides — set by the build
-    // from site.yaml optergy_override_display (blank if the site sets none).
-    // All overridable points must exist in this compiled display.
-    OVERRIDE_FILE: '',
+    // Default Optergy display file used for all overrides (generated above).
+    OVERRIDE_FILE: LIVE_POINTS_OVERRIDE_FILE,
 
     // Override/change a point value.
     _overridePoint: function(elementId, textSpanId, bacnetAddress) {

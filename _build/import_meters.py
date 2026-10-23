@@ -22,7 +22,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-import build
+import site_data
 import generate_meter_registry
 import meters_yaml
 
@@ -53,35 +53,35 @@ HEADER = """\
 def target_path() -> Path:
     """The site's meters YAML, or where a new one goes: numbered like the
     site's floors.yaml, if that is."""
-    existing = build.data_path("meters.yaml")
+    existing = site_data.data_path("meters.yaml")
     if existing.exists():
         return existing
-    if build.data_path("floors.yaml").name != "floors.yaml":
-        return build.DATA_DIR / f"{build.DATA_FILES.index('meters.yaml'):02d}_meters.yaml"
+    if site_data.data_path("floors.yaml").name != "floors.yaml":
+        return site_data.DATA_DIR / f"{site_data.DATA_FILES.index('meters.yaml'):02d}_meters.yaml"
     return existing
 
 
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description="Import a meters.csv export into the site's meters YAML.")
     ap.add_argument("csv", type=Path, help="the exported meters.csv")
-    ap.add_argument("--site", type=Path, default=build.DEFAULT_SITE_ROOT, help="site directory (default: site/)")
+    ap.add_argument("--site", type=Path, default=site_data.DEFAULT_SITE_ROOT, help="site directory (default: site/)")
     ap.add_argument("--replace", action="store_true", help="overwrite the site's existing meters YAML")
     args = ap.parse_args(argv)
 
-    build.configure(args.site, build.DEFAULT_OUT_ROOT)
-    rows = generate_meter_registry.read_csv(args.csv, build.UTILITIES)
-    levels = build.read_levels()
+    site_data.configure(args.site, site_data.DEFAULT_OUT_ROOT)
+    rows = generate_meter_registry.read_csv(args.csv, site_data.UTILITIES)
+    levels = site_data.read_levels()
     cores = {lv["key"]: lv["cores"] for lv in levels}
     text = meters_yaml.dump(rows, cores, [lv["key"] for lv in levels], HEADER.format(source=args.csv.name))
 
     out = target_path()
     if out.exists() and not args.replace:
-        raise SystemExit(f"{build._rel(out)} exists — pass --replace to overwrite it with this import")
+        raise SystemExit(f"{site_data._rel(out)} exists — pass --replace to overwrite it with this import")
 
     with tempfile.TemporaryDirectory() as tmp:
         check = Path(tmp) / out.name
         check.write_text(text, encoding="utf-8")
-        back = meters_yaml.read(check, build.UTILITIES, cores)
+        back = meters_yaml.read(check, site_data.UTILITIES, cores)
     expected = sorted(rows, key=lambda r: r["id"])
     if back != expected:
         ids = sorted({a["id"] for a, b in zip(back, expected) if a != b} | {r["id"] for r in back[len(expected):]}
@@ -89,10 +89,10 @@ def main(argv: list[str]) -> int:
         raise SystemExit(f"the YAML wouldn't read back as the CSV (meter ids {ids[:12]}) — nothing written")
 
     out.write_text(text, encoding="utf-8", newline="\n")
-    print(f"wrote {build._rel(out)}: {len(rows)} meters")
-    csv_in_site = build.data_path("meters.csv")
+    print(f"wrote {site_data._rel(out)}: {len(rows)} meters")
+    csv_in_site = site_data.data_path("meters.csv")
     if csv_in_site.exists():
-        print(f"now delete {build._rel(csv_in_site)}: the build won't read both")
+        print(f"now delete {site_data._rel(csv_in_site)}: the build won't read both")
     return 0
 
 

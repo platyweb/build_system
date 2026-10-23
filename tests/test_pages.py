@@ -120,5 +120,5 @@ def test_an_older_site_still_uses_sidebar_yaml_and_modules(tmp_path: Path) -> No
     build.configure(ROOT / "examples" / "campus", tmp_path / "project")
     assert build.read_menu() is None
     assert build.resolve_modules(None) == ["floors", "incomers", "home", "meters_hierarchy", "pages",
-                                           "switchboards", "sidebar"]
+                                           "switchboards", "risers", "sidebar"]
     assert [pg["key"] for pg in build.own_pages()] == ["north_plant"]

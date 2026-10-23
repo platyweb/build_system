@@ -11,13 +11,13 @@ data is only what that CSV gives (see [site1](#site1)).
 modules, how-tos, `--check`, regression and the upgrade workflow. This
 handoff keeps the history and the open items.
 The owner commits by hand; everything since their last commit is uncommitted.
-Last verified state:
-- `python _build/regress.py check`: every golden identical; re-baselines 7
-  and 10–22 are accepted;
-- `pytest`: 1 failure, the owner's committed HEAD's: client names in
-  `examples/1lb`, `2ml`, `4ml`, `6hl`;
+Last verified state (2026-10-23):
+- `python _build/regress.py check`: every golden identical (site1 and three
+  examples); re-baselines 7 and 10–24 are accepted;
+- `pytest`: all pass. `test_engine_neutral` names the owner's four
+  old-layout examples as its one exception (`KNOWN_CLIENT_LINES`);
 - `build.py --check`: site1 passes with 4 warnings: its missing floorplans
-  and the dummy tenants' three missing Docs PDFs. Both examples pass with
+  and the dummy tenants' three missing Docs PDFs. The examples pass with
   none.
 
 ---
@@ -62,14 +62,16 @@ re-baselines. `site/` is now site1, under the same rule.
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # jinja2, pyyaml, pytest
 
-.venv/bin/python _build/build.py                           # full build of site/ → project/st-peters/
-.venv/bin/python _build/build.py floor_23rd                # rebuild one page into the existing output
+.venv/bin/python _build/build.py                           # full build of site/ → project/site1/
+.venv/bin/python _build/build.py floor_ground              # rebuild one page into the existing output
 .venv/bin/python _build/build.py --check                   # validate site data + a trial build (temp dir); writes nothing
 .venv/bin/python _build/build.py --site examples/campus --out /tmp/out   # build another site elsewhere
 .venv/bin/python _build/build.py --modules switchboards    # override site.yaml modules for one run
 
 .venv/bin/python _build/regress.py check                   # every site's fresh build vs its golden
+.venv/bin/python _build/regress.py diff --against HEAD     # what the uncommitted engine change does to every site
 .venv/bin/python -m pytest -q tests/                       # unit tests + the golden check
+git config core.hooksPath .githooks                        # once per clone: the pre-commit hook runs the golden check
 ```
 
 Notes:
@@ -82,15 +84,17 @@ Notes:
 ## 3. Repo layout
 
 ```
-_build/build.py              engine: configure(), readers, layout derivation, builders, MODULES, --check, CLI
-_build/jsblocks.py           renders/injects generated JS blocks (METER_REGISTRY, POINTS, BACNET_CONFIG, REPORT_URLS, SIDEBAR_HTML)
-                             + set_string_property (live-points.js OVERRIDE_FILE)
+_build/build.py              engine: staging, layout derivation, builders, the menu, MODULES, --check, CLI
+_build/site_data.py          the configured site: configure() and its paths/settings, every data reader,
+                             page_location()/relative_url(), render_page(). Imported by build.py and the module files
+_build/jsblocks.py           renders/injects generated JS blocks (METER_REGISTRY, POINTS, BACNET_CONFIG, REPORT_URLS,
+                             REPORT_CARDS, SIDEBAR_HTML, SIDEBAR_RUNTIME, OVERRIDE_FILE)
 _build/linkcheck.py          --check's output checks: data-point/meter ids on built pages; referenced-but-missing files
 _build/meters_yaml.py        meters.yaml reader + writer (level → core → meter; rows identical to the CSV reader's)
 _build/import_meters.py      meters.csv export → the site's meters YAML, checked by reading it back
 _build/generate_meter_registry.py   meters.csv reader + normalisers (name is historical: it no longer generates anything itself)
 _build/build_switchboards.py, build_risers.py   the `switchboards` / `risers` modules (run(env, only))
-_build/regress.py            golden regression harness (multi-site)
+_build/regress.py            golden regression harness (multi-site); `diff --against REF` builds with an older engine
 _build/migrate_js_data.py    ONE-OFF (Phase 2): JS → YAML migration. Never committed. Delete after committing Phase 2
 _templates/                  engine templates + partials/macros.j2
 _assets/                     engine runtime skeleton (project JS, vendor libs, generic images). Copied into every build.
@@ -102,10 +106,15 @@ site/                        site1 — everything specific to the building being
 examples/minimal/            "Acme Depot": single storey, electricity/solar/gas/water, building performance, no tenants (+ golden).
                              Numbered data files + meters.yaml: what a new site starts from
                              (examples/campus keeps the older root site.yaml, unnumbered names and meters.csv, proving they still build)
-examples/campus/             "Riverside Campus": 2 buildings, subfolders, switchboards with cross-building bus tie (+ golden)
-                             (both have placeholder floorplans in assets/img/floors/)
+examples/campus/             "Riverside Campus": 2 buildings, subfolders, switchboards with cross-building bus tie,
+                             a riser split over two pages (+ golden)
+examples/tower/              "Northgate House": 4 storeys, two tenants with their own pages, an SVG schematic (+ golden)
+                             (all three have placeholder floorplans in assets/img/floors/)
 tests/                       test_golden (wraps regress check), test_jsblocks, test_levels, test_site_config, test_campus,
-                             test_check (--check), test_tenants, test_meters_yaml, test_engine_neutral (no client data in engine/examples)
+                             test_check (--check), test_tenants, test_meters_yaml, test_engine_neutral (no client data in engine/examples),
+                             test_template_coverage (every template rendered by an example), test_engine_conventions
+                             (data_path, render_page, template URLs, no module imports build), test_regress, …
+.githooks/pre-commit         regress.py check + test_engine_neutral before each commit (git config core.hooksPath .githooks)
 _baseline/                   (gitignored, ~45 MB) full copy of each last golden build. Used only to print readable diffs
 ```
 
@@ -173,6 +182,9 @@ edit, build, then run `regress.py snapshot --site site`.
 | Pages menu (2026-10-21) | Owner's request. A menu-shaped `pages.yaml` (`sections`, `top_items`, `bottom_items`, `unlisted`, `brand`, `footer`) lists every page: `page: <key>` (a generated page, or the site's own: its site template, `pages/` fragments, or an empty page) and `pages: <family>` (floors, incomers, switchboards, risers, tenants, buildings). `build.read_menu()` turns it into the sidebar's items, the modules to run and the own pages; `sidebar_cfg()` / `own_pages()` read either shape. St Peters and minimal converted, `16_sidebar.yaml` and `modules:` removed; the menu data is identical to the old `sidebar.yaml`, and minimal's output is unchanged. St Peters now builds its tenant pages (`pages: tenants`): re-baseline 9. Campus keeps `sidebar.yaml` + `modules:` + its frozen-page list as the backward-compatibility proof |
 | BMS points merged (2026-10-21) | Owner's request. `points.yaml` groups every BMS point by page: `named` (was `points:`), `floors` (was `bms_bindings.yaml` rows, now `floor_<key>: {<role>: {id, bacnet}}`), `incomers` (was `incomers.yaml`) and `home` (was `home.yaml`). `build.point_section()` reads either layout; `read_incomers()` / `read_home()` replace direct file reads. St Peters and minimal merged with their comments kept; both read back to the same data and build byte-identical output. Campus keeps the separate files |
 | site1 (2026-10-21) | Owner's request: `site/` made site-neutral. St Peters deleted from the working tree; `site/` rebuilt from a copy of `examples/minimal` with only what the owner's meters export gives: levels from its floors, the electricity utility, an incomer page from meters 389/363/362, the menu (floors, incomers, hierarchy). It reads `data/meters.csv` directly. Engine: `meters_hierarchy.yaml` optional (default texts; roots = meters marked `parent: 0`, and those with no parent that feed others); `tenants.yaml` is the tenant catalog's own file; a meter outside the cores keeps its `position` in `meters.yaml`. First golden recorded |
+| Floor layout (2026-10-22) | `site.yaml floor_page` gains `floorplan` (`right`, `top` or `none`), `meter_columns` (`1`–`4` or `auto`) and `summary_layout` (`split` or `row`); a level in `floors.yaml` can set any of them for its own pages, tenant pages included. The defaults render every page as before. `--check` warns when a page's cards use more columns than its grid has. `tests/test_floor_layout.py`. The new layouts' CSS is re-baseline 23 |
+| Section 6 fixes (2026-10-23) | Owner's request: a guard for each of the "Things that will bite you". `.githooks/pre-commit` (golden check + `test_engine_neutral`); `regress.py diff --against REF` (old engine vs new) and a stale-`_baseline/` guard on `check`'s diffs; examples render every template but dials/energy flow (`test_template_coverage`): campus gained a two-page riser, the new `examples/tower` has tenants and a schematic; `test_engine_conventions` (data paths, `render_page`, template URLs, imports); `render_page()` checks page fields against template globals and defaults `path_prefix`; `site_data.py` split out of `build.py`, so the module files no longer import `build`; the two guarded skeleton lines became generated blocks (re-baseline 24) |
+| Tenant docs (2026-10-23) | Owner's request. `tenants.yaml` gains an optional `docs:` per tenant, the menu's Docs link (`site_data.tenant_docs_href`): a file the site ships in `assets/` (linked up to the site folder), a URL or `/docs/…` path as written, or `false` for no Docs item. Unset keeps the old `docs/<slug>-submetering.pdf`, so site1, minimal and campus are unchanged. Tower uses both forms (its golden re-accepted), so `test_check` no longer excuses Docs warnings |
 | 7 (part 1) | `_assets/` site-neutral: empty generated blocks; `OVERRIDE_FILE` blank, set from site.yaml `optergy_override_display` (St Peters sets its old `tlb` path); a neutral default `img/sidebar-bg.png`. Engine `building_performance.html.j2` uses `data-point` names and loads meter-templates.js. `--check` adds a trial build in a temp dir (`build_site()` shared with `main()`) and `linkcheck.py` checks on it: an unknown data-point/meter id on a rendered page is an error, a missing file is a warning. This replaced the template scan, which held overridden and unrendered templates to the site's data. Client names reworded out of engine and example comments. Examples: placeholder floorplans; minimal gained `building_performance` |
 
 ### Approved re-baselines (all in `site/golden/CHANGELOG`)
@@ -461,8 +473,8 @@ includes the CSS and fonts, so re-baseline 7 is now the two examples' only.
     Optergy libraries need no time of their own after DOMContentLoaded (they
     load synchronously in `<head>`). Also, a site page script that creates
     `data-bacnet` elements later than DOMContentLoaded no longer gets the
-    500 ms grace. The context-menu CSS stays in `live-points.js` for now: the
-    move to `style.css` waits for the floor-layout work there. Verified,
+    500 ms grace. The context-menu CSS stayed in `live-points.js` until the
+    floor-layout work in `style.css` was done (see Open items). Verified,
     old engine vs new on all three sites:
     - only `live-points.js` changes;
     - in headless Chromium, with a stub for the controller's `/js/`
@@ -477,6 +489,34 @@ includes the CSS and fonts, so re-baseline 7 is now the two examples' only.
     Popper's `direction === 'rtl'`, which re-baseline 20 removed. Verified,
     old engine vs new: only `style.css` changes, and `stylediff.py` finds no
     difference on all 37 pages (222 renders).
+23. **Floor-layout CSS, owner-approved, accepted 2026-10-23.** `style.css`
+    goes from 57,554 to 57,981 bytes. It gains `.floor-grid-cols-1/2/4`
+    (`floor_page.meter_columns` other than 3) and `.floor-summary-plan-img`
+    (`floor_page.floorplan: top`). The comment on the media query after them
+    now says "grid rules", not "base rule". Verified, old engine vs new on all
+    three sites:
+    - the `_baseline/` copies match the old goldens, and only `style.css`
+      changes;
+    - its diff is those insertions and the two reworded comment lines;
+    - no other built file uses the new classes, so no element's style changes.
+24. **Guarded skeleton lines become generated blocks, owner-approved
+    (section 6 fixes), accepted 2026-10-23.** Release note: every site's
+    `sidebar-template.js` and `live-points.js` change. `sidebar-template.js`
+    gains a `SIDEBAR_RUNTIME` block (`const SIDEBAR_RUNTIME_SRC`, the
+    page-relative `sidebar.js` URL; a building folder's copy gets `../`), read
+    by `script.src`. `live-points.js` gains an `OVERRIDE_FILE` block
+    (`const LIVE_POINTS_OVERRIDE_FILE`, from `optergy_override_display`, now
+    JSON-quoted, so it may hold a quote), read by
+    `LivePointContextMenu.OVERRIDE_FILE`. They replace the build's two
+    exact-shape line rewrites (`SIDEBAR_RUNTIME_SCRIPT`,
+    `jsblocks.set_string_property`). A site's own copy of either file needs
+    the new block. Verified, old engine vs new on all four sites:
+    - only every `sidebar-template.js` (root and building folders; the tenant
+      menus are templates) and every `live-points.js` change;
+    - each by the new block and its comment, the one line that reads it, and
+      in `live-points.js` the moved override comment;
+    - Node evaluates each new value to the old literal
+      (`js/project/2.0/sidebar.js`, `../js/project/2.0/sidebar.js`, `''`).
 
 The example goldens changed only when the examples themselves changed; that's
 logged in each example's `golden/CHANGELOG`.
@@ -485,43 +525,62 @@ logged in each example's `golden/CHANGELOG`.
 
 ## 6. Things that will bite you
 
-- **Data file paths.** Read a data file through `build.data_path("x.yaml")`,
+Each of these now has a guard (2026-10-23); what's left is knowing why it's there.
+
+- **Data file paths.** Read a data file through `site_data.data_path("x.yaml")`,
   never `DATA_DIR / "x.yaml"`: a site's file may be numbered (`04_x.yaml`).
-  `site.yaml` is `build.BUILDING_FILE` (`data/00_site.yaml`, or the root
-  `site.yaml` of an older site; `build.site_file()` finds it).
-  Meters go through `build.read_meter_rows()`, which picks `meters.yaml` or
-  `meters.csv`.
-- **Two copies of `build`.** `python _build/build.py` runs `main()` on the
-  importable `build` module, not on `__main__`. Without that, the switchboard
-  and riser modules (`import build`) would see a second, unconfigured copy.
-  The guard is at the bottom of build.py. Those modules are imported lazily
-  (`_switchboards`/`_risers` wrappers) because they import build back.
+  `site.yaml` is `site_data.BUILDING_FILE` (`data/00_site.yaml`, or the root
+  `site.yaml` of an older site; `site_data.site_file()` finds it).
+  Meters go through `site_data.read_meter_rows()`, which picks `meters.yaml` or
+  `meters.csv`. Guard: `test_engine_conventions` fails on a join onto the data
+  directory outside the path helpers.
+- **The configured site lives in `site_data`.** `configure()` sets its paths
+  and settings after import, so code reads them as `site_data.SITE_DIR`, not
+  a name imported from it. `build.py` and the module files import
+  `site_data`; a module file never imports `build` (`test_engine_conventions`),
+  so there's no import cycle, no lazy import and no second copy of the state
+  when `build.py` runs as a script. `build.<name>` still reads anything in
+  `site_data`, but setting `build.SITE_DIR = …` only hides it: set values on
+  `site_data`.
 - **Undefined template variables fail the build** (`StrictUndefined`). Guard
-  genuinely optional fields with `|default(...)`, `is defined` or `.get()`.
-  Never pass a `building` key in a page's context: it shadows the `building`
-  global (site.yaml). Builders pop it.
+  genuinely optional fields with `|default(...)`, `is defined` or `.get()`, or
+  give them their default in the reader. Pages render through
+  `render_page(template, ctx)`, which stops the build when a context key is
+  named like a template global (`building`, `floor_page`, `slot`, …): builders
+  pop placement fields such as `building` first. `test_engine_conventions`
+  fails on a `.render(**ctx)` that bypasses it.
 - **Paths:** template and data URLs are written relative to the site root.
-  `relative_url(url, folder)` rewrites them for campus building folders. Use
-  `{{ _pp }}` (templates) or `{{ path_prefix }}` (frozen fragments) for assets.
-- **Per-folder sidebars** rewrite the runtime line
-  `script.src = "js/project/2.0/sidebar.js";` (`SIDEBAR_RUNTIME_SCRIPT` in
-  build.py). The build stops if that exact line disappears from
-  `_assets/.../sidebar-template.js`.
-- **`OVERRIDE_FILE` sits inside an object literal** in live-points.js, so it
-  can't be a marker block. `jsblocks.set_string_property` rewrites that one
-  line and stops the build if the line's shape changes.
+  `relative_url(url, folder)` rewrites them for campus building folders. Every
+  page gets `path_prefix` (`render_page` defaults it to `""`); write asset URLs
+  as `{{ path_prefix }}…`, or `{{ _pp }}…` in templates extending
+  `base.html.j2`. `test_engine_conventions` checks every template's
+  `src`/`href`.
+- **Generated JS blocks.** The build writes eight marker blocks into the staged
+  JS (`jsblocks.py`), including `SIDEBAR_RUNTIME` (where a building folder's
+  `sidebar-template.js` loads `sidebar.js` from) and `OVERRIDE_FILE`
+  (`live-points.js`), which replaced the two exact-shape line rewrites in
+  re-baseline 24. A site's own copy of a skeleton JS file needs its blocks.
 - **Keep `_assets/` site-neutral.** Never paste a built block back into it.
-  `test_engine_neutral` checks that the blocks are empty, that no client names
-  appear anywhere in the engine or examples, and that engine code (outside
-  comments) holds no literal BACnet addresses.
+  `test_engine_neutral` checks that the blocks are empty (or at their
+  default), that no client names appear anywhere in the engine, the examples
+  or the hook, and that engine code (outside comments) holds no literal
+  BACnet addresses. The owner's four old-layout examples are its one named
+  exception (`KNOWN_CLIENT_LINES`), until the template split. The
+  pre-commit hook runs it.
 - **`--check` runs a trial build.** It builds the site's modules into a temp
   dir and checks what got rendered, so a template the site overrides or never
-  renders isn't checked. It treats `/docs/<path>` as `<output root>/<path>`,
-  because Optergy serves `project/` at `/docs/` (`linkcheck.DEPLOY_ROOT`).
+  renders isn't checked against its data. The engine's templates are covered by
+  the examples instead: `test_template_coverage` fails when no example renders
+  one (dials and energy flow wait for d3). `--check` treats `/docs/<path>` as
+  `<output root>/<path>`, because Optergy serves `project/` at `/docs/`
+  (`linkcheck.DEPLOY_ROOT`).
 - **Re-baselining:** `regress.py snapshot` refuses to overwrite a golden
-  without `--accept "<reason>"`. Check determinism and acceptance criteria
-  first, and keep each re-baseline the only change in its step.
-
+  without `--accept "<reason>"`. Start the proof from `regress.py diff
+  --against HEAD` (old engine vs new on every site), keep each re-baseline the
+  only change in its step, and turn on the pre-commit hook
+  (`git config core.hooksPath .githooks`) so an output change can't be
+  committed without its golden. `check` won't diff against a stale
+  `_baseline/` copy.
 ---
 
 ## Open items
@@ -594,21 +653,26 @@ script its markup needs (`linkcheck.unloaded_scripts`). The owner ruled out
   with placement fields the runtime never reads). That's small for site1
   and large for a 47-floor tower (542 KB and 212 KB).
 - **Small:** move `live-points.js`'s context-menu CSS into `style.css`
-  (deferred so as not to clash with the floor-layout work there); when d3
+  (no longer blocked: the floor-layout work there is in); when d3
   lands (below), ship only the d3 modules dials and energy flow use.
 
 **Rest of Phase 7.** The project CSS and fonts are in (re-baseline 7). Still owed, for `_assets/`
 unless noted; `build.py --check` lists the ones a site references:
 - `js/d3/7/*`: d3.v7.min.js, d3-sankey.min.js, energy-charts.js (dials, energy_flow).
 - `placeholder.png`, loaded by `report-template.js` (`--check` can't see it).
-- The owner's `examples/1lb`, `2ml`, `4ml`, `6hl` (old `building.yaml` layout) fail
-  `test_engine_neutral`: they carry client names, and `examples/` ships with the template.
+- The owner's `examples/1lb`, `2ml`, `4ml`, `6hl` (old `building.yaml` layout) carry
+  client names, and `examples/` ships with the template. Kept for now (owner,
+  2026-10-23): `test_engine_neutral`'s `KNOWN_CLIENT_LINES` excuses exactly
+  their 8 lines. Remove, rework or move them, and drop that list, before the
+  template split.
 
 **Housekeeping:**
 - Delete `_build/migrate_js_data.py` once Phase 2 is committed. It reads git `HEAD`.
 - `todo.md` was removed from the working tree. Its item, the n/a quoting bug, is fixed.
-- `build.py` is about 2,100 lines. The planned `site_data.py` split (readers +
-  `--check`) wasn't done. It's optional.
+- The `site_data.py` split is done (2026-10-23): `site_data.py` (about 1,030
+  lines) holds `configure()`, the readers and page locations; `build.py`
+  (about 1,900) keeps staging, layout, the builders, the menu and `--check`,
+  which stayed because it runs the trial build.
 
 <a id="site1"></a>**site1, built from the meters export alone.** To fill in:
 - **Confirm** the BACnet device (300) and offsets (Modbus 40, Calculation 82) in
@@ -624,9 +688,11 @@ unless noted; `build.py --check` lists the ones a site references:
   Placements have no library item `id`, so the cards link to `#`: add the ids
   once the reports exist in the controller's library.
 - **Tenants** (`05_tenants.yaml`): three dummy tenants until the real ones
-  are known. Their menus link a Docs PDF,
-  `tenants/<slug>/docs/<slug>-submetering.pdf`, that doesn't exist (3
-  `--check` warnings).
+  are known. Their menus link the default Docs PDF,
+  `tenants/<slug>/docs/<slug>-submetering.pdf`, which the build can't fill
+  (3 `--check` warnings). Each tenant's `docs:` fixes it: a PDF in
+  `site/assets/`, a URL, or `false`. Setting it changes site1's tenant
+  sidebars, so it's a re-baseline for the owner to approve.
 - **Not built yet** (no data in the export): home page, named points, floor
   summary-card points, switchboards, risers.
 
@@ -665,9 +731,10 @@ Still to do:
   1. Create a fresh template repo holding only the engine paths:
      ```bash
      mkdir ../ems-template && cd ../ems-template && git init
-     cp -r ../build_system/{_build,_templates,_components,_assets,examples,tests,requirements.txt,.gitignore,README.md} .
+     cp -r ../build_system/{_build,_templates,_components,_assets,examples,tests,.githooks,requirements.txt,.gitignore,README.md} .
      rm -f _build/migrate_js_data.py && find . -name __pycache__ -prune -exec rm -rf {} +
      python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+     git config core.hooksPath .githooks
      .venv/bin/python _build/regress.py check && .venv/bin/python -m pytest -q tests/
      git add -A && git commit -m "EMS build engine"
      ```

@@ -6,7 +6,7 @@ bd546fd847b1720ca9b95531522fecb5adf43656b7b6f087e3def8cc4da319e2  site1/css/boxi
 5bc7995706814ff92364c8c89df37ea4a288d6cde8cf0fe88656c1073b668cab  site1/css/project/2.0/font.css
 73d778e0f8dc542ebb26d827cd4be23baef777472a563832ebf30988dc532738  site1/css/project/2.0/meters-hierarchy.css
 7bbf6b062d1abd61e55eec42144ca089e17c490641dacacdd149e6d4b5ff5b5a  site1/css/project/2.0/sankey.css
-de54928583382aa14b5cd669b894d886b23f8a0c80b3d9bc3076b16f75d044ee  site1/css/project/2.0/style.css
+8843d5d703a05d5d71513e8b70bfd404404622e0c5ab6e89947acf44731d5782  site1/css/project/2.0/style.css
 859636c9927d42b7b04d8f12bbb2d5a2c0b971a650a7104bbf3bb795fe81cb05  site1/css/project/2.0/switchboard-widget.css
 6039430172382c1f06334c0980c4f5ad768a36b1b1dead268106e008cd25dde6  site1/css/project/2.0/tenant-accordion.css
 ab17042a637218ca49d9f48b9583d295e7a62dc09f96caf36e2ccfb21dd2f4b1  site1/floor_2nd.htm
@@ -70,14 +70,14 @@ bdd83c89978d72eb796a28ea36c118e71700d374d6e6d998a9e8ac7abaefef97  site1/img/stat
 ba5839e0df2b2a26b71a41a4e5a164d4e89c813ba443f3c1b6c2dae4560103fc  site1/js/project/2.0/energy-dials.js
 8469c7fbb6a71861488a0eb37daff95a662310c08fb054d377b7c4937a378bb2  site1/js/project/2.0/energy-sankey.js
 f97de373c46992b5e3cd8c9291339d57812980ed0e5656325b4dbef281b2e0e3  site1/js/project/2.0/floor-tabs.js
-725d1aa07f57aadc85adb4b3b70ca1d41de25aac75cee3b03f943d2ba11a985e  site1/js/project/2.0/live-points.js
+93edf44345ddb6feb3ffa2102d3794ae613eb9def4ec8a7aeb98e463791f133a  site1/js/project/2.0/live-points.js
 34ba7a776d1bab8cb80005755c0f062aef5bf98890f7fb2212a8a78435dc24ea  site1/js/project/2.0/meter-hierarchy.js
 9c7cc1ff1bca3e1b369904a79789a58485c7fede349d735b2bc3020de337417f  site1/js/project/2.0/meter-templates.js
 8ae10ecb936b512246a53847454582faffaf817bc9dcfd1cb23a9aeef288da50  site1/js/project/2.0/position-handler.js
 14cc89a6e1abd788ff5e52a857681a496b11ecced2ac71f752b0219c54c84f7b  site1/js/project/2.0/range-widget.js
 3b190e75435adb4a945c036d3258399c3152727e327093b0f983720bdb4e6a49  site1/js/project/2.0/report-template.js
 4c30fd79e9d6869f6cd1c286d0705955e03e5ae97a6a92e8453099e9f88c0dd8  site1/js/project/2.0/reports.js
-a464f275069e9929b34b3c737cf3b1137581d74c4384b378f446619a2e1cee55  site1/js/project/2.0/sidebar-template.js
+0aeb368b44b9ae0e9916b671ac0b3c56cdd014650d751cc2865dcb52c2530ddb  site1/js/project/2.0/sidebar-template.js
 6b9917bb233be977e47f2b3508ab3f981aa176a5433b1a6af1f2e26e2cab846c  site1/js/project/2.0/sidebar.js
 6d6cc526334a36013600465612a20f4fc93ffa6406ba884fd6243b1b124ff85c  site1/js/project/2.0/spectrum-widget.js
 0574ac4774caec70ee6003566ba4a77a2a81a95700c4842714f3159f24e8123a  site1/js/project/2.0/switchboard-gauge.js

@@ -29,7 +29,7 @@ def test_building_pages_live_in_building_folders(site_dir: Path) -> None:
     assert sorted(p.relative_to(site_dir).as_posix() for p in site_dir.glob("*/*.htm")) == [
         "north/floor_n-l00.htm", "north/floor_n-l01.htm", "north/floor_n-l02.htm", "north/floor_n-l03.htm",
         "north/incomer_north_electricity.htm", "north/incomer_north_lthw.htm", "north/plant_room.htm",
-        "north/swb_north_mdb.htm",
+        "north/riser_4_p1.htm", "north/riser_4_p2.htm", "north/swb_north_mdb.htm",
         "south/floor_s-l00.htm", "south/incomer_south_electricity.htm", "south/swb_south_mdb.htm",
     ]
     assert sorted(p.name for p in site_dir.glob("*.htm")) == ["home.htm", "incomer_gas.htm", "meters_hierarchy.htm"]
@@ -64,7 +64,10 @@ def test_sidebars_rewritten_per_folder(site_dir: Path) -> None:
     assert 'href="north/floor_n-l03.htm"' in root and 'href="home.htm"' in root
     assert 'href="floor_n-l03.htm"' in north and 'href="../home.htm"' in north
     assert 'href="../south/floor_s-l00.htm"' in north and 'src="../img/sidebar-bg.png"' in north
-    assert 'script.src = "../js/project/2.0/sidebar.js";' in north
+    # The runtime's own URL: up a level from a building folder.
+    assert 'const SIDEBAR_RUNTIME_SRC = "js/project/2.0/sidebar.js";' in root
+    assert 'const SIDEBAR_RUNTIME_SRC = "../js/project/2.0/sidebar.js";' in north
+    assert "script.src = SIDEBAR_RUNTIME_SRC;" in north
     # Building sub-menus: floors top first, then the building's incomers and switchboards.
     labels = re.findall(r'menu-title">([^<]+)<', SIDEBAR_BLOCK.search(north).group(0))
     assert labels[labels.index("North Tower"):labels.index("South Annex")] == [

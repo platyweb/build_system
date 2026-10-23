@@ -13,7 +13,7 @@ Where a switchboard's single-line diagram is horizontal (busbar left-right,
 ways tapping up from it), a riser diagram is the same idea turned 90°: the
 busbar runs vertically, the riser's own incomer sits at the bottom (fed from
 its LV switchboard), and floor tap-offs run up it in physical floor order
-(the floors.yaml level roster, build.level_rank) — a floor can carry more than one tap (e.g. "LTG/FCU" +
+(the floors.yaml level roster, site_data.level_rank) — a floor can carry more than one tap (e.g. "LTG/FCU" +
 "SP" + "Comms"), fanned out with their own independent, non-crossing lanes
 to the busbar exactly like a switchboard column's stacked ways.
 
@@ -37,7 +37,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 import yaml
-import build  # imported by build.py as a module; paths (build.SITE_DIR, …) are read at call time
+import site_data  # the configured site: its paths (site_data.SITE_DIR, …) are read at call time
 
 TAG_PREFIX_RE = re.compile(r"^LV\d+\s*-\s*")  # "LV03 - " etc. — redundant, the riser's own name says which board
 
@@ -56,7 +56,7 @@ def make_box(meter, cx, cy, w, h, default_rating, is_incomer=False):
         "title":    TAG_PREFIX_RE.sub("", meter["tag"]),
         "ct":       "",
         "rating":   default_rating,
-        "bacnet":   build.demand_address(meter),
+        "bacnet":   site_data.demand_address(meter),
         "cx": round(cx, 1), "cy": round(cy, 1), "w": w, "h": h,
         "is_incomer": is_incomer,
     }
@@ -296,17 +296,17 @@ def sidebar_items() -> list[dict]:
     """The sidebar's `auto: risers` items: one per riser, linking to its
     first page and labelled like its heading (risers.yaml `overrides:
     <id>: {nav_label}` to rename one)."""
-    risers_file = build.data_path("risers.yaml")
+    risers_file = site_data.data_path("risers.yaml")
     cfg_all = (yaml.safe_load(risers_file.read_text(encoding="utf-8")) or {}) if risers_file.exists() else {}
     defaults = cfg_all.get("defaults", {})
     overrides = cfg_all.get("overrides", {}) or {}
-    meters = build.read_meters()
+    meters = site_data.read_meters()
     children = defaultdict(list)
     for m in meters:
         if m["parent_id"] is not None:
             children[m["parent_id"]].append(m)
-    floor_rank = build.level_rank()
-    level_building = {lv["key"]: lv["building"] for lv in build.read_levels()}
+    floor_rank = site_data.level_rank()
+    level_building = {lv["key"]: lv["building"] for lv in site_data.read_levels()}
     items = []
     for riser in sorted((m for m in meters if m["function"] == "Riser-meter"), key=lambda m: m["id"]):
         cfg = overrides.get(riser["id"], {})
@@ -318,7 +318,7 @@ def sidebar_items() -> list[dict]:
         items.append({
             "_key": key, "_building": building,
             "label": str(cfg.get("nav_label") or TAG_PREFIX_RE.sub("", riser["tag"])),
-            "href": build.site_href(building, f"{key}{page_suffix(chunks, 0)}.htm"),
+            "href": site_data.site_href(building, f"{key}{page_suffix(chunks, 0)}.htm"),
         })
     return items
 
@@ -326,11 +326,11 @@ def sidebar_items() -> list[dict]:
 def run(env, only: str | None = None) -> list[Path]:
     """The `risers` module: one or more linked pages + SVGs per riser meter
     (function == "Riser-meter") in the meters file (`only`: a single riser key)."""
-    cfg_all = yaml.safe_load(build.data_path("risers.yaml").read_text(encoding="utf-8")) or {}
+    cfg_all = yaml.safe_load(site_data.data_path("risers.yaml").read_text(encoding="utf-8")) or {}
     defaults = cfg_all.get("defaults", {})
     overrides = cfg_all.get("overrides", {}) or {}
 
-    meters = build.read_meters()
+    meters = site_data.read_meters()
     by_id = {m["id"]: m for m in meters}
     children = defaultdict(list)
     for m in meters:
@@ -339,15 +339,15 @@ def run(env, only: str | None = None) -> list[Path]:
 
     risers = sorted((m for m in meters if m["function"] == "Riser-meter"), key=lambda m: m["id"])
     if not risers:
-        print(f"  (skip risers: no meters with function == 'Riser-meter' in {build.meters_file().name})")
+        print(f"  (skip risers: no meters with function == 'Riser-meter' in {site_data.meters_file().name})")
         return []
 
-    img_dir = build.SITE_DIR / "img"
+    img_dir = site_data.SITE_DIR / "img"
     template = env.get_template("riser.html.j2")
 
     default_rating = defaults.get("default_rating", 60)
-    floor_rank = build.level_rank()
-    level_building = {lv["key"]: lv["building"] for lv in build.read_levels()}
+    floor_rank = site_data.level_rank()
+    level_building = {lv["key"]: lv["building"] for lv in site_data.read_levels()}
     written = []
     for riser in risers:
         key = f"riser_{riser['id']}"
@@ -362,20 +362,20 @@ def run(env, only: str | None = None) -> list[Path]:
         # On a campus a riser's pages go to the folder of the building its
         # own meter's floor belongs to (its continuation pages link to each
         # other by bare filename, so they stay together).
-        out_dir, location_ctx = build.page_location(level_building.get(riser.get("floor") or ""))
-        folder = build.page_folder(level_building.get(riser.get("floor") or ""))
+        out_dir, location_ctx = site_data.page_location(level_building.get(riser.get("floor") or ""))
+        folder = site_data.page_folder(level_building.get(riser.get("floor") or ""))
         for suffix, ctx, svg in pages:
             page_key = key + suffix
             ctx.update(location_ctx)
             for meta_key in ("heading", "page_title"):
                 if isinstance(ctx.get(meta_key), str):
                     ctx[meta_key] = env.from_string(ctx[meta_key]).render()
-            ctx["svg_path"] = build.relative_url(f"img/{page_key}.svg", folder)
+            ctx["svg_path"] = site_data.relative_url(f"img/{page_key}.svg", folder)
             svg_path = img_dir / f"{page_key}.svg"
             svg_path.write_text(svg, encoding="utf-8", newline="\n")
             html_path = out_dir / f"{page_key}.htm"
-            html_path.write_text(template.render(**ctx), encoding="utf-8", newline="\n")
+            html_path.write_text(site_data.render_page(template, ctx), encoding="utf-8", newline="\n")
             n_taps = len(ctx["boxes"]) - (1 if ctx["boxes"] and ctx["boxes"][-1]["is_incomer"] else 0)
-            print(f"  wrote {svg_path.relative_to(build.SITE_DIR)} + {html_path.relative_to(build.SITE_DIR)}  ({n_taps} taps)")
+            print(f"  wrote {svg_path.relative_to(site_data.SITE_DIR)} + {html_path.relative_to(site_data.SITE_DIR)}  ({n_taps} taps)")
             written += [svg_path, html_path]
     return written

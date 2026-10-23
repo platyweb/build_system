@@ -25,10 +25,10 @@ from collections import defaultdict
 from pathlib import Path
 
 import yaml
-import build  # imported by build.py as a module; paths (build.SITE_DIR, …) are read at call time
+import site_data  # the configured site: its paths (site_data.SITE_DIR, …) are read at call time
 
 # Output lives under the site directory (project/<slug>/, see site.yaml), not the repo
-# root — this mirrors every other builder in _build/ (all write under build.SITE_DIR).
+# root — this mirrors every other builder in _build/ (all write under site_data.SITE_DIR).
 
 
 # ─── layout ──────────────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ def make_box(meter, cx, cy, w, h, cfg, default_rating, is_incomer=False):
         "title":    TAG_PREFIX_RE.sub("", meter["tag"]),
         "ct":       cfg.get("ct", ""),
         "rating":   cfg.get("rating", default_rating),
-        "bacnet":   build.demand_address(meter),
+        "bacnet":   site_data.demand_address(meter),
         "cx": round(cx, 1), "cy": round(cy, 1), "w": w, "h": h,
         "is_incomer": is_incomer,
     }
@@ -228,17 +228,17 @@ def build_svg(L, width, height, busbar_y, boxes, incomer, col_step, busbar_x1, b
 def run(env, only: str | None = None) -> list[Path]:
     """The `switchboards` module: one page + busbar SVG per board in
     site/data/switchboards.yaml (`only`: a single board key)."""
-    cfg = yaml.safe_load(build.data_path("switchboards.yaml").read_text(encoding="utf-8")) or {}
+    cfg = yaml.safe_load(site_data.data_path("switchboards.yaml").read_text(encoding="utf-8")) or {}
     defaults, boards = cfg.get("defaults", {}), cfg.get("boards", {})
 
-    meters = build.read_meters()
+    meters = site_data.read_meters()
     by_id = {m["id"]: m for m in meters}
     children = defaultdict(list)
     for m in meters:
         if m["parent_id"] is not None:
             children[m["parent_id"]].append(m)
 
-    img_dir = build.SITE_DIR / "img"
+    img_dir = site_data.SITE_DIR / "img"
     template = env.get_template("switchboard.html.j2")
 
     written = []
@@ -254,20 +254,20 @@ def run(env, only: str | None = None) -> list[Path]:
         # On a campus a board with `building:` lives in that building's
         # folder: its SVG (shared img/) and bus-tie link are written relative
         # to the site root, then rewritten for the page's folder.
-        bkey = build.check_building(board.get("building"), f"switchboards.yaml '{key}'")
-        out_dir, location_ctx = build.page_location(bkey)
-        folder = build.page_folder(bkey)
+        bkey = site_data.check_building(board.get("building"), f"switchboards.yaml '{key}'")
+        out_dir, location_ctx = site_data.page_location(bkey)
+        folder = site_data.page_folder(bkey)
         ctx.update(location_ctx)
-        ctx["svg_path"] = build.relative_url(ctx["svg_path"], folder)
+        ctx["svg_path"] = site_data.relative_url(ctx["svg_path"], folder)
         if ctx["bus_tie"]:
             to = board["bus_tie"]["to"]
-            ctx["bus_tie"]["href"] = build.relative_url(
-                build.site_href(boards[to].get("building"), f"{to}.htm"), folder)
+            ctx["bus_tie"]["href"] = site_data.relative_url(
+                site_data.site_href(boards[to].get("building"), f"{to}.htm"), folder)
         svg_path = img_dir / f"{key}.svg"
         svg_path.write_text(svg, encoding="utf-8", newline="\n")
         html_path = out_dir / f"{key}.htm"
-        html_path.write_text(template.render(**ctx), encoding="utf-8", newline="\n")
+        html_path.write_text(site_data.render_page(template, ctx), encoding="utf-8", newline="\n")
         n_ways = len(ctx["boxes"]) - 1
-        print(f"  wrote {svg_path.relative_to(build.SITE_DIR)} + {html_path.relative_to(build.SITE_DIR)}  ({n_ways} ways)")
+        print(f"  wrote {svg_path.relative_to(site_data.SITE_DIR)} + {html_path.relative_to(site_data.SITE_DIR)}  ({n_ways} ways)")
         written += [svg_path, html_path]
     return written

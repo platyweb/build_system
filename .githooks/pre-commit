@@ -1,0 +1,19 @@
+#!/bin/sh
+# Before every commit: every golden still matches, and the engine holds no
+# client data (README "Regression testing"). Enable it once per clone:
+#     git config core.hooksPath .githooks
+# It checks the working tree, not only what's staged. Skip it for one commit
+# with `git commit --no-verify`.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+py=.venv/bin/python
+[ -x "$py" ] || py=python3
+
+if ! "$py" _build/regress.py check; then
+    echo "pre-commit: the build output differs from the goldens (diff above). A deliberate" >&2
+    echo "  change is a re-baseline: _build/regress.py snapshot --accept \"<reason>\"." >&2
+    exit 1
+fi
+if ! "$py" -m pytest -q tests/test_engine_neutral.py; then
+    echo "pre-commit: client data in the engine or the examples (above)." >&2
+    exit 1
+fi

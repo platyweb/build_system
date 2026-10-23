@@ -15,6 +15,7 @@ Usage:
     python _build/regress.py check                     # fresh builds vs golden
     python _build/regress.py snapshot --site DIR       # first golden for a site
     python _build/regress.py snapshot --accept "why"   # deliberate re-baseline
+    python _build/regress.py diff --against REF        # engine at git REF vs the working tree
 
 Variants (each has its own manifest; a site is checked for every variant it
 has a golden for, and a first snapshot records just `site`):
@@ -29,9 +30,15 @@ has a golden for, and a first snapshot records just `site`):
 `snapshot` builds every variant twice under different PYTHONHASHSEEDs and
 refuses to record a golden that isn't deterministic. It also keeps a full
 copy of the build in _baseline/ (gitignored) so `check` can print readable
-diffs instead of just hashes. Overwriting an existing golden requires
+diffs instead of just hashes; a copy that no longer matches the golden is
+reported as stale rather than diffed. Overwriting an existing golden requires
 --accept "<reason>", which is appended to the site's golden/CHANGELOG — the
 audit trail of every approved re-baseline.
+
+`diff --against REF` is the proof a re-baseline starts from: it builds each
+site's data twice, once with the engine as committed at git REF and once with
+the working tree's, and prints every file that differs. It needs no golden
+and no _baseline/ copy.
 """
 from __future__ import annotations
 
@@ -39,16 +46,19 @@ import argparse
 import datetime
 import difflib
 import hashlib
+import io
 import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 from pathlib import Path
 
 import yaml
 
-from build import MODULES, OUTPUT_MARKER, site_file
+from build import MODULES, OUTPUT_MARKER
+from site_data import site_file
 
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE_DIR = ROOT / "_baseline"
@@ -98,17 +108,19 @@ def _run(cmd: list[str], cwd: Path, env: dict[str, str]) -> None:
         raise SystemExit(f"regress: command failed ({proc.returncode}): {' '.join(cmd)}")
 
 
-def build(site: Path, variant: str, seed: int) -> Path:
+def build(site: Path, variant: str, seed: int, engine: Path = ROOT) -> Path:
     """Build one site's variant in a fresh workspace; return the workspace root.
 
     build.py runs exactly as it does by hand: it stages project/ from
     _assets/ + site/assets/, regenerates METER_REGISTRY from meters.csv and
-    writes every page.
+    writes every page. `engine` is where the engine dirs come from: this
+    repo, or an older engine extracted from git (`diff --against`).
     """
     workspace = Path(tempfile.mkdtemp(prefix=f"regress-{_site_slug(site)}-{variant}-"))
     ignore = shutil.ignore_patterns("__pycache__")
     for d in COPY_DIRS:
-        shutil.copytree(ROOT / d, workspace / d, ignore=ignore)
+        if (engine / d).exists():
+            shutil.copytree(engine / d, workspace / d, ignore=ignore)
     shutil.copytree(site, workspace / "site", ignore=ignore)
 
     env = {**os.environ, "PYTHONHASHSEED": str(seed), "PYTHONDONTWRITEBYTECODE": "1"}
@@ -184,12 +196,21 @@ def js_syntax_problems(workspace: Path) -> list[str]:
     return problems
 
 
-def print_diffs(changed: list[str], baseline_root: Path, fresh_root: Path) -> None:
+def print_diffs(changed: list[str], baseline_root: Path, fresh_root: Path,
+                golden: dict[str, str] | None = None) -> None:
+    """A unified diff of each changed file, old (baseline_root) vs new.
+    With `golden`, the old copy is _baseline/'s and must still hash to the
+    golden; a stale copy would show a diff against the wrong file."""
     budget = DIFF_LINES_TOTAL
     for rel in changed:
         old, new = baseline_root / rel, fresh_root / rel
         if not old.exists():
-            print(f"    ({rel}: no _baseline/ copy to diff against — run `snapshot` once to create it)")
+            print(f"    ({rel}: no _baseline/ copy to diff against — run `snapshot` once to create it,"
+                  " or `diff --against HEAD`)")
+            continue
+        if golden is not None and hashlib.sha256(old.read_bytes()).hexdigest() != golden.get(rel):
+            print(f"    ({rel}: the _baseline/ copy is stale, it doesn't match the golden; "
+                  "see the change with `diff --against HEAD`)")
             continue
         try:
             a = old.read_text(encoding="utf-8").splitlines(keepends=True)
@@ -241,7 +262,8 @@ def cmd_check(sites: list[Path], variants: tuple[str, ...] | None, keep: bool) -
                 print(f"  changed: {rel}")
             for p in js_problems:
                 print(f"  JS syntax: {p}")
-            print_diffs(changed, BASELINE_DIR / slug / variant, workspace / "project")
+            print_diffs(changed, BASELINE_DIR / slug / variant, workspace / "project",
+                        golden=read_manifest(golden_file))
             if keep:
                 print(f"  fresh build kept at {workspace}")
             else:
@@ -303,17 +325,69 @@ def cmd_snapshot(sites: list[Path], variants: tuple[str, ...] | None, accept: st
     return 0
 
 
+def engine_at(ref: str, dest: Path) -> Path:
+    """The engine dirs as committed at git `ref`, extracted under dest."""
+    def git(*args: str) -> bytes:
+        proc = subprocess.run(["git", *args], cwd=ROOT, capture_output=True)
+        if proc.returncode != 0:
+            raise SystemExit(f"regress: git {' '.join(args)}: {proc.stderr.decode().strip()}")
+        return proc.stdout
+
+    present = set(git("ls-tree", "--name-only", ref).decode().split())
+    dirs = [d for d in COPY_DIRS if d in present]
+    if "_build" not in dirs:
+        raise SystemExit(f"regress: {ref} has no _build/ to build with")
+    with tarfile.open(fileobj=io.BytesIO(git("archive", "--format=tar", ref, *dirs))) as tar:
+        tar.extractall(dest, filter="data")
+    return dest
+
+
+def cmd_diff(sites: list[Path], variants: tuple[str, ...] | None, ref: str, keep: bool) -> int:
+    """Each site's data built by the engine at `ref` and by the working tree's;
+    1 if any output differs."""
+    differs = False
+    with tempfile.TemporaryDirectory(prefix="regress-engine-") as tmp:
+        old_engine = engine_at(ref, Path(tmp))
+        for site in sites:
+            slug = _site_slug(site)
+            for variant in (list(variants) if variants else golden_variants(site) or ["site"]):
+                print(f"[{slug}/{variant}] building with the engine at {ref} and the working tree's…")
+                try:
+                    old_ws = build(site, variant, 0, engine=old_engine)
+                except SystemExit as e:
+                    raise SystemExit(f"{e}\nregress: the engine at {ref} can't build {_rel(site)} as it is now") from None
+                new_ws = build(site, variant, 0)
+                changed, added, removed = compare(manifest(old_ws), manifest(new_ws))
+                if not (changed or added or removed):
+                    print(f"[{slug}/{variant}] identical")
+                else:
+                    differs = True
+                    print(f"[{slug}/{variant}] {len(changed)} changed, {len(added)} added, {len(removed)} removed")
+                    for label, rels in (("added", added), ("removed", removed), ("changed", changed)):
+                        for rel in rels:
+                            print(f"  {label}: {rel}")
+                    print_diffs(changed, old_ws / "project", new_ws / "project")
+                for ws, which in ((old_ws, ref), (new_ws, "working tree")):
+                    if keep and (changed or added or removed):
+                        print(f"  {which} build kept at {ws}")
+                    else:
+                        shutil.rmtree(ws)
+    return 1 if differs else 0
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", choices=("check", "snapshot"))
+    parser.add_argument("command", choices=("check", "snapshot", "diff"))
     parser.add_argument("--site", type=Path, action="append",
                         help="Site directory to check/snapshot (repeatable). Default: site/ + examples/*.")
     parser.add_argument("--variant", choices=tuple(VARIANTS), action="append",
                         help="Limit to one variant (repeatable). Default: every variant the site has a golden for.")
     parser.add_argument("--accept", metavar="REASON",
                         help="snapshot only: overwrite an existing golden, recording REASON in the CHANGELOG.")
+    parser.add_argument("--against", metavar="REF",
+                        help="diff only: the git ref (commit, branch, tag) whose engine to compare with.")
     parser.add_argument("--keep", action="store_true",
-                        help="check only: keep the fresh build directory when it differs, for inspection.")
+                        help="check/diff only: keep the build directories when they differ, for inspection.")
     args = parser.parse_args(argv)
     sites = [s.resolve() for s in args.site] if args.site else discover_sites()
     for site in sites:
@@ -323,6 +397,10 @@ def main(argv: list[str]) -> int:
 
     if args.command == "check":
         return cmd_check(sites, variants, keep=args.keep)
+    if args.command == "diff":
+        if not args.against:
+            parser.error("diff needs --against REF")
+        return cmd_diff(sites, variants, args.against, keep=args.keep)
     return cmd_snapshot(sites, variants, accept=args.accept)
 
 

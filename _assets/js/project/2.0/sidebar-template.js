@@ -9,6 +9,12 @@
 const SIDEBAR_HTML = ``;
 // ── END GENERATED SIDEBAR_HTML ──
 
+// The sidebar runtime, loaded below by a URL relative to the page: a campus
+// building folder's copy of this file points it up a level.
+// ── BEGIN GENERATED SIDEBAR_RUNTIME ── DO NOT EDIT BY HAND ──
+const SIDEBAR_RUNTIME_SRC = "js/project/2.0/sidebar.js";
+// ── END GENERATED SIDEBAR_RUNTIME ──
+
 // Apply saved theme immediately (before DOM renders to prevent flash)
 (function () {
   var saved = localStorage.getItem("theme") || "light";
@@ -76,7 +82,7 @@ const SIDEBAR_HTML = ``;
     // Wait for next frame to ensure DOM is ready, then load sidebar-sidebar.js
     requestAnimationFrame(() => {
       const script = document.createElement("script");
-      script.src = "js/project/2.0/sidebar.js";
+      script.src = SIDEBAR_RUNTIME_SRC;
       script.onload = function () {
         console.log("Sidebar loaded and initialized successfully");
       };

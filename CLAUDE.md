@@ -34,7 +34,8 @@ The site's output stays **byte-identical**. Any change to a site's output is a
   the same way, with a reason.
 
 Refactors keep every golden identical. When they don't, `regress.py check`
-prints the diff.
+prints the diff. `regress.py diff --against HEAD` shows what an uncommitted
+engine change does to every site, the starting point for a re-baseline's proof.
 
 ## Engine and site
 
@@ -68,11 +69,11 @@ An older site must keep building, with identical output, on a newer engine:
 
 - **Data files are numbered** in fill-in order (`site/data/02_floors.yaml`;
   README "Data files and the order to fill them in"). Engine code opens them
-  with `build.data_path("<name>.yaml")`, finds `site.yaml` (`data/00_site.yaml`)
-  as `build.BUILDING_FILE`, and reads meters with `build.read_meter_rows()`:
+  with `site_data.data_path("<name>.yaml")`, finds `site.yaml` (`data/00_site.yaml`)
+  as `site_data.BUILDING_FILE`, and reads meters with `site_data.read_meter_rows()`:
   a site's meters are `meters.csv`, an export read as it is (site1), or
   `meters.yaml`, laid out level → core → meter. The tenant catalog is
-  `05_tenants.yaml` (`build.read_tenants()`). `04_points.yaml` holds every BMS point, grouped by
+  `05_tenants.yaml` (`site_data.read_tenants()`). `04_points.yaml` holds every BMS point, grouped by
   page (`named`, `floors`, `incomers`, `home`): read it with `read_points()`,
   `read_bms_bindings()`, `read_incomers()` and `read_home()`, never the file,
   since an older site keeps those in separate files.
@@ -82,19 +83,22 @@ An older site must keep building, with identical output, on a newer engine:
   `build.sidebar_cfg()` and the site's own pages with `build.own_pages()`:
   an older site still has `sidebar.yaml`, `modules:` and a frozen `pages:` list.
 - **Templates use `StrictUndefined`.** Guard optional fields with
-  `|default(...)` or `is defined`. Builders pop any `building` key from a
-  page's context, because it would shadow the `site.yaml` global.
-- **URLs:** templates write asset and page URLs as `{{ _pp }}…`; a site's
-  `pages/` fragments (the `pages` module) write them as `{{ path_prefix }}…`. That prefix supplies the
-  `../` a campus building folder needs.
-- **Module imports:** `build_switchboards.py` and `build_risers.py` do
-  `import build`. `build.py` imports them lazily, and its `__main__` runs the
-  importable `build` module so they share its configured state. A new module
-  file follows the same pattern.
-- **Guarded skeleton lines:** the build rewrites two lines by their exact
-  shape, and stops if either shape changes:
-  `script.src = "js/project/2.0/sidebar.js";` in `sidebar-template.js`, and
-  `OVERRIDE_FILE: '…',` in `live-points.js`.
+  `|default(...)` or `is defined`, or give the field its default in the
+  Python reader. Render a page with `render_page(template, ctx)`: it stops
+  the build when a context key is named like a template global (`building`,
+  `floor_page`, `slot`, …), so builders pop placement fields such as
+  `building` first.
+- **URLs:** every page gets `path_prefix` (`""` at the site root, the `../`
+  a campus building folder needs). Write asset and page URLs as
+  `{{ path_prefix }}…`; templates extending `base.html.j2` may use its short
+  alias `{{ _pp }}…`. `tests/test_engine_conventions.py` checks the templates.
+- **Module imports:** `_build/site_data.py` is the configured site:
+  `configure()`, the paths and settings it sets, and every data reader.
+  `build.py` and the module files (`build_switchboards.py`, `build_risers.py`)
+  import it, and read the configured values as `site_data.SITE_DIR` etc.,
+  since `configure()` sets them after import. A module file never imports
+  `build` (`tests/test_engine_conventions.py`). `build.<name>` still reaches
+  anything in `site_data` for reading; set values on `site_data` itself.
 
 ## Working with the owner
 

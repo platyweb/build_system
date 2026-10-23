@@ -1,0 +1,15 @@
+# Data file 02: the level roster, bottom → top. `cores:` says which tenant
+# (05_tenants.yaml) holds each core, a card of 03_meters.yaml; a core left
+# out is the landlord's.
+
+floor_L00:
+  label: "Ground Floor"
+floor_L01:
+  label: "Level 1"
+  cores: {West: Fern & Co, East: Fern & Co}
+floor_L02:
+  label: "Level 2"
+  cores: {West: Fern & Co, East: Brook Studio}
+floor_L03:
+  label: "Level 3"
+  cores: {West: Brook Studio}

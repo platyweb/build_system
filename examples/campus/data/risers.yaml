@@ -1,0 +1,25 @@
+# Riser diagrams (the `risers` module). A riser is a meter with
+# `function: Riser-meter`; its floor tap-offs are its child meters, drawn up
+# the busbar in floor order. North Tower's riser (meter 4) feeds one tap-off
+# per floor; floors_per_page: 2 splits it into two linked pages,
+# riser_4_p1 and riser_4_p2, in the north/ folder (its meter's building).
+
+defaults:
+  default_rating: 60           # gauge full-scale (kW) for each tap-off
+  floors_per_page: 2
+  layout:
+    box:        { w: 190, h: 54 }
+    floor_gap:  16
+    gap:        30
+    tap_offset: 70
+    depth_step: 220
+    tap_stagger: 10
+    margin:     80
+    incomer_gap: 70
+    lane_pitch_target: 14
+    busbar:     { color: "#6d28d9", width: 6 }
+    conn:       { color: "#6d28d9", width: 3 }
+    tie_arrow_len:  70
+    tie_arrow_head: 26
+
+overrides: {}

@@ -1,0 +1,45 @@
+# Data file 03: every meter, level → core → meter. A core's meters take the
+# tenant 02_floors.yaml gives the core; `tenant_display: yes` shows a meter
+# on its tenant's pages too. A level's floor total takes the level's tenant
+# when one tenant holds every core listed on it (Level 1, Level 3).
+
+columns: {West: 0, East: 2}
+
+floor_L00:
+  floor:
+    - {id: 1, tag: Main Incomer - Electricity, base: 10000, type: Modbus, daily: 2000001, monthly: 2000002, parent: 0, function: Incomer, utility: electricity}
+    - {id: 2, tag: Plant Room DB, base: 10100, type: Modbus, parent: 1, function: Mechanical Plant, utility: electricity}
+    - {id: 9, tag: L00 Floor Total, base: 20000, type: Calculation, function: Floor Total Electricity, utility: electricity}
+  West:
+    - {id: 10, tag: L00 Reception Lighting, base: 11000, type: Modbus, parent: 1, function: Lighting, utility: electricity}
+  East:
+    - {id: 11, tag: L00 Reception Small Power, base: 11100, type: Modbus, parent: 1, function: Small Power, utility: electricity}
+
+floor_L01:
+  floor:
+    - {id: 19, tag: L01 Floor Total, base: 20100, type: Calculation, function: Floor Total Electricity, utility: electricity, tenant_display: yes}
+  West:
+    - {id: 20, tag: L01 West Lighting, base: 12000, type: Modbus, parent: 1, function: Lighting, utility: electricity, tenant_display: yes}
+    - {id: 21, tag: L01 West Small Power, base: 12100, type: Modbus, parent: 1, function: Small Power, utility: electricity, tenant_display: yes}
+  East:
+    - {id: 22, tag: L01 East Lighting, base: 12200, type: Modbus, parent: 1, function: Lighting, utility: electricity, tenant_display: yes}
+    - {id: 23, tag: L01 East Small Power, base: 12300, type: Modbus, parent: 1, function: Small Power, utility: electricity, tenant_display: yes}
+
+floor_L02:
+  floor:
+    - {id: 29, tag: L02 Floor Total, base: 20200, type: Calculation, function: Floor Total Electricity, utility: electricity}
+  West:
+    - {id: 30, tag: L02 West Lighting, base: 13000, type: Modbus, parent: 1, function: Lighting, utility: electricity, tenant_display: yes}
+    - {id: 31, tag: L02 West Small Power, base: 13100, type: Modbus, parent: 1, function: Small Power, utility: electricity, tenant_display: yes}
+  East:
+    - {id: 32, tag: L02 East Lighting, base: 13200, type: Modbus, parent: 1, function: Lighting, utility: electricity, tenant_display: yes}
+    - {id: 33, tag: L02 East Small Power, base: 13300, type: Modbus, parent: 1, function: Small Power, utility: electricity, tenant_display: yes}
+
+floor_L03:
+  floor:
+    - {id: 39, tag: L03 Floor Total, base: 20300, type: Calculation, function: Floor Total Electricity, utility: electricity, tenant_display: yes}
+  West:
+    - {id: 40, tag: L03 West Lighting, base: 14000, type: Modbus, parent: 1, function: Lighting, utility: electricity, tenant_display: yes}
+    - {id: 41, tag: L03 West Small Power, base: 14100, type: Modbus, parent: 1, function: Small Power, utility: electricity, tenant_display: yes}
+  East:
+    - {id: 42, tag: L03 Landlord Plant, base: 14200, type: Modbus, parent: 1, function: Mechanical Plant, utility: electricity}

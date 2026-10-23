@@ -9,7 +9,9 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "_build"))
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "_build"))
+import build  # noqa: E402
 import generate_meter_registry  # noqa: E402
 import jsblocks  # noqa: E402
 
@@ -41,6 +43,19 @@ def test_meter_registry_survives_quotes_and_backslashes(tmp_path: Path) -> None:
     assert entry["column"] == 0 and entry["position"] is None
 
 
+@pytest.mark.skipif(shutil.which("node") is None, reason="node not installed")
+@pytest.mark.parametrize("render, name, value", [
+    (jsblocks.render_override_file, "LIVE_POINTS_OVERRIDE_FILE", "/displays/O'Brien \\ \"plant\".dsp"),
+    (jsblocks.render_sidebar_runtime, "SIDEBAR_RUNTIME_SRC", "../js/project/2.0/sidebar.js"),
+])
+def test_string_settings_survive_quotes_and_backslashes(render, name: str, value: str, tmp_path: Path) -> None:
+    # The old one-line rewrite couldn't take a quote or backslash at all.
+    js = tmp_path / "setting.js"
+    js.write_text(render(value) + f"\nprocess.stdout.write(JSON.stringify({name}));\n", encoding="utf-8")
+    out = subprocess.run(["node", str(js)], capture_output=True, text=True, check=True).stdout
+    assert json.loads(out) == value
+
+
 def test_inject_writes_backslashes_verbatim(tmp_path: Path) -> None:
     js = tmp_path / "x.js"
     begin, end = jsblocks.POINTS
@@ -69,3 +84,16 @@ def test_na_and_null_cells_are_blank(tmp_path: Path) -> None:
     csv.write_text(CSV_HEADER + "7,Riser,10600,Modbus,n/a,,n/a,3rd,null,East,N/A,Lighting,Electricity,,,\n", encoding="utf-8")
     [m] = generate_meter_registry.read_csv(csv, UTILITIES)
     assert (m["daily"], m["monthly"], m["parent_id"], m["column"], m["position"]) == (0, 0, None, None, None)
+
+
+def test_the_override_display_reaches_live_points(tmp_path: Path) -> None:
+    site = tmp_path / "site"
+    shutil.copytree(ROOT / "examples" / "minimal", site, ignore=shutil.ignore_patterns("golden"))
+    site_yaml = site / "data" / "00_site.yaml"
+    site_yaml.write_text(site_yaml.read_text(encoding="utf-8")
+                         + '\noptergy_override_display: "/displays/plant.dsp"\n', encoding="utf-8")
+    build.configure(site, tmp_path / "project")
+    build.build_site(["sidebar"])
+    js = build.LIVE_POINTS_JS.read_text(encoding="utf-8")
+    assert 'const LIVE_POINTS_OVERRIDE_FILE = "/displays/plant.dsp";' in js
+    assert "OVERRIDE_FILE: LIVE_POINTS_OVERRIDE_FILE," in js

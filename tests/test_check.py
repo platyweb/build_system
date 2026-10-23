@@ -41,7 +41,7 @@ def test_check_builds_only_into_a_temporary_directory(site: Path, tmp_path: Path
     assert build.OUT_ROOT == (tmp_path / "project").resolve()   # configure() restored
 
 
-@pytest.mark.parametrize("example", ["minimal", "campus"])
+@pytest.mark.parametrize("example", ["minimal", "campus", "tower"])
 def test_examples_reference_only_files_they_ship(example: str, tmp_path: Path,
                                                  capsys: pytest.CaptureFixture[str]) -> None:
     build.configure(ROOT / "examples" / example, tmp_path / "project")

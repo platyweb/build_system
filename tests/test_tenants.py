@@ -210,3 +210,61 @@ def test_the_catalog_lives_in_one_place(site: Path, floors: str, tenants: str, e
     _write(site, floors, tenants)
     with pytest.raises(SystemExit, match=error):
         build.read_tenants()
+
+
+def _docs(fern: str, northwind: str = "") -> str:
+    """CATALOG with these `docs:` lines added to its two tenants."""
+    return CATALOG.replace("    index: {}\n", f"    index: {{}}\n{fern}").replace("    slug: northwind\n",
+                                                                           f"    slug: northwind\n{northwind}")
+
+
+@pytest.mark.parametrize(("docs", "href"), [
+    ("", "docs/fern-co-submetering.pdf"),                          # unset: in the tenant's own folder
+    ("    docs: false\n", None),
+    ("    docs: docs/fern.pdf\n", "../../acme-depot//docs/fern.pdf"),   # in the site folder (TENANT_PATH_PREFIX)
+    ("    docs: /docs/manuals/fern.pdf\n", "/docs/manuals/fern.pdf"),
+    ("    docs: https://example.com/fern.pdf\n", "https://example.com/fern.pdf"),
+])
+def test_docs_link(site: Path, docs: str, href: str | None) -> None:
+    _write(site, _docs(docs))
+    fern = build.read_tenants()[0]
+    assert fern["docs"] == href
+    assert "docs" not in fern["data"]
+
+
+@pytest.mark.parametrize(("docs", "error"), [
+    ("    docs:\n", "`docs:` is empty — write false for no Docs item"),
+    ("    docs: true\n", "`docs:` is a file in the site's assets/.* not True"),
+    ("    docs: ''\n", "`docs:` is a file in the site's assets/.* not ''"),
+])
+def test_a_bad_docs_link_stops_the_build(site: Path, docs: str, error: str) -> None:
+    _write(site, _docs(docs))
+    with pytest.raises(SystemExit, match=error):
+        build.read_tenants()
+
+
+def test_a_site_ships_its_tenants_docs(site: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    # The default link points into the tenant's own folder, which the build
+    # never fills; a `docs:` file in the site's assets/ is found, and
+    # `docs: false` drops the menu item.
+    pages = build.data_path("pages.yaml")
+    pages.write_text(pages.read_text(encoding="utf-8").replace(
+        "pages: incomers }\n", "pages: incomers }\n      - { label: Tenants, icon: bxs-user-badge, pages: tenants }\n"),
+        encoding="utf-8")
+    _write(site, CATALOG)
+    assert build.validate() == 0
+    assert "/docs/tenants/fern-co/docs/: fern-co-submetering.pdf — not in the build" in capsys.readouterr().out
+
+    _write(site, _docs("    docs: docs/fern.pdf\n", "    docs: false\n"))
+    (site / "assets" / "docs").mkdir(parents=True)
+    (site / "assets" / "docs" / "fern.pdf").write_bytes(b"%PDF-1.4\n")
+    assert build.validate() == 0
+    assert not [w for w in _warnings(capsys.readouterr().out) if "pdf" in w]
+
+    build.build_site(["tenants"])
+    tenants = tmp_path / "project" / "tenants"
+    fern = (tenants / "fern-co" / "sidebar-template.js").read_text(encoding="utf-8")
+    northwind = (tenants / "northwind" / "sidebar-template.js").read_text(encoding="utf-8")
+    assert '<a href="../../acme-depot//docs/fern.pdf" target="_blank" rel="noopener">' in fern
+    assert "Docs" in fern and "Docs" not in northwind
+    assert "Floor Displays" in northwind and "menu-logout" in northwind

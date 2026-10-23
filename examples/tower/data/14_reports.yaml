@@ -1,0 +1,12 @@
+# Report cards: `urls:` maps image_ref → chart image URL; `placements:` puts a
+# report on a page and slot. The URLs are placeholders.
+
+urls:
+  floor_l01_electricity_demand: "/images/dynamic/UtilityReport.png?cacheId=11&reportType=report-demand&utilityType=Electricity"
+  floor_l01_electricity_consumption: "/images/dynamic/UtilityReport.png?cacheId=12&reportType=report-consumption&utilityType=Electricity"
+  floor_l02_electricity_demand: "/images/dynamic/UtilityReport.png?cacheId=21&reportType=report-demand&utilityType=Electricity"
+
+placements:
+  - { id: 11, image_ref: "floor_l01_electricity_demand",      alt: "📊 Electricity Demand",      page: "floor", slot: "electricity", position: 0, floor: "L01" }
+  - { id: 12, image_ref: "floor_l01_electricity_consumption", alt: "📊 Electricity Consumption", page: "floor", slot: "electricity", position: 1, floor: "L01" }
+  - { id: 21, image_ref: "floor_l02_electricity_demand",      alt: "📊 Electricity Demand",      page: "floor", slot: "electricity", position: 0, floor: "L02" }

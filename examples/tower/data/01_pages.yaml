@@ -1,0 +1,20 @@
+# Data file 01: every page the site builds, laid out as its sidebar menu.
+# `pages: tenants` builds every tenant's pages and lists them; `page:
+# plant_schematic` is the schematic in 11_schematics.yaml.
+
+bottom_items:
+  - { label: Logout, icon: bxs-user, href: "/Login.html?logout", class: menu-logout }
+
+sections:
+  - header: METERING
+    items:
+      - { label: Floors,  icon: bxs-building,   pages: floors }
+      - { label: Tenants, icon: bxs-user-badge, pages: tenants }
+      - label: Meters
+        icon: bx-tachometer
+        children:
+          - { label: "Hierarchy tree", page: meters_hierarchy }
+          - { label: "Plant schematic", page: plant_schematic }
+  - header: SETTINGS
+    items:
+      - { kind: theme_toggle }

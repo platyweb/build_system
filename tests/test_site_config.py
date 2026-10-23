@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "_build"))
 import build  # noqa: E402
 import generate_meter_registry as gmr  # noqa: E402
+import site_data  # noqa: E402
 
 CATALOG = {
     "electricity": {"label": "Electricity", "kind": "electric"},
@@ -45,8 +46,8 @@ def test_utility_cells_resolve_to_catalog_codes(cell: str, function: str, code: 
     assert gmr.normalise_utility(cell, function, CATALOG) == code
 
 
-def test_zone_subtitles_follow_utility_kinds() -> None:
-    build.UTILITIES = CATALOG
+def test_zone_subtitles_follow_utility_kinds(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(site_data, "UTILITIES", CATALOG, raising=False)
     assert build.derive_zone_location({"electricity", "lthw", "chw"}) == "Electrical & Heat Energy"
     assert build.derive_zone_location({"lthw"}) == "Heat Energy"
     assert build.derive_zone_location({"solar"}) == "Electricity"

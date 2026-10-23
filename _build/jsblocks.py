@@ -40,6 +40,14 @@ BACNET_CONFIG = (  # meter-templates.js
     "// ── BEGIN GENERATED BACNET_CONFIG ── DO NOT EDIT BY HAND ──",
     "// ── END GENERATED BACNET_CONFIG ──",
 )
+SIDEBAR_RUNTIME = (  # sidebar-template.js
+    "// ── BEGIN GENERATED SIDEBAR_RUNTIME ── DO NOT EDIT BY HAND ──",
+    "// ── END GENERATED SIDEBAR_RUNTIME ──",
+)
+OVERRIDE_FILE = (  # live-points.js
+    "// ── BEGIN GENERATED OVERRIDE_FILE ── DO NOT EDIT BY HAND ──",
+    "// ── END GENERATED OVERRIDE_FILE ──",
+)
 
 
 def inject(js_file: Path, markers: tuple[str, str], body: str) -> None:
@@ -54,22 +62,6 @@ def inject(js_file: Path, markers: tuple[str, str], body: str) -> None:
     # A function replacement, not a string: re.sub would otherwise interpret
     # backslashes in the block (e.g. a JSON-escaped quote) as escape codes.
     js_file.write_text(re.sub(pattern, lambda _m: block, js, flags=re.DOTALL), encoding="utf-8", newline="\n")
-
-
-def set_string_property(js_file: Path, name: str, value: str) -> None:
-    """Set the single `<name>: '<string>',` property line in js_file to
-    `value` — for a one-off runtime setting that sits inside an object
-    literal, where a marker block can't go. Single-quoted, as the skeleton
-    writes it; idempotent (a rebuild of a staged copy matches its own
-    output). Fails loudly unless the line is there exactly once."""
-    if "'" in value or "\\" in value:
-        raise SystemExit(f"{name}: {value!r} can't contain a quote or backslash")
-    pattern = re.compile(rf"^([ \t]*{re.escape(name)}: )'[^'\n]*',$", re.M)
-    js = js_file.read_text(encoding="utf-8")
-    if len(pattern.findall(js)) != 1:
-        raise SystemExit(f"{js_file}: expected exactly one `{name}: '…',` line for the build to set — "
-                         "has the skeleton changed?")
-    js_file.write_text(pattern.sub(lambda m: f"{m.group(1)}'{value}',", js), encoding="utf-8", newline="\n")
 
 
 def js_value(v: object) -> str:
@@ -176,6 +168,18 @@ def render_bacnet_config(bacnet: dict) -> str:
         f"    powerOffset: {{ {offsets} }}",
         "};",
     ])
+
+
+def render_sidebar_runtime(src: str) -> str:
+    """`const SIDEBAR_RUNTIME_SRC = "…";`: where sidebar-template.js loads
+    the sidebar runtime from, relative to the page."""
+    return f"const SIDEBAR_RUNTIME_SRC = {json.dumps(src)};"
+
+
+def render_override_file(display: str) -> str:
+    """`const LIVE_POINTS_OVERRIDE_FILE = "…";`: the Optergy display file
+    live-points.js posts point overrides to ("" for none)."""
+    return f"const LIVE_POINTS_OVERRIDE_FILE = {json.dumps(display, ensure_ascii=False)};"
 
 
 # ─── ReportUrls ──────────────────────────────────────────────────────────────
