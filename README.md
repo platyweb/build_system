@@ -68,7 +68,9 @@ file). It won't wipe a directory it didn't make.
    `00_site.yaml` (`slug`, `name`, `bacnet`, `utilities`), `01_pages.yaml`
    (the pages to build, laid out as the menu), `02_floors.yaml`,
    `03_meters.yaml` (or drop a meters export in as `data/meters.csv`),
-   then the data files of the pages you listed.
+   then the data files of the pages you listed. With the building's import
+   workbook or meter schedule, [prefill](#prefilling-from-a-buildings-documents)
+   drafts the floors, meters and tenants.
 4. Run `build.py --check` until it reports no problems, then run `build.py`.
 5. Record the first golden with `regress.py snapshot --site site`.
 6. Turn on the pre-commit hook (see [Regression testing](#regression-testing)),
@@ -79,6 +81,102 @@ file). It won't wipe a directory it didn't make.
 
 Live values need the controller. Opened locally, the pages show their layout
 and links, with "Loading..." in place of live values.
+
+### Prefilling from a building's documents
+
+`_build/prefill.py` drafts `data/floors.yaml`, `meters.yaml`,
+`tenants.yaml` and `reports.yaml`, and the floorplan images, from the
+building's documents. It reports where each field came from, what it
+couldn't fill and where the documents disagree. Put the documents in
+`site/sources/`; each is found by what it holds:
+
+| Document | Recognised by | Gives |
+|---|---|---|
+| Optergy import workbook (`.xlsx`) | a sheet headed `name` … `driver` | the meters and their names, types (`Aggregate` → `Calculation`), utilities, calculation members, `daily`/`monthly` from the custom meter points, and the report charts from its `Reports` sheet |
+| Meter schedule (`.xlsx`) | a `Meter No.` column | each meter's tenant and core (its `Location`, e.g. "West Core 2"), and the tenants' proper names |
+| Controller meter export (`.csv`) | `id` and `tag` columns, e.g. a `meters.csv` | ids, BACnet bases, types and parents |
+| Floor drawings, in `sources/floorplans/` | a level in the file name: `Ninth_Floor.emf`, `L3.svg`, `…-Fifth.pdf`, `floor_ground.png` | `assets/img/floors/floor_<key>.png` for each level with a page |
+
+```bash
+python _build/prefill.py --dry-run     # the report; writes nothing
+python _build/prefill.py --replace     # the first run, over the example's floors and meters
+python _build/build.py --check
+```
+
+- **The workbook:** every sheet is read, backups included. The prefix most
+  meter names share (`ABC - …`) picks this building's rows; rows for other
+  buildings are ignored.
+- **Levels:** taken from the meter names (`FL3`, `Floor 03`, `3rd`, `Grd`,
+  `LG`, `Basement`, `Roof`, …) and the schedule. A calculation meter's level
+  is its members' when they agree, and its members without a level take its
+  level.
+- **Which meters go on a level's page:** only those with evidence for it:
+  the level's calculation meters (a "Total" one gets `floor_page.summary_cards.total`
+  as its function), their members, and the meters the schedule or their name
+  puts in a core. The report lists the meters a name alone ties to a level.
+- **Cores and tenants:** a core is a card on the floor page. Its column
+  comes from its compass word (West 0, North/South/Centre 1, East 2, else 0).
+  Its meters are ordered lighting, then power, then mechanical. A level's
+  meters with no core go in `default_core` (`Floor`). The schedule's tenant
+  on a core's rows holds that core. Landlord, Vacant and n/a are no tenant.
+  A tenant's short name is its proper name without the legal words
+  ("Fern and Company Limited" → "Fern").
+- **Report cards:** one per `Reports` row, on the floor page of the level its
+  meters are on, in the floor tab whose `slot` is its utility. The chart URL
+  carries the meters (with their ids, so it's right once the export is in),
+  their colours, the chart and report type, and the house style. A side in
+  the name ("Floor03 - East - Electricity - Demand") titles the card "East
+  Demand", after the floor's own cards. The report-library link needs each
+  report's id: `report_ids:`, or `first_report_id:` if the library numbered
+  them in the sheet's order (check one).
+- **Floorplans:** a PNG is copied; a PDF is rendered with `pdftoppm`, and an
+  SVG or EMF converted with `inkscape` (or `rsvg-convert`, LibreOffice,
+  ImageMagick), whichever is installed; the report names the package
+  otherwise. With several drawings for a level the PNG wins, then SVG, PDF
+  and EMF. A PDF is the whole sheet, title block included, so a cleaned PNG
+  backdrop is better where there is one. An image already in `assets/` is
+  kept; `--replace` makes it again.
+- **Without the controller export** the ids are provisional, numbered from
+  `first_id` in workbook order with `base = (id + 99) × 100`, and no meter has
+  a parent. Add the export to `sources/` and run it again.
+- **Re-running:** prefill replaces the files it wrote. Each starts with a
+  `# prefill:` line, and a file edited since stops the run (or pass
+  `--replace`). Make corrections in `sources/prefill.yaml` instead, so they
+  survive the next run. The full report of the last run is
+  `sources/prefill-report.txt`.
+- **`site.yaml`** stays yours: the report lists the utilities and meter types
+  the meters need that it lacks.
+
+`sources/prefill.yaml`, every key optional:
+
+```yaml
+workbook: import.xlsx          # schedule:, controller: — when sources/ has more than one candidate
+prefix: "ABC"                  # the building prefix on meter names (default: the most common)
+first_id: 362                  # provisional ids start here (default 1)
+utility_codes: {"0": electricity}                    # the workbook's utility codes
+types: {Aggregate: Calculation}                      # workbook driver → meter type
+points:                                              # the custom points behind daily / monthly
+  daily: {period: This, frequency: month}
+  monthly: {period: Previous To Today Equivalent, frequency: month}
+schedule_columns: {meter_no: "Description", description: "Meter No."}   # headers that differ
+levels:                        # a level's label and floors.yaml fields, and names that mean it
+  ground: {label: "Ground Floor", match: ['\bFloor 01\b']}
+default_core: Floor
+columns: {"West Core 1": 0}    # a core's floor-page column
+landlord: [Landlord, Vacant, n/a]                    # schedule tenants that are no tenant
+tenants:                       # by the schedule's proper name: short name, tenants.yaml fields
+  "Fern and Company Limited": {short: Fern & Co, docs: false}
+tenant_display: true           # meters with a tenant show on its pages
+meters:                        # corrections by tag, applied last
+  "ABC - DB/L/B2": {floor: basement, core: Floor}
+  "ABC - DB/T/2P": {function: Small Power}
+report_ids: {"ABC - Floor03 - Electricity - Demand": 412}   # a card's report-library link
+first_report_id: 400           # or: the Reports sheet's rows numbered from here
+reports:                       # report cards of the site's own (home, incomers), added as they are
+  urls: {home_demand: "/images/dynamic/UtilityReport.png?…"}
+  placements: [{id: 401, image_ref: home_demand, page: home, slot: top, position: 0, title: Demand}]
+floorplans: floorplans         # the folder in sources/ with the floor drawings
+```
 
 ---
 
@@ -179,6 +277,7 @@ controller's own `/js/` libraries (cache-busted with `optergy_lib_version`).
 | `_build/jsblocks.py` | Renders and injects the generated JS blocks |
 | `_build/meters_yaml.py` | `meters.yaml` reader and writer |
 | `_build/import_meters.py` | Imports a `meters.csv` export into `meters.yaml` |
+| `_build/prefill.py`, `xlsx.py` | Drafts the floors, meters, tenants, report cards and floorplans from the building's documents; reads `.xlsx` |
 | `_build/generate_meter_registry.py` | `meters.csv` reader and cell normalisers |
 | `_build/linkcheck.py` | `--check`'s checks on built pages |
 | `_build/components.py` | Extras: the component catalog, slots, placement checks |

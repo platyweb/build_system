@@ -32,6 +32,7 @@ DATA_PATH_HELPERS = {
     ("site_data.py", "data_path"),
     ("site_data.py", "site_file"),
     ("import_meters.py", "target_path"),
+    ("prefill.py", "target_path"),
 }
 
 
