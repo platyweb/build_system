@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
 Prefill a site's data files from the building's documents: its floors,
-meters, tenants, report cards and floorplans, so they don't have to be
-typed in.
+meters, tenants, report cards, switchboards, risers and floorplans, so they
+don't have to be typed in.
 
 Usage:
     python _build/prefill.py                 # site/
@@ -18,7 +18,7 @@ Put the documents in <site>/sources/; each is found by what it holds:
     included: a building prefix on the meter names ("ABC - …") picks this
     building's rows;
   - the meter schedule (.xlsx with a "Meter No." column): tenants, the core
-    each meter sits in, utilities;
+    each meter sits in, utilities, and the switchboard each is on;
   - the controller's meter export (.csv with id and tag columns, e.g. a
     meters.csv): meter ids, BACnet bases, types and parents. Without it the
     ids are provisional, numbered from `first_id` in workbook order, and the
@@ -29,8 +29,9 @@ Put the documents in <site>/sources/; each is found by what it holds:
     pdftoppm; SVG and EMF with inkscape, if installed). An image already
     there is kept unless --replace.
 
-It writes data/floors.yaml, meters.yaml, tenants.yaml and reports.yaml
-(numbered, e.g. 02_floors.yaml) and prints a report: where each field came from, what it
+It writes data/floors.yaml, meters.yaml, tenants.yaml, reports.yaml,
+switchboards.yaml and risers.yaml (numbered, e.g. 02_floors.yaml) and
+prints a report: where each field came from, what it
 couldn't fill, and where the documents disagree. A file it wrote starts
 with a "# prefill:" line; a re-run replaces it, and stops instead if the
 file was edited since. Make corrections in sources/prefill.yaml, so a re-run
@@ -93,6 +94,8 @@ DEFAULTS: dict = {
     "first_report_id": None,   # or: ids numbered from here in the Reports sheet's order
     "reports": {},         # {urls: {…}, placements: […]}: report cards of the site's own, added as they are
     "floorplans": "floorplans",   # the folder in sources/ holding the floor drawings
+    "switchboards": {},    # {board: false | {heading, nav_label, incomer: <tag>, bus_tie, columns, ways: {<tag>: {rating, ct}}}}
+    "risers": {},          # {tag: false | {nav_label, default_rating}}: drop, add or set up a riser
 }
 
 # ─── Levels ──────────────────────────────────────────────────────────────────
@@ -478,8 +481,10 @@ def prefill(site_root: Path, report: Report) -> dict:
     level_of = level_finder(settings["levels"])
     workbook = read_workbook(docs["workbook"], settings, report) if docs["workbook"] else Workbook()
     prefix, wb_meters, points = workbook.prefix, workbook.meters, workbook.points
-    strip = (lambda tag: re.sub(rf"^{re.escape(prefix)}\s*-\s*", "", tag, flags=re.I)) if prefix else (lambda tag: tag)
     controller = read_controller(docs["controller"]) if docs["controller"] else {}
+    if not prefix and controller:
+        prefix = settings["prefix"] or _prefix(list(controller)) or ""
+    strip = (lambda tag: re.sub(rf"^{re.escape(prefix)}\s*-\s*", "", tag, flags=re.I)) if prefix else (lambda tag: tag)
     schedule = read_schedule(docs["schedule"], settings, level_of, report) if docs["schedule"] else []
 
     # The meters: the controller's when there's an export, else the workbook's.
@@ -500,8 +505,16 @@ def prefill(site_root: Path, report: Report) -> dict:
               for (name, period, frequency), instance in points.items() if compact(name) in tag_of}
     members = {t: [tag_of[compact(m)] for m in wb(t).get("members", []) if compact(m) in tag_of] for t in tags}
 
-    # Schedule rows → meters: by name, then by (level, core, load).
+    # Schedule rows → meters: by name; by a meter's identifier ("WCA/1B/001"
+    # of "ABC-LL-WCA/1B/001", letters and digits) found in the row; then by
+    # (level, core, load).
     by_name: dict[str, str] = {compact(strip(t)): t for t in tags}
+    by_part: dict[str, set[str]] = defaultdict(set)
+    for t in tags:
+        for part in re.split(r"\s*-\s*", strip(t)):
+            if len(key := compact(part)) >= 6 and re.search(r"\d", key) and re.search(r"[a-z]", key):
+                by_part[key].add(t)
+    by_part = {key: next(iter(found)) for key, found in by_part.items() if len(found) == 1}
     by_parts: dict[tuple, list[str]] = defaultdict(list)
     for t in tags:
         parts = (level_of(strip(t)), core_of(t), load_of(strip(t)))
@@ -520,8 +533,15 @@ def prefill(site_root: Path, report: Report) -> dict:
                 if len(hits) == 1:
                     tag, how = hits[0], "name"
                     break
+        if tag is None:
+            text = compact(r["meter_no"] + " " + r["description"])
+            found = {key: t for key, t in by_part.items() if key in text}
+            hits = {t for key, t in found.items() if not any(key != k and key in k for k in found)}   # the longest
+            if len(hits) == 1:
+                tag, how = hits.pop(), "identifier"
         if tag is None and len(by_parts.get((r["level"], r["core"], r["load"]), [])) == 1:
             tag, how = by_parts[(r["level"], r["core"], r["load"])][0], "level, core and load"
+        r["tag"] = None
         if tag is None:
             report.note("Schedule rows matched to no meter", f"{r['sheet']} row {r['row']}: "
                         + " | ".join(x for x in (r["meter_no"], r["description"], r["location"]) if x))
@@ -530,7 +550,7 @@ def prefill(site_root: Path, report: Report) -> dict:
             report.note("Schedule rows matched to a meter twice (the first is kept)",
                         f"{tag}: {sched[tag]['sheet']} row {sched[tag]['row']} and {r['sheet']} row {r['row']}")
             continue
-        sched[tag] = r
+        sched[tag], r["tag"] = r, tag
         report.source("schedule match", how)
 
     # Tenants: the schedule's names, short names by the settings or with the
@@ -678,6 +698,8 @@ def prefill(site_root: Path, report: Report) -> dict:
         elif parent.isdigit():
             row["parent_id"] = int(parent)
             report.source("parent", "controller")
+            if int(parent) not in by_tag_id.values() and int(parent) != 0:
+                report.note("Parents that are no meter on the controller", f"{row['tag']}: parent id {parent}")
         elif parent in by_tag_id:
             row["parent_id"] = by_tag_id[parent]
             report.source("parent", "workbook")
@@ -697,6 +719,13 @@ def prefill(site_root: Path, report: Report) -> dict:
                 report.source("tenant", "calculation members")
 
     _apply_corrections(rows, settings, by_tag_id, cores, report)
+    locked = {tag for tag, fix in settings["meters"].items() if "parent" in (fix or {})}
+    boards = draft_boards(schedule, rows, not controller, locked, strip, settings, report)
+    risers = draft_risers(rows, sched, settings, report)
+    for family, found, icon in (("switchboards", boards, "bx-grid-alt"), ("risers", risers, "bx-git-commit")):
+        if found and not menu_lists(family):
+            report.note("pages.yaml: page families to list in the menu",
+                        f"{{ label: {family.capitalize()}, icon: {icon}, pages: {family} }}")
 
     # Columns and positions: a core's column from the settings or its compass
     # word; its meters lighting, then power, then mechanical, each in id order.
@@ -734,6 +763,7 @@ def prefill(site_root: Path, report: Report) -> dict:
     reports = draft_reports(workbook.reports, tag_of, rows_by_tag, report_level, level_of, strip,
                             meter_levels, settings, report)
     return {"rows": rows, "cores": dict(cores), "order": order, "meter_levels": meter_levels, "reports": reports,
+            "boards": boards, "risers": risers,
             "tenants": list(catalog.items()), "settings": settings, "docs": docs,
             "prefix": prefix, "schedule": schedule}
 
@@ -806,6 +836,174 @@ def _check_site(rows: list[dict], report: Report) -> None:
     types = sorted({r["type"] for r in rows if r["type"]} - set(site_data.BACNET.get("power_offset", {})))
     if types:
         report.note("site.yaml bacnet.power_offset: meter types with no offset", ", ".join(types))
+
+
+# ─── Switchboards and risers ─────────────────────────────────────────────────
+# A board's page shows its incomer meter and its ways: the meters whose
+# parent the incomer is. The boards are the schedule's Switchboard column,
+# each fed by its "Main Incomer" row's meter; then, on the controller's
+# hierarchy, any other incomer or transformer feeding meters. Without the
+# controller export, a board's schedule meters take its incomer as their
+# parent. A riser is a "Rising Main", "Riser" or "Busbar" meter feeding
+# meters on a level; its page draws them floor by floor.
+INCOMER = re.compile(r"incomer|\bI/?C\b|transformer|\bTX[\s-]*\d", re.I)
+RISER = re.compile(r"\brising\b|\briser\b|\bbus\s*bar\b", re.I)
+BOARD_NAME = re.compile(r"\b(LV[\s-]*\d+|SWB[\s-]*\d+|SB[\s-]*[A-Z]{0,2}[\s-]*\d+|MDB[\s-]*\d*|TX[\s-]*[A-Z]?[\s-]*\d+)\b", re.I)
+NO_BOARD = {"", "na", "tbd", "none"}
+BOARD_FIELDS = ("nav_label", "page_title", "bus_tie", "columns", "default_rating", "building")
+SWITCHBOARD_DEFAULTS = {"default_rating": 150}   # a way's gauge full scale (kW)
+RISER_DEFAULTS = {"default_rating": 60}          # a tap's
+
+
+def board_heading(name: str) -> str:
+    return name if re.search(r"board|\bSWB\b", name, re.I) else f"{name} Switchboard"
+
+
+def draft_boards(schedule: list[dict], rows: list[dict], provisional: bool, locked: set[str], strip,
+                 settings: dict, report: Report) -> dict[str, dict]:
+    """switchboards.yaml's boards, by key."""
+    by_tag = {r["tag"]: r for r in rows}
+    tag_by_id = {r["id"]: r["tag"] for r in rows}
+    own = {compact(name): (name, spec) for name, spec in settings["switchboards"].items()}
+    groups: dict[str, list[dict]] = {}
+    spellings: dict[str, Counter] = defaultdict(Counter)
+    for r in schedule:
+        if (key := compact(r["switchboard"])) not in NO_BOARD:
+            groups.setdefault(key, []).append(r)
+            spellings[key][r["switchboard"].strip()] += 1
+
+    found: list[dict] = []   # {name, incomer: tag, spec: settings, origin}
+    for key, group in groups.items():
+        name = spellings[key].most_common(1)[0][0]
+        spec = own.pop(key, (name, {}))[1]
+        if spec is False:
+            continue
+        spec = spec or {}
+        incomer = spec.get("incomer") or next(
+            (r["tag"] for r in group if r.get("tag") and INCOMER.search(r["meter_no"] + " " + r["description"])), None) \
+            or next((t for t in by_tag if compact(strip(t)) == key), None)   # a meter named as the board
+        if incomer not in by_tag:
+            report.note("Switchboards with no incomer meter (no page: name it in prefill.yaml switchboards: "
+                        "{<board>: {incomer: <tag>}})",
+                        f"{name}: " + (f"{incomer} is no meter" if incomer else
+                                      next((f"its incomer row, {r['meter_no']} | {r['description']}, matched no meter"
+                                            for r in group if INCOMER.search(r["meter_no"] + " " + r["description"])),
+                                           "no Main Incomer row")))
+            continue
+        members = [r["tag"] for r in group if r.get("tag") and r["tag"] != incomer]
+        incomer_id = by_tag[incomer]["id"]
+        if provisional:
+            for m in members:
+                if by_tag[m]["parent_id"] is None and m not in locked:
+                    by_tag[m]["parent_id"] = incomer_id
+                    report.source("parent", "schedule switchboard")
+        else:
+            elsewhere = Counter(tag_by_id.get(by_tag[m]["parent_id"], "no parent") for m in members
+                                if by_tag[m]["parent_id"] != incomer_id)
+            if elsewhere:
+                report.note("Switchboards whose schedule meters the controller puts elsewhere",
+                            f"{name} ({incomer}): {sum(elsewhere.values())} of {len(members)}, "
+                            + ", ".join(f"{n} under {parent}" for parent, n in elsewhere.most_common(3)))
+        found.append({"name": name, "incomer": incomer, "spec": spec, "origin": "schedule"})
+
+    # The hierarchy's other incomers: a meter named for one, feeding two or more.
+    feeds = Counter(r["parent_id"] for r in rows if r["parent_id"] is not None)
+    taken = {b["incomer"] for b in found}
+    if not provisional:
+        for r in rows:
+            if r["tag"] in taken or r["type"] == "Calculation" or feeds[r["id"]] < 2 or not INCOMER.search(r["tag"]):
+                continue
+            m = BOARD_NAME.search(strip(r["tag"]))
+            name = m.group(1) if m else strip(r["tag"])
+            spec = own.pop(compact(name), (name, {}))[1]
+            if spec is False:
+                continue
+            found.append({"name": name, "incomer": r["tag"], "spec": spec or {}, "origin": "hierarchy"})
+            report.note("Switchboards from the controller's hierarchy (no schedule board)",
+                        f"{name}: {r['tag']}, {feeds[r['id']]} ways")
+    for name, spec in own.values():   # boards only the settings name
+        if spec and spec.get("incomer") in by_tag:
+            found.append({"name": name, "incomer": spec["incomer"], "spec": spec, "origin": "prefill.yaml"})
+        elif spec is not False:
+            report.note("prefill.yaml switchboards that are no board (give it an incomer: <tag>)", name)
+
+    if not provisional:
+        for b in list(found):
+            if not feeds[by_tag[b["incomer"]]["id"]] and "incomer" not in b["spec"]:
+                report.note("Switchboards whose incomer feeds no meter on the controller (no page)",
+                            f"{b['name']}: {b['incomer']}")
+                found.remove(b)
+    keys = {compact(b["name"]): "swb_" + re.sub(r"^swb_", "", re.sub(r"[^a-z0-9]+", "_", b["name"].lower()).strip("_"))
+            for b in found}
+    boards: dict[str, dict] = {}
+    for b in found:
+        name, spec = b["name"], b["spec"]
+        incomer_id = by_tag[b["incomer"]]["id"]
+        board = {"heading": spec.get("heading") or board_heading(name), "nav_label": name,
+                 "incomer_id": incomer_id, "ways": {}}
+        for tag, way in (spec.get("ways") or {}).items():
+            if tag in by_tag:
+                board["ways"][by_tag[tag]["id"]] = way
+            else:
+                report.note("prefill.yaml switchboard ways that are no meter", f"{name}: {tag}")
+        board.update({f: spec[f] for f in BOARD_FIELDS if f in spec})
+        if "bus_tie" in board:
+            to = str(board["bus_tie"].get("to", ""))
+            board["bus_tie"] = {**board["bus_tie"], "to": keys.get(compact(to), to)}
+            if "meter" in board["bus_tie"]:   # the coupler's meter, by tag
+                tag = board["bus_tie"]["meter"]
+                if tag in by_tag:
+                    board["bus_tie"]["meter"] = by_tag[tag]["id"]
+                else:
+                    report.note("prefill.yaml switchboard bus-tie meters that are no meter", f"{name}: {tag}")
+                    del board["bus_tie"]["meter"]
+            if board["bus_tie"]["to"] not in keys.values():
+                report.note("prefill.yaml switchboard bus ties to no board (the build stops at it)", f"{name} → {to}")
+        boards[keys[compact(name)]] = board
+        report.source("switchboard", b["origin"])
+    return boards
+
+
+def draft_risers(rows: list[dict], sched: dict[str, dict], settings: dict, report: Report) -> dict[int, dict]:
+    """risers.yaml's overrides by meter id, one per riser (empty when it has
+    none). Each riser's function becomes Riser-meter, and one on no level
+    goes on its lowest tap's, outside the cores: the build reads a meter's
+    function only on a level."""
+    taps: dict[int, list[str]] = defaultdict(list)   # a meter's children's levels
+    for r in rows:
+        if r["parent_id"] is not None and r["floor"]:
+            taps[r["parent_id"]].append(r["floor"].split("/")[0])
+    own = settings["risers"]
+    risers: dict[int, dict] = {}
+    for r in rows:
+        spec = own.get(r["tag"])
+        text = r["tag"] + " " + (sched[r["tag"]]["meter_no"] + " " + sched[r["tag"]]["description"]
+                                 if r["tag"] in sched else "")
+        if spec is False or (spec is None and not RISER.search(text)):
+            continue
+        if not taps[r["id"]]:
+            report.note("Named like a riser, but feeds no meter on a level (no riser page)", r["tag"])
+            continue
+        r["function"] = "Riser-meter"
+        if not r["floor"]:   # the build reads a function only on a level: the riser's lowest, off the grid
+            r.update(floor=min(taps[r["id"]], key=level_rank), zone="", column=None, position=None)
+            report.source("floor", "riser's lowest tap")
+        risers[r["id"]] = dict(spec or {})
+        report.source("riser", "prefill.yaml" if spec is not None else "name")
+    for tag in own:
+        if not any(r["tag"] == tag for r in rows):
+            report.note("prefill.yaml risers that are no meter", tag)
+    return risers
+
+
+def menu_lists(family: str) -> bool:
+    """Whether the site's menu (pages.yaml) lists a page family."""
+    def walk(node) -> bool:
+        if isinstance(node, dict):
+            return node.get("pages") == family or node.get("auto") == family or any(walk(v) for v in node.values())
+        return isinstance(node, list) and any(walk(v) for v in node)
+    path = site_data.data_path("pages.yaml")
+    return path.exists() and walk(yaml.safe_load(path.read_text(encoding="utf-8")))
 
 
 # ─── Reports ─────────────────────────────────────────────────────────────────
@@ -1009,11 +1207,15 @@ def make_floorplan(src: Path, out: Path) -> str | None:
 
 
 # ─── Writing ─────────────────────────────────────────────────────────────────
+NOTHING = {"tenants.yaml": "tenants in the schedule", "reports.yaml": "Reports sheet in the workbook",
+           "switchboards.yaml": "board with an incomer meter", "risers.yaml": "riser feeding meters on a level"}
 HEADERS = {
     "floors.yaml": "Levels bottom → top, with the tenant holding each core (from the schedule).",
     "meters.yaml": "Every meter, by level → core (README \"data/meters.yaml\").",
     "tenants.yaml": "The tenant catalog: short name → proper name (from the schedule).",
     "reports.yaml": "Report cards: each chart's URL, and where its card goes (from the workbook's Reports).",
+    "switchboards.yaml": "Switchboards: each board's incomer meter; its ways are the meters it feeds.",
+    "risers.yaml": "Risers: the meters with function Riser-meter; their taps are the meters they feed on a level.",
 }
 
 
@@ -1079,6 +1281,21 @@ def reports_text(result: dict) -> str | None:
     return "".join(out)
 
 
+def switchboards_text(result: dict) -> str | None:
+    if not result["boards"]:
+        return None
+    return yaml.safe_dump({"defaults": SWITCHBOARD_DEFAULTS, "boards": result["boards"]},
+                          sort_keys=False, allow_unicode=True, width=120)
+
+
+def risers_text(result: dict) -> str | None:
+    if not result["risers"]:
+        return None
+    overrides = {meter_id: spec for meter_id, spec in result["risers"].items() if spec}
+    return yaml.safe_dump({"defaults": RISER_DEFAULTS, "overrides": overrides},
+                          sort_keys=False, allow_unicode=True, width=120)
+
+
 def meters_text(result: dict) -> str:
     text = meters_yaml.dump(result["rows"], result["cores"], result["order"])
     with tempfile.TemporaryDirectory() as tmp:
@@ -1104,14 +1321,14 @@ def main(argv: list[str]) -> int:
     result = prefill(site_data.SITE_ROOT, report)
     _check_site_utilities_first(report)
     outputs = {"floors.yaml": floors_text(result), "meters.yaml": meters_text(result),
-               "tenants.yaml": tenants_text(result), "reports.yaml": reports_text(result)}
+               "tenants.yaml": tenants_text(result), "reports.yaml": reports_text(result),
+               "switchboards.yaml": switchboards_text(result), "risers.yaml": risers_text(result)}
 
     files, blocked = [], []
     for name, body in outputs.items():
         path = target_path(name)
         if body is None:
-            files.append(f"{name}: nothing to write (no " + ("tenants in the schedule)" if name == "tenants.yaml"
-                                                             else "Reports sheet in the workbook)"))
+            files.append(f"{name}: nothing to write (no {NOTHING[name]})")
             continue
         text = _with_mark(name, body)
         rel = site_data._rel(path)

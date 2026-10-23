@@ -347,6 +347,16 @@
 {%- macro report_card_titled(report, indent=28) %}{{ report_card(report, indent) }}{%- endmacro %}
 
 
+{# ── meter_card: one meter on a switchboard or riser diagram ──────────── #}
+{# A one-line placeholder: meter-templates.js builds the card from          #}
+{# METER_REGISTRY (title, live demand, a gauge against `rating` kW, CT).    #}
+{# `card` is {meter_id, label, rating, ct}; variant 'incomer' draws the     #}
+{# diagram's source heavier.                                                #}
+{%- macro meter_card(card, variant='', indent=0) %}{{ ' ' * indent }}<div data-meter-card="{{ card.meter_id }}" data-label="{{ card.label|e }}" data-rating="{{ card.rating }}"
+{%- if card.ct %} data-ct="{{ card.ct|e }}"{% endif %}{% if variant %} data-variant="{{ variant }}"{% endif %}></div>
+{%- endmacro %}
+
+
 {# ── floorplan_viewer: centre image in the layout ──────────────────────── #}
 {%- macro floorplan_viewer(image) %}                            <!-- CENTER COLUMN: Floorplan Image -->
                             <div class="floorplan-viewer floorplan-viewer-constrained">

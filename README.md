@@ -85,15 +85,15 @@ and links, with "Loading..." in place of live values.
 ### Prefilling from a building's documents
 
 `_build/prefill.py` drafts `data/floors.yaml`, `meters.yaml`,
-`tenants.yaml` and `reports.yaml`, and the floorplan images, from the
-building's documents. It reports where each field came from, what it
+`tenants.yaml`, `reports.yaml`, `switchboards.yaml` and `risers.yaml`, and
+the floorplan images, from the building's documents. It reports where each field came from, what it
 couldn't fill and where the documents disagree. Put the documents in
 `site/sources/`; each is found by what it holds:
 
 | Document | Recognised by | Gives |
 |---|---|---|
 | Optergy import workbook (`.xlsx`) | a sheet headed `name` … `driver` | the meters and their names, types (`Aggregate` → `Calculation`), utilities, calculation members, `daily`/`monthly` from the custom meter points, and the report charts from its `Reports` sheet |
-| Meter schedule (`.xlsx`) | a `Meter No.` column | each meter's tenant and core (its `Location`, e.g. "West Core 2"), and the tenants' proper names |
+| Meter schedule (`.xlsx`) | a `Meter No.` column | each meter's tenant and core (its `Location`, e.g. "West Core 2"), the tenants' proper names, and the switchboard each meter is on |
 | Controller meter export (`.csv`) | `id` and `tag` columns, e.g. a `meters.csv` | ids, BACnet bases, types and parents |
 | Floor drawings, in `sources/floorplans/` | a level in the file name: `Ninth_Floor.emf`, `L3.svg`, `…-Fifth.pdf`, `floor_ground.png` | `assets/img/floors/floor_<key>.png` for each level with a page |
 
@@ -129,6 +129,19 @@ python _build/build.py --check
   Demand", after the floor's own cards. The report-library link needs each
   report's id: `report_ids:`, or `first_report_id:` if the library numbered
   them in the sheet's order (check one).
+- **Switchboards:** one per board in the schedule's `Switchboard` column,
+  fed by its "Main Incomer" (or I/C) row's meter, or the meter named as the
+  board. On the controller's hierarchy, any other incomer or transformer
+  (`TX1`) feeding two or more meters is a board too. A board's ways are the
+  meters its incomer feeds: before the export, its schedule meters take the
+  incomer as their parent; after, the report lists the meters the controller
+  puts elsewhere.
+- **Risers:** a meter named "Rising Main", "Riser" or "Busbar" that feeds
+  meters on a level gets `function: Riser-meter`, and goes on the lowest of
+  those levels, outside the cores (the build reads a meter's function only
+  on a level). Risers need the export's hierarchy.
+- The report gives the `pages.yaml` entry for switchboards or risers the
+  menu doesn't list yet.
 - **Floorplans:** a PNG is copied; a PDF is rendered with `pdftoppm`, and an
   SVG or EMF converted with `inkscape` (or `rsvg-convert`, LibreOffice,
   ImageMagick), whichever is installed; the report names the package
@@ -176,6 +189,14 @@ reports:                       # report cards of the site's own (home, incomers)
   urls: {home_demand: "/images/dynamic/UtilityReport.png?…"}
   placements: [{id: 401, image_ref: home_demand, page: home, slot: top, position: 0, title: Demand}]
 floorplans: floorplans         # the folder in sources/ with the floor drawings
+switchboards:                  # by the schedule's board name, or a hierarchy board's (TX1, LV02)
+  "SWB 1": {incomer: "ABC-LL-TX1", heading: "Main LV Switchboard", columns: 4,
+            bus_tie: {side: right, to: SWB 2, normally: open, meter: "ABC-LL-Bus Coupler"},
+            ways: {"ABC - Chiller 1": {rating: 400, ct: "800/5"}}}
+  "TX9": false                 # not a board
+risers:                        # by meter tag
+  "ABC - Rising Main East": {nav_label: East riser}
+  "ABC - Wet Riser Pump": false
 ```
 
 ---
@@ -277,7 +298,7 @@ controller's own `/js/` libraries (cache-busted with `optergy_lib_version`).
 | `_build/jsblocks.py` | Renders and injects the generated JS blocks |
 | `_build/meters_yaml.py` | `meters.yaml` reader and writer |
 | `_build/import_meters.py` | Imports a `meters.csv` export into `meters.yaml` |
-| `_build/prefill.py`, `xlsx.py` | Drafts the floors, meters, tenants, report cards and floorplans from the building's documents; reads `.xlsx` |
+| `_build/prefill.py`, `xlsx.py` | Drafts the floors, meters, tenants, report cards, switchboards, risers and floorplans from the building's documents; reads `.xlsx` |
 | `_build/generate_meter_registry.py` | `meters.csv` reader and cell normalisers |
 | `_build/linkcheck.py` | `--check`'s checks on built pages |
 | `_build/components.py` | Extras: the component catalog, slots, placement checks |
@@ -286,7 +307,7 @@ controller's own `/js/` libraries (cache-busted with `optergy_lib_version`).
 | `_assets/` | Runtime skeleton copied into every build. Site-neutral |
 | `_components/` | The component catalog for [extras](#extras-one-off-additions-to-pages), and `published.yaml`, its compatibility contract |
 | `examples/minimal/` | *Acme Depot*: one storey, electricity/solar/gas/water, building performance |
-| `examples/campus/` | *Riverside Campus*: two buildings, per-building folders, switchboards with a cross-building bus tie, a riser split over two pages |
+| `examples/campus/` | *Riverside Campus*: two buildings, per-building folders, switchboards with a cross-building bus tie, a riser fed from one of them |
 | `examples/tower/` | *Northgate House*: four storeys, two tenants with their own pages (one ships a Docs PDF), an SVG schematic |
 | `tests/` | Unit tests, `--check` tests, the golden check, the engine-neutrality check, the template coverage check |
 | `.githooks/` | The pre-commit hook (see [Regression testing](#regression-testing)) |
@@ -662,8 +683,8 @@ Each file belongs to the module that reads it. Only the files of the pages
 | `meters_hierarchy.yaml` | `meters_hierarchy` | Optional. `page_title`, `heading`, `subtitle`, `search_placeholder`, `root_meter_ids: [ … ]` (one tree per root). Without it the page has default texts, and its trees start at the meters marked `parent: 0`, and at those with no parent that feed another |
 | `sidebar.yaml` | `sidebar` | Older sites: the menu, `top_items`, `sections: [{header, items}]`, `bottom_items`; see below, with `auto: <family>` where `pages.yaml` writes `pages: <family>` |
 | `pages.yaml` (older sites) | `pages` | Frozen pages: `pages: [{key, out, page_title, heading, building?}]`, plus optional shell settings `container_class`, `container_style`, `layout_mode` and `no_optergy: true` (skips the controller's `/js/` libraries). Body from `pages/<key>.body.html`, plus optional `<key>.styles.html`, `.extra_scripts.html`, `.tail_scripts.html` |
-| `switchboards.yaml` | `switchboards` | `defaults: {default_rating, layout}`, `boards: {<key>: {incomer_id, heading, ways: {<meter id>: {rating, ct}}, bus_tie?, nav_label?, building?}}`. A board's ways are every meter whose `parent` is its `incomer_id` |
-| `risers.yaml` | `risers` | `defaults: {default_rating, floors_per_page, layout}`, `overrides: {<meter id>: {floors_per_page?, layout?, nav_label?}}`. Risers are the meters with `function: Riser-meter`; their floor taps are their child meters. A riser past `floors_per_page` floors splits into linked pages `riser_<id>_p1`, `_p2`, … |
+| `switchboards.yaml` | `switchboards` | `defaults: {default_rating, columns}`, `boards: {<key>: {incomer_id, heading, incomer?: {rating, ct}, ways: {<meter id>: {rating, ct}}, columns?, bus_tie?: {side, to, label?, normally?: open\|closed, meter?, rating?}, nav_label?, building?}}`. A board's ways are every meter whose `parent` is its `incomer_id`. Its page is a single-line diagram: the incomer on top feeding the busbar, a card per way below it, `columns` (default 5) to a busbar row. Each card is one `<div data-meter-card>` that `meter-templates.js` fills from the meters: live demand in kW, a gauge against the way's `rating` (kW), its CT, and a green or red glow from the meter's online/offline status. The busbar and lines are CSS: dark grey, white in dark mode. A `bus_tie` is a bus coupler, declared on one board and drawn on both: a breaker on the busbar's run to a link to the other board, dashed and "N/O" when `normally: open` (the default), and the coupler's `meter` card if it has one. Links between boards come from the meters: a board whose incomer is another board's way shows "Fed from" that board, and that way's card links to it; a way that is a riser links to the riser's page. `layout:` (the old SVG geometry) is ignored, and `--check` says so |
+| `risers.yaml` | `risers` | `defaults: {default_rating}`, `overrides: {<meter id>: {nav_label?, default_rating?, rating?}}`. Risers are the meters with `function: Riser-meter`; their floor taps are their child meters. A riser's page, `riser_<id>`, is its diagram: a vertical busbar with a row per floor, top first, holding that floor's tap cards, and the riser's own meter at the bottom, linked to the board whose incomer feeds it. `floors_per_page` and `layout:` are ignored (a tall riser scrolls), and `--check` says so |
 | `bms_bindings.yaml` (older sites) | `floors`, `tenants` | Now `points.yaml floors:` |
 | `energy_flow.yaml` | `energy_flow` | Live Sankey: `nodes`, `floors: [{key, node}]`, `floor_end_uses`, `landlord_flows`, optional `gas` + `heat_flows`. Its topology (Electricity → Tenants/Landlord, Gas → Boilers) is fixed in `build_energy_flow` |
 | `dials.yaml` | `dials` | `dials: [{bacnet, label, format, min, max, …}]`: live segmented gauges |
@@ -678,7 +699,7 @@ Each file belongs to the module that reads it. Only the files of the pages
 | `{label, href, icon?, target?, rel?, class?}` | An outside link |
 | `{label, icon, children: [ … ]}` | A sub-menu |
 | `{pages: <family>}`, or `{label, icon, pages: <family>}` as a sub-menu | `pages.yaml`'s family entry: builds the family's pages and lists them as `auto:` does |
-| `{auto: floors \| incomers \| switchboards \| risers \| tenants \| buildings}` | `sidebar.yaml` only: a list derived from the data. `floors` lists the page levels, top first. `risers` links each riser's first page, labelled with its tag (or `nav_label`). `buildings` makes one sub-menu per building with its floors, incomers and boards |
+| `{auto: floors \| incomers \| switchboards \| risers \| tenants \| buildings}` | `sidebar.yaml` only: a list derived from the data. `floors` lists the page levels, top first. `risers` links each riser's page, labelled with its tag (or `nav_label`). `buildings` makes one sub-menu per building with its floors, incomers and boards |
 | `… only: [keys]` | Picks and orders a derived list |
 | `… groups: [{label, from, to}]` | Splits a derived list into range sub-menus |
 | `… building: <key>` | Limits a derived list to one building |
@@ -706,8 +727,8 @@ in `site.yaml modules:`). Modules always run in this order:
 | `tenants` | `../tenants/<slug>/{index,floor_<key>}.htm` + a sidebar per tenant | `tenants.yaml`, `floors.yaml`, the meters file, `points.yaml floors:`, `reports.yaml` |
 | `energy_flow` | `energy_flow.htm` | `energy_flow.yaml` |
 | `dials` | `dials.htm` | `dials.yaml` |
-| `switchboards` | `<key>.htm` + `img/<key>.svg` per board | `switchboards.yaml`, the meters file |
-| `risers` | `riser_<id>[_pN].htm` + SVGs | `risers.yaml`, the meters file |
+| `switchboards` | `<key>.htm` per board | `switchboards.yaml`, the meters file |
+| `risers` | `riser_<id>.htm` per riser | `risers.yaml`, the meters file |
 | `sidebar` | the `SIDEBAR_HTML` block (+ one sidebar per campus building folder) | `pages.yaml` (older sites: `sidebar.yaml`) |
 
 "The meters file" is `meters.yaml` or `meters.csv`. Every page's report

@@ -456,6 +456,112 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 })();
 
+// ─── Auto-resolve data-meter-card elements ───────────────────────────────────
+// A meter's card on the switchboard and riser diagrams: its title, live
+// demand and a segmented gauge against its rating, glowing green or red with
+// the meter's comms status (switchboard-gauge.js paints both), linking to the
+// meter's display. The diagram's page lays the cards out; the card itself
+// carries no position.
+//
+// Usage:
+//   <div data-meter-card="12" data-label="Chiller 1" data-rating="150" data-ct="800/5"></div>
+//
+//   data-label    – card title (default: the meter's tag)
+//   data-rating   – the gauge's full scale, kW
+//   data-ct       – CT ratio, shown beside the value
+//   data-variant  – "incomer": the board's or riser's source, drawn heavier
+//
+// Generates:
+//   <a href="/meters/MeterDisplay.html?meter.id=12" target="_blank" rel="noopener noreferrer" class="swb-link">
+//       <div class="swb-box">
+//           <div class="swb-head"><span class="swb-dot"></span><span class="swb-title" title="Chiller 1">Chiller 1</span>
+//               <span id="meter-card-12-status" class="swb-comms" data-bacnet="..." data-format="status" ...></span></div>
+//           <div class="swb-valrow">
+//               <span id="meter-card-12-demand" class="swb-value" data-bacnet="..." data-format="power" data-refresh="10">Loading...</span>
+//               <span class="swb-ct">CT 800/5</span>
+//           </div>
+//           <div class="swb-gauge" data-max="150"></div>
+//       </div>
+//   </a>
+// Runs immediately, like data-floor-meter: the script tag is at the bottom of
+// <body>, so the placeholders exist, and live-points.js binds the values on
+// DOM ready.
+(function() {
+    var cards = document.querySelectorAll('[data-meter-card]');
+    var used = {};
+
+    function text(tag, className, value) {
+        var el = document.createElement(tag);
+        el.className = className;
+        el.textContent = value;
+        return el;
+    }
+
+    cards.forEach(function(el) {
+        var meterId = parseInt(el.getAttribute('data-meter-card'));
+        var meter = getMeter(meterId);
+        if (!meter) {
+            console.error('Meter card template: unknown meter id ' + meterId, el);
+            el.textContent = 'Error: unknown meter #' + meterId;
+            return;
+        }
+        var label = el.getAttribute('data-label') || meter.tag;
+        var ct = el.getAttribute('data-ct');
+        // live-points.js binds a value through its element id: unique per page
+        // even when a meter has two cards.
+        var id = 'meter-card-' + meterId;
+        used[id] = (used[id] || 0) + 1;
+        if (used[id] > 1) id += '-' + used[id];
+
+        var link = document.createElement('a');
+        link.href = '/meters/MeterDisplay.html?meter.id=' + meterId;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.className = 'swb-link';
+
+        var box = document.createElement('div');
+        box.className = 'swb-box' + (el.getAttribute('data-variant') === 'incomer' ? ' swb-incomer' : '');
+
+        var head = document.createElement('div');
+        head.className = 'swb-head';
+        head.appendChild(text('span', 'swb-dot', ''));
+        var title = text('span', 'swb-title', label);
+        title.title = label;
+        head.appendChild(title);
+        var comms = text('span', 'swb-comms', '');   // hidden: read for the glow
+        comms.id = id + '-status';
+        comms.setAttribute('data-bacnet', FIELD_CONFIG.status.getBacnet(meter));
+        comms.setAttribute('data-format', 'status');
+        comms.setAttribute('data-refresh', '10');
+        comms.setAttribute('data-status-online-text', 'online');
+        comms.setAttribute('data-status-offline-text', 'offline');
+        head.appendChild(comms);
+
+        var row = document.createElement('div');
+        row.className = 'swb-valrow';
+        var value = text('span', 'swb-value', 'Loading...');
+        value.id = id + '-demand';
+        value.setAttribute('data-bacnet', FIELD_CONFIG.demand.getBacnet(meter));
+        value.setAttribute('data-format', 'power');
+        value.setAttribute('data-refresh', '10');
+        row.appendChild(value);
+        if (ct) row.appendChild(text('span', 'swb-ct', 'CT ' + ct));
+
+        var gauge = document.createElement('div');
+        gauge.className = 'swb-gauge';
+        gauge.setAttribute('data-max', el.getAttribute('data-rating') || '0');
+
+        box.appendChild(head);
+        box.appendChild(row);
+        box.appendChild(gauge);
+        link.appendChild(box);
+        el.parentNode.replaceChild(link, el);
+    });
+    if (cards.length) {
+        console.log('Meter card template: resolved ' + cards.length + ' meter cards');
+    }
+})();
+
 // Export for use in other scripts
 if (typeof window !== 'undefined') {
     window.MeterTemplates = {

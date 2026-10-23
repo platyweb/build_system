@@ -1663,6 +1663,10 @@ def validate(modules: list[str] | None = None) -> int:
     # fields; a second, different set for the same name is ignored.
     warnings.extend(report_cards()[1])
 
+    # The switchboard and riser diagrams lay themselves out: their old
+    # geometry settings do nothing.
+    warnings.extend(build_switchboards.retired_settings() + build_risers.retired_settings())
+
     # A file in data/ the build doesn't know — a misspelt name (numbered or
     # not) would otherwise be silently ignored.
     known = set(DATA_FILES) | set(LEGACY_DATA_FILES)

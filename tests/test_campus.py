@@ -29,7 +29,7 @@ def test_building_pages_live_in_building_folders(site_dir: Path) -> None:
     assert sorted(p.relative_to(site_dir).as_posix() for p in site_dir.glob("*/*.htm")) == [
         "north/floor_n-l00.htm", "north/floor_n-l01.htm", "north/floor_n-l02.htm", "north/floor_n-l03.htm",
         "north/incomer_north_electricity.htm", "north/incomer_north_lthw.htm", "north/plant_room.htm",
-        "north/riser_4_p1.htm", "north/riser_4_p2.htm", "north/swb_north_mdb.htm",
+        "north/riser_4.htm", "north/swb_north_mdb.htm",
         "south/floor_s-l00.htm", "south/incomer_south_electricity.htm", "south/swb_south_mdb.htm",
     ]
     assert sorted(p.name for p in site_dir.glob("*.htm")) == ["home.htm", "incomer_gas.htm", "meters_hierarchy.htm"]
@@ -76,9 +76,9 @@ def test_sidebars_rewritten_per_folder(site_dir: Path) -> None:
 
 def test_switchboard_links_cross_building_folders(site_dir: Path) -> None:
     south = (site_dir / "south" / "swb_south_mdb.htm").read_text(encoding="utf-8")
-    assert 'src="../img/swb_south_mdb.svg"' in south        # SVGs stay in the shared img/
     assert 'href="../north/swb_north_mdb.htm"' in south     # bus tie to the other building's board
-    assert (site_dir / "img" / "swb_south_mdb.svg").exists()
+    riser = (site_dir / "north" / "riser_4.htm").read_text(encoding="utf-8")
+    assert 'href="swb_north_mdb.htm">Fed from Main Distribution Board</a>' in riser   # same building
 
 
 @pytest.mark.parametrize("url, folder, expected", [

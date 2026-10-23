@@ -8,7 +8,7 @@ bd546fd847b1720ca9b95531522fecb5adf43656b7b6f087e3def8cc4da319e2  acme-depot/css
 73d778e0f8dc542ebb26d827cd4be23baef777472a563832ebf30988dc532738  acme-depot/css/project/2.0/meters-hierarchy.css
 7bbf6b062d1abd61e55eec42144ca089e17c490641dacacdd149e6d4b5ff5b5a  acme-depot/css/project/2.0/sankey.css
 8843d5d703a05d5d71513e8b70bfd404404622e0c5ab6e89947acf44731d5782  acme-depot/css/project/2.0/style.css
-859636c9927d42b7b04d8f12bbb2d5a2c0b971a650a7104bbf3bb795fe81cb05  acme-depot/css/project/2.0/switchboard-widget.css
+dfcb5098867a13a3ebbd7a48173593bd503920e13f0dc4b88676344e72f9299e  acme-depot/css/project/2.0/switchboard-widget.css
 6039430172382c1f06334c0980c4f5ad768a36b1b1dead268106e008cd25dde6  acme-depot/css/project/2.0/tenant-accordion.css
 4d3d3a84bd3899bc2ac6594bf6e93270e6848486dc4cb7a209b6b3f68e871741  acme-depot/floor_L00.htm
 47642c83b4b8923317c3975fc9e1fafa1d7ecfa43a87718458f09b6216cbfed6  acme-depot/fonts/boxicons/2.1.4/boxicons.eot
@@ -73,7 +73,7 @@ ba5839e0df2b2a26b71a41a4e5a164d4e89c813ba443f3c1b6c2dae4560103fc  acme-depot/js/
 f97de373c46992b5e3cd8c9291339d57812980ed0e5656325b4dbef281b2e0e3  acme-depot/js/project/2.0/floor-tabs.js
 93edf44345ddb6feb3ffa2102d3794ae613eb9def4ec8a7aeb98e463791f133a  acme-depot/js/project/2.0/live-points.js
 34ba7a776d1bab8cb80005755c0f062aef5bf98890f7fb2212a8a78435dc24ea  acme-depot/js/project/2.0/meter-hierarchy.js
-390f8349a60dcfd774ab65dd6e65db859382b1220d6fa70de8ade7123f2b0f8a  acme-depot/js/project/2.0/meter-templates.js
+c20c869bea8fd2ac2227cee8c9b233a97e5d5f5b02722ea86312103105eafbed  acme-depot/js/project/2.0/meter-templates.js
 8ae10ecb936b512246a53847454582faffaf817bc9dcfd1cb23a9aeef288da50  acme-depot/js/project/2.0/position-handler.js
 14cc89a6e1abd788ff5e52a857681a496b11ecced2ac71f752b0219c54c84f7b  acme-depot/js/project/2.0/range-widget.js
 3b190e75435adb4a945c036d3258399c3152727e327093b0f983720bdb4e6a49  acme-depot/js/project/2.0/report-template.js
@@ -81,6 +81,6 @@ f97de373c46992b5e3cd8c9291339d57812980ed0e5656325b4dbef281b2e0e3  acme-depot/js/
 a13eb51ae6ae1bf1b1021abdb9a607541f3ca89f28ebe3812b76f93a8aca69df  acme-depot/js/project/2.0/sidebar-template.js
 6b9917bb233be977e47f2b3508ab3f981aa176a5433b1a6af1f2e26e2cab846c  acme-depot/js/project/2.0/sidebar.js
 6d6cc526334a36013600465612a20f4fc93ffa6406ba884fd6243b1b124ff85c  acme-depot/js/project/2.0/spectrum-widget.js
-0574ac4774caec70ee6003566ba4a77a2a81a95700c4842714f3159f24e8123a  acme-depot/js/project/2.0/switchboard-gauge.js
+5e3cc282fb8b8a039d2b3f617134c183b9e11ac469f38ae7e5c698b1618af16b  acme-depot/js/project/2.0/switchboard-gauge.js
 0050262b4609d3f18c4675b50313655293c50bc0fb3beb4329efa521a9e8a11e  acme-depot/js/project/2.0/tenant-accordion.js
 6458682701246af7d8d378e1d960ba401cc23d479d5646331f00da3eea49be5c  acme-depot/meters_hierarchy.htm

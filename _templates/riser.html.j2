@@ -1,46 +1,47 @@
 {% extends "base.html.j2" %}
-{# Riser diagram — the vertical counterpart of switchboard.html.j2. Generated
-   by _build/build_risers.py from METER_REGISTRY + site/data/risers.yaml. The
-   busbar is a generated SVG background; each floor tap is a live HTML
-   widget overlay, identical markup/widget system to the switchboard pages
-   (same swb-box/swb-gauge, same switchboard-gauge.js) — only the background
-   geometry and the top/bottom continuation arrows (instead of left/right)
-   differ. #}
+{%- from 'partials/macros.j2' import meter_card -%}
+{#- ────────────────────────────────────────────────────────────────────────
+    riser.html.j2 — a riser's diagram, the vertical counterpart of
+    switchboard.html.j2, built by _build/build_risers.py from the meters
+    file and data/risers.yaml.
+
+    The busbar rises from the riser's own meter at the bottom past every
+    floor it feeds, top floor first; on each floor, the meters the riser
+    feeds there (its taps). Every meter is a meter_card placeholder that
+    meter-templates.js fills; the busbar and the lines are CSS.
+
+      floors   : [{label, taps: [{meter_id, label, rating, ct}]}], top → bottom
+      riser    : {meter_id, label, rating, ct}
+      fed_from : {href, label} | none, the board whose incomer feeds the riser
+   ──────────────────────────────────────────────────────────────────────── -#}
 {% block extra_styles %}    <link rel="stylesheet" href="{{ _pp }}css/project/2.0/switchboard-widget.css">
 {% endblock %}
 {% block content %}
                 <div class="switchboard-card-no-animation primary">
-                    <div class="floorplan-viewer">
-                        <div class="floorplan-placeholder">
-                            <img src="{{ svg_path }}" alt="{{ heading }}" style="display: block;">
-{% for b in boxes %}
-                            <a href="/meters/MeterDisplay.html?meter.id={{ b.meter_id }}" target="_blank" rel="noopener noreferrer">
-                                <div class="data-overlay swb-box{% if b.is_incomer %} swb-incomer{% endif %}" data-position="{{ b.cx }},{{ b.cy }}" style="width: {{ b.w }}px; height: {{ b.h }}px;">
-                                    <div class="swb-head"><span class="swb-dot"></span><span class="swb-title" title="{{ b.title }}">{{ b.title }}</span></div>
-                                    <div class="swb-valrow">
-                                        <span class="swb-value" data-bacnet="{{ b.bacnet }}" data-format="power" data-refresh="10">Loading...</span>
-{% if b.ct %}                                        <span class="swb-ct">CT {{ b.ct }}</span>
-{% endif %}                                    </div>
-                                    <div class="swb-gauge" data-max="{{ b.rating }}"></div>
+                    <div class="riser">
+                        <ol class="riser-floors">
+{%- for f in floors %}
+                            <li class="riser-floor">
+                                <div class="riser-floor-label">{{ f.label }}</div>
+                                <div class="riser-taps">
+{%- for t in f.taps %}
+{{ meter_card(t, '', 36) }}
+{%- endfor %}
                                 </div>
-                            </a>
-{% endfor %}
-{% if tie_top %}
-                            <a href="{{ tie_top.href }}">
-                                <div class="data-overlay swb-tie" data-position="{{ tie_top.label_cx }},{{ tie_top.label_cy }}">{{ tie_top.label }}</div>
-                            </a>
-{% endif %}
-{% if tie_bottom %}
-                            <a href="{{ tie_bottom.href }}">
-                                <div class="data-overlay swb-tie" data-position="{{ tie_bottom.label_cx }},{{ tie_bottom.label_cy }}">{{ tie_bottom.label }}</div>
-                            </a>
-{% endif %}
+                            </li>
+{%- endfor %}
+                        </ol>
+                        <div class="riser-source">
+{{ meter_card(riser, 'incomer', 28) }}
+{%- if fed_from %}
+                            <a class="swb-tie sld-tie" href="{{ fed_from.href }}">Fed from {{ fed_from.label }}</a>
+{%- endif %}
                         </div>
                     </div>
                 </div>
 {% endblock %}
-{% block tail_scripts %}    <!-- Position the overlays from their data-position attributes -->
-    <script src="{{ _pp }}js/project/2.0/position-handler.js"></script>
+{% block tail_scripts %}    <!-- Build the meter cards from METER_REGISTRY -->
+    <script src="{{ _pp }}js/project/2.0/meter-templates.js"></script>
     <!-- Render + live-update the segmented gauges -->
     <script src="{{ _pp }}js/project/2.0/switchboard-gauge.js"></script>
 {% endblock %}

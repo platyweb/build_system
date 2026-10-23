@@ -16,12 +16,15 @@
 // Threshold colors match d3/segmented-horizontal: grey <10, green 10–70,
 // yellow 70–85, red 85–100. Load status (ok/warn/alarm) is derived from the
 // percentage and applied as a class on the .swb-box (drives dot + border).
+//
+// A box's hidden .swb-comms element carries the meter's status point
+// (live-points.js writes "online" or "offline" into it): comms-online or
+// comms-offline on the .swb-box makes it glow green or red.
 
 (function () {
     'use strict';
 
     var SEGMENTS = 14;
-    var OFF = 'rgba(0,0,0,0.10)';
 
     function hexToRgb(h) {
         h = h.replace('#', '');
@@ -68,14 +71,28 @@
             var pct = hasVal ? Math.max(0, Math.min(100, (val / max) * 100)) : 0;
             var lit = Math.round((pct / 100) * SEGMENTS);
             for (var i = 0; i < SEGMENTS; i++) {
-                segs[i].style.background = i < lit ? segColor(((i + 0.5) / SEGMENTS) * 100) : OFF;
+                // an unlit segment takes the stylesheet's color, per theme
+                segs[i].style.background = i < lit ? segColor(((i + 0.5) / SEGMENTS) * 100) : '';
             }
             box.classList.remove('status-ok', 'status-warn', 'status-alarm');
             if (hasVal) box.classList.add('status-' + statusFromPct(pct));
         };
     }
 
+    function watchComms(box) {
+        var comms = box.querySelector('.swb-comms');
+        if (!comms) return;
+        function render() {
+            var t = comms.textContent.toLowerCase();
+            box.classList.toggle('comms-offline', t.indexOf('offline') !== -1);
+            box.classList.toggle('comms-online', t.indexOf('online') !== -1 && t.indexOf('offline') === -1);
+        }
+        render();
+        new MutationObserver(render).observe(comms, { childList: true, characterData: true, subtree: true });
+    }
+
     function init() {
+        document.querySelectorAll('.swb-box').forEach(watchComms);
         var gauges = document.querySelectorAll('.swb-gauge');
         gauges.forEach(function (gauge) {
             var box = gauge.closest('.swb-box');

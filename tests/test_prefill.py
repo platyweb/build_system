@@ -83,6 +83,8 @@ WORKBOOK = {
         ["ACM - Main Incomer", None, 0, None, "Modbus", None],
         ["ACM - Lift 1", None, 0, None, "Modbus", None],
         ["ACM - Roof Plant", None, 0, None, "Modbus", None],
+        ["ACM - Rising Main 1", None, 0, None, "Modbus", None],
+        ["ACM - Transformer TX9", None, 0, None, "Modbus", None],
     ],
     "Meters_BCK": [   # a backup sheet: another building's rows, and one of ours again
         METER_HEADER,
@@ -117,6 +119,8 @@ SCHEDULE = {
         ["East Floor 1", "POWER", "n/a", "Landlord", "East Core 1"],
         ["Lift 1", "Passenger lift", "SB-1", "Landlord", "LV Room"],
         ["Spare way", "Spare", "SB-1", "Landlord", "LV Room"],
+        ["Main Incomer", "Main Incomer TX-A", "SB 1", "Landlord", "LV Room"],
+        ["Roof Plant", "Roof plant", "SB-1", "Landlord", "Roof"],
         ["Notes"],
         ["1", "the end of the meters"],
     ],
@@ -169,7 +173,7 @@ def test_a_draft_from_the_workbook_and_schedule(site: Path, capsys: pytest.Captu
     assert run(site, "--replace") == 0
     out = capsys.readouterr().out
     m = meters(site)
-    assert "OTH - Somewhere Else" not in m and len(m) == 10           # this building's prefix only
+    assert "OTH - Somewhere Else" not in m and len(m) == 12           # this building's prefix only
     # Provisional ids in workbook order, the base from the id.
     assert [m[t]["id"] for t in ("ACM - FL1 West Core 1 L", "ACM - Roof Plant")] == [100, 109]
     assert m["ACM - Roof Plant"]["base"] == (109 + 99) * 100
@@ -184,7 +188,7 @@ def test_a_draft_from_the_workbook_and_schedule(site: Path, capsys: pytest.Captu
     assert (total["daily"], total["monthly"]) == (2000001, 2000101)
     assert m["ACM - Floor 02 Total Electricity"]["daily"] == 0          # #REF! isn't a point
     assert m["ACM - Lift 1"]["floor"] == "" and m["ACM - Lift 1"]["function"] == "Lift 1"
-    assert m["ACM - Lift 1"]["parent_id"] is None
+    assert m["ACM - Lift 1"]["parent_id"] == m["ACM - Main Incomer"]["id"]   # its board's incomer, until the export
     # Tenants: the schedule's, by short name; the landlord's core isn't listed.
     assert m["ACM - FL1 West Core 1 L"]["tenant"] == "Fern" and m["ACM - FL1 West Core 1 L"]["tenant_display"]
     assert m["ACM - FL1 East Core 1 P"]["tenant"] == ""
@@ -211,7 +215,7 @@ def test_the_draft_builds(site: Path, tmp_path: Path) -> None:
 def test_a_rerun_keeps_its_files_and_stops_at_an_edited_one(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert run(site, "--replace") == 0
     assert run(site) == 0
-    assert capsys.readouterr().out.count(": unchanged") == 4
+    assert capsys.readouterr().out.count(": unchanged") == 5
     path = site_data.data_path("meters.yaml")
     path.write_text(path.read_text(encoding="utf-8").replace("function: Lift 1", "function: Lift"), encoding="utf-8")
     assert run(site) == 1
@@ -431,3 +435,86 @@ def test_a_pdf_drawing_becomes_a_png(tmp_path: Path) -> None:
     assert prefill.make_floorplan(tmp_path / "Third.pdf", tmp_path / "out" / "floor_3rd.png") is None
     made = (tmp_path / "out" / "floor_3rd.png").read_bytes()
     assert made[:8] == b"\x89PNG\r\n\x1a\n" and struct.unpack(">II", made[16:24]) == (2400, 1200)
+
+
+# ─── Switchboards and risers ─────────────────────────────────────────────────
+def export(site: Path, parents: dict[str, str]) -> dict[str, int]:
+    """A controller export of the workbook's meters, ids from 501, with these
+    parents (by tag); the ids by tag."""
+    tags = [row[0] for row in WORKBOOK["Meters"][1:]]
+    ids = {tag: 501 + i for i, tag in enumerate(tags)}
+    with (site / "sources" / "meters-export.csv").open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["id", "tag", "parent_id"])
+        for tag in tags:
+            w.writerow([ids[tag], tag, ids.get(parents.get(tag, ""), "")])
+    return ids
+
+
+def test_a_board_from_the_schedule_gives_provisional_parents(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert run(site, "--replace") == 0
+    m = meters(site)
+    boards = yaml.safe_load(site_data.data_path("switchboards.yaml").read_text(encoding="utf-8"))
+    assert boards["defaults"] == {"default_rating": 150}
+    assert boards["boards"] == {"swb_sb_1": {"heading": "SB-1 Switchboard", "nav_label": "SB-1",
+                                             "incomer_id": m["ACM - Main Incomer"]["id"], "ways": {}}}
+    assert m["ACM - Roof Plant"]["parent_id"] == m["ACM - Main Incomer"]["id"]
+    out = capsys.readouterr().out
+    assert "parent          schedule switchboard 2" in out
+    assert "{ label: Switchboards, icon: bx-grid-alt, pages: switchboards }" in out   # the menu doesn't list them
+    assert "risers.yaml: nothing to write" in out
+    assert "ACM - Rising Main 1\n" in out          # named like a riser, but feeds nothing yet
+
+
+def test_the_export_gives_the_hierarchy_its_boards_and_risers(site: Path, tmp_path: Path,
+                                                              capsys: pytest.CaptureFixture[str]) -> None:
+    ids = export(site, {"ACM - FL1 West Core 1 L": "ACM - Rising Main 1", "ACM - FL1 West Core 1 P": "ACM - Rising Main 1",
+                        "ACM - Rising Main 1": "ACM - Main Incomer", "ACM - Roof Plant": "ACM - Main Incomer",
+                        "ACM - Lift 1": "ACM - Transformer TX9", "ACM - DB/T/2L": "ACM - Transformer TX9"})
+    assert run(site, "--replace") == 0
+    m = meters(site)
+    boards = yaml.safe_load(site_data.data_path("switchboards.yaml").read_text(encoding="utf-8"))["boards"]
+    assert {key: b["incomer_id"] for key, b in boards.items()} == \
+        {"swb_sb_1": ids["ACM - Main Incomer"], "swb_tx9": ids["ACM - Transformer TX9"]}
+    riser = m["ACM - Rising Main 1"]
+    assert (riser["function"], riser["floor"], riser["zone"], riser["column"]) == ("Riser-meter", "1st", "", None)
+    assert yaml.safe_load(site_data.data_path("risers.yaml").read_text(encoding="utf-8"))["overrides"] == {}
+    out = capsys.readouterr().out
+    assert "SB-1 (ACM - Main Incomer): 1 of 2, 1 under ACM - Transformer TX9" in out   # Lift 1, the schedule says SB-1
+    assert "TX9: ACM - Transformer TX9, 2 ways" in out
+    # The pages build.
+    menu = site / "data" / "01_pages.yaml"
+    menu.write_text(menu.read_text(encoding="utf-8")
+                    + "      - { label: Switchboards, icon: bx-grid-alt, pages: switchboards }\n"
+                    + "      - { label: Risers, icon: bx-git-commit, pages: risers }\n", encoding="utf-8")
+    build.configure(site, tmp_path / "project")
+    assert build.validate() == 0
+
+
+def test_boards_and_risers_from_the_settings(site: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    ids = export(site, {"ACM - FL1 West Core 1 L": "ACM - Rising Main 1", "ACM - Lift 1": "ACM - Transformer TX9",
+                        "ACM - DB/T/2L": "ACM - Transformer TX9", "ACM - Roof Plant": "ACM - Main Incomer",
+                        "ACM - FL1 West Core 1 P": "ACM - Main Incomer", "ACM - FL1 East Core 1 P": "ACM - Roof Plant"})
+    settings(site, 'switchboards:\n'
+                   '  SB 1: {heading: Main LV Board, ways: {"ACM - Roof Plant": {rating: 40}}, bus_tie: {side: right, to: TX9}}\n'
+                   '  TX9: false\n'
+                   '  Plant: {incomer: "ACM - Roof Plant"}\n'
+                   'risers:\n  "ACM - Rising Main 1": {nav_label: West riser}\n  "ACM - Roof Plant": false\n')
+    assert run(site, "--replace") == 0
+    assert "SB-1 → TX9" in capsys.readouterr().out
+    boards = yaml.safe_load(site_data.data_path("switchboards.yaml").read_text(encoding="utf-8"))["boards"]
+    assert boards["swb_sb_1"] == {"heading": "Main LV Board", "nav_label": "SB-1", "incomer_id": ids["ACM - Main Incomer"],
+                                  "ways": {ids["ACM - Roof Plant"]: {"rating": 40}},
+                                  "bus_tie": {"side": "right", "to": "TX9"}}   # TX9 is dropped, so no key to point at
+    assert set(boards) == {"swb_sb_1", "swb_plant"}
+    risers = yaml.safe_load(site_data.data_path("risers.yaml").read_text(encoding="utf-8"))
+    assert risers == {"defaults": {"default_rating": 60}, "overrides": {ids["ACM - Rising Main 1"]: {"nav_label": "West riser"}}}
+
+
+def test_a_bus_coupler_from_the_settings(site: Path) -> None:
+    ids = export(site, {"ACM - Roof Plant": "ACM - Main Incomer", "ACM - Lift 1": "ACM - Main Incomer",
+                        "ACM - DB/T/2L": "ACM - Transformer TX9", "ACM - DB/T/2P": "ACM - Transformer TX9"})
+    settings(site, 'switchboards:\n  SB-1: {bus_tie: {side: right, to: TX9, normally: open, meter: "ACM - Lift 1"}}\n')
+    assert run(site, "--replace") == 0
+    boards = yaml.safe_load(site_data.data_path("switchboards.yaml").read_text(encoding="utf-8"))["boards"]
+    assert boards["swb_sb_1"]["bus_tie"] == {"side": "right", "to": "swb_tx9", "normally": "open", "meter": ids["ACM - Lift 1"]}

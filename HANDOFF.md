@@ -517,6 +517,33 @@ includes the CSS and fonts, so re-baseline 7 is now the two examples' only.
       in `live-points.js` the moved override comment;
     - Node evaluates each new value to the old literal
       (`js/project/2.0/sidebar.js`, `../js/project/2.0/sidebar.js`, `''`).
+25. **Switchboard and riser diagrams built from meter cards, owner-requested
+    and approved, accepted 2026-10-23.** Release note: every site's
+    `switchboard-widget.css`, `meter-templates.js` and `switchboard-gauge.js`
+    change, and so does every board and riser page. The pages drop the
+    generated SVG background and the positioned overlays (`data-position`)
+    for a single-line diagram laid out by CSS: the incomer on top feeding the
+    busbar, the ways below it `columns` (default 5) to a row; a riser is a
+    vertical busbar with a row per floor and its own meter at the bottom.
+    Each meter is one `<div data-meter-card>` placeholder that
+    `meter-templates.js` fills from METER_REGISTRY: live kW, a gauge against
+    its rating, its CT, and a green or red glow from its status point. The
+    lines are dark grey, white in dark mode. A riser is one page,
+    `riser_<id>.htm` (no `_pN` split). A `bus_tie` is a coupler (`normally:
+    open|closed`, optional `meter`) drawn on both boards it joins; a board fed
+    from another says so and that way links to it; a way that is a riser
+    links to its page. `layout:` and `floors_per_page:` are ignored and
+    `--check` says so; the campus example's data loses them. Verified, old
+    engine vs new on all four sites:
+    - site1, minimal and tower change only those three runtime files. No page
+      loads them except `meter-templates.js` on floor pages, and its change
+      is purely additive (+97/−0) and acts only on `data-meter-card`
+      elements, which those pages have none of;
+    - campus: both boards show the same meters with the same ratings, the
+      riser the same meters on one page; its three sidebars change only the
+      riser link (`riser_4_p1.htm` → `riser_4.htm`); the four SVGs are gone;
+      the north board gains the coupler mirrored from the south board's tie
+      and a link on its riser way.
 
 The example goldens changed only when the examples themselves changed; that's
 logged in each example's `golden/CHANGELOG`.
