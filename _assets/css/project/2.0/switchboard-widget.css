@@ -19,6 +19,7 @@
     --sld-gap: 24px;                 /* between two cards side by side */
     --sld-drop: 40px;                /* busbar → a way's card */
     --sld-row-gap: 48px;             /* between busbar rows: room for a way's link */
+    --sld-tier-gap: 38px;            /* between a staggered row's two levels: room for a link */
     --sld-grid: rgba(12, 30, 53, 0.10);   /* the canvas's dot grid */
     --sld-slab: rgba(12, 30, 53, 0.16);   /* a riser's floor slabs */
     --sld-ok: #27ae60;               /* load under 70% of the rating */
@@ -114,23 +115,49 @@
     border-left: var(--sld-bus-w) solid var(--sld-bus);
     transform: translateX(-50%);
 }
-.sld-ways {
+.sld-ways {                          /* the busbar rows, top to bottom */
+    --sld-slot: calc(var(--sld-card-w) + var(--sld-gap));      /* a way's share of the busbar */
+    --sld-end: 0px;                                             /* the busbar past the end ways */
+    --sld-row-h: calc(var(--sld-drop) + var(--sld-card-h));    /* a row, below its busbar */
     grid-area: ways;
-    display: grid;
-    grid-template-columns: repeat(var(--sld-columns), calc(var(--sld-card-w) + var(--sld-gap)));
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     row-gap: var(--sld-row-gap);
-    margin: 0;
-    padding: 0;
-    list-style: none;
 }
-.sld-way {                           /* the cells' top borders make each row's busbar */
+/* A staggered board: every second way hangs a level lower, its drop passing
+   between the cards above, so a way needs only half a card's busbar. */
+.sld-staggered {
+    --sld-slot: calc((var(--sld-card-w) + var(--sld-gap)) / 2);
+    --sld-end: calc((var(--sld-card-w) - var(--sld-slot)) / 2 + 14px);
+    --sld-row-h: calc(var(--sld-drop) + 2 * var(--sld-card-h) + var(--sld-tier-gap));
+}
+.sld-row {                           /* its top border is the row's busbar */
+    position: relative;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: var(--sld-slot);
+    margin: 0;
+    padding: 0 var(--sld-end);
+    list-style: none;
+    border-top: var(--sld-bus-w) solid var(--sld-bus);
+}
+.sld-row + .sld-row::before {        /* a later row, tied back to the one above */
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 100%;
+    height: calc(var(--sld-row-gap) + var(--sld-row-h) + 2 * var(--sld-bus-w));
+    border-left: var(--sld-bus-w) solid var(--sld-bus);
+}
+.sld-way {
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding-top: var(--sld-drop);
-    border-top: var(--sld-bus-w) solid var(--sld-bus);
 }
+.sld-way-low { padding-top: calc(var(--sld-drop) + var(--sld-card-h) + var(--sld-tier-gap)); }
 .sld-way::before {                   /* the way's drop from the busbar */
     content: "";
     position: absolute;
@@ -140,14 +167,8 @@
     border-left: var(--sld-line-w) solid var(--sld-bus);
     transform: translateX(-50%);
 }
+.sld-way-low::before { height: calc(var(--sld-drop) + var(--sld-card-h) + var(--sld-tier-gap)); }
 .sld-way::after { top: calc(var(--sld-drop) / 2 - 7px); left: calc(50% - 7px); }
-.sld-wrap {                          /* a later busbar row, tied back to the one above */
-    position: absolute;
-    left: 0;
-    bottom: 100%;
-    height: calc(var(--sld-row-gap) + var(--sld-drop) + var(--sld-card-h) + var(--sld-bus-w));
-    border-left: var(--sld-bus-w) solid var(--sld-bus);
-}
 
 /* A bus coupler: the busbar runs on through a breaker (normally open:
    dashed, "N/O") to the board it ties to, and the coupler's meter if it has one. */
@@ -194,6 +215,12 @@
     top: calc(var(--sld-drop) + var(--sld-card-h) + 8px);
     left: 50%;
     transform: translateX(-50%);
+}
+.sld-way-low > .swb-tie { top: calc(var(--sld-drop) + 2 * var(--sld-card-h) + var(--sld-tier-gap) + 8px); }
+.sld-staggered .swb-tie {            /* clear of the lower ways' drops either side */
+    max-width: calc(2 * var(--sld-slot) - 24px);
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .sld-source > .swb-tie {
     position: absolute;

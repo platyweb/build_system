@@ -1,6 +1,7 @@
 # Switchboard diagrams (the `switchboards` module). A board's ways are every
 # meter whose parent_id is its incomer_id: its page draws the incomer on top
-# feeding the busbar, and each way's card below it, `columns` to a row.
+# feeding the busbar, and each way's card below it, at most `columns` (default
+# 12) to a row; a row of more than 6 staggers its cards over two levels.
 # `building:` builds the board into that building's folder; a bus_tie may
 # link boards in different buildings; nav_label names it in the sidebar
 # (default: swb_lvNN → "LV-NN").

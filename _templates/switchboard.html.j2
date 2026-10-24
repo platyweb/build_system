@@ -6,8 +6,10 @@
     data/switchboards.yaml.
 
     The incomer sits on top, feeding the busbar; the board's ways, every
-    meter the incomer feeds, hang below it, `columns` to a busbar row, each
-    later row tied back to the first down the left. A bus coupler runs the
+    meter the incomer feeds, hang below it in busbar rows, each later row
+    tied back to the one above at its left end. A staggered board's rows
+    alternate their cards between two levels (every second way hangs
+    lower), so a row fits twice as many. A bus coupler runs the
     busbar on, through its breaker, to the board it ties to. Every meter is
     a meter_card placeholder that meter-templates.js fills; the busbar and
     the lines are CSS (switchboard-widget.css). The key above the diagram
@@ -15,9 +17,9 @@
 
       incomer  : {meter_id, label, rating, ct}
       fed_from : {href, label} | none, the board feeding this one
-      ways     : [{meter_id, label, rating, ct, wraps, link?: {href, label}}],
-                 wraps: it starts a busbar row; link: the board or riser it feeds
-      columns  : ways to a busbar row
+      rows     : [[{meter_id, label, rating, ct, link?: {href, label}}]], the
+                 ways by busbar row; link: the board or riser the way feeds
+      staggered: the rows' cards alternate between two levels
       couplers : [{side, open, href, label, meter?}], left and/or right
    ──────────────────────────────────────────────────────────────────────── -#}
 {% block extra_styles %}    <link rel="stylesheet" href="{{ _pp }}css/project/2.0/switchboard-widget.css">
@@ -26,7 +28,7 @@
                 <div class="switchboard-card-no-animation primary">
                     <div class="sld">
 {{ diagram_legend(24) }}
-                        <div class="sld-diagram" style="--sld-columns: {{ columns }};">
+                        <div class="sld-diagram">
                             <div class="sld-source">
 {{ meter_card(incomer, 'incomer', 32) }}
 {%- if fed_from %}
@@ -43,16 +45,20 @@
 {%- endif %}
                             </div>
 {%- endfor %}
-                            <ul class="sld-ways">
-{%- for w in ways %}
-                                <li class="sld-way">{% if w.wraps %}<span class="sld-wrap"></span>{% endif %}
-{{ meter_card(w, '', 36) }}
+                            <div class="sld-ways{% if staggered %} sld-staggered{% endif %}">
+{%- for row in rows %}
+                                <ul class="sld-row">
+{%- for w in row %}
+                                    <li class="sld-way{% if staggered and loop.index is even %} sld-way-low{% endif %}">
+{{ meter_card(w, '', 40) }}
 {%- if w.link %}
-                                    <a class="swb-tie" href="{{ w.link.href }}">{{ w.link.label }}</a>
+                                        <a class="swb-tie" href="{{ w.link.href }}">{{ w.link.label }}</a>
 {%- endif %}
-                                </li>
+                                    </li>
 {%- endfor %}
-                            </ul>
+                                </ul>
+{%- endfor %}
+                            </div>
                         </div>
                     </div>
                 </div>

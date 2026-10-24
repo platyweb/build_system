@@ -46,7 +46,7 @@ boards:
   swb_lv01:
     heading: LV-01 Switchboard
     incomer_id: 1
-    columns: 3
+    {columns}
     ways: {{2: {{rating: 400, ct: "800/5"}}}}
     {tie}
   swb_lv02:
@@ -67,9 +67,9 @@ def site(tmp_path: Path) -> Path:
     return site
 
 
-def _boards(site: Path, tie: str = "") -> dict[str, str]:
+def _boards(site: Path, tie: str = "", columns: str = "columns: 3") -> dict[str, str]:
     """Build the boards; their pages by key."""
-    (site / "data" / "09_switchboards.yaml").write_text(BOARDS.format(tie=tie), encoding="utf-8")
+    (site / "data" / "09_switchboards.yaml").write_text(BOARDS.format(tie=tie, columns=columns), encoding="utf-8")
     build.build_site(["switchboards"])
     return {key: (build.SITE_DIR / f"{key}.htm").read_text(encoding="utf-8") for key in ("swb_lv01", "swb_lv02")}
 
@@ -78,17 +78,39 @@ def _cards(page: str) -> list[str]:
     return re.findall(r'<div data-meter-card="[^"]*"[^>]*></div>', page)
 
 
+def _rows(page: str) -> list[list[tuple[str, str]]]:
+    """Each busbar row's ways: (the way's classes, its meter id)."""
+    return [re.findall(r'<li class="([^"]+)">\s*<div data-meter-card="(\d+)"', row)
+            for row in re.findall(r'<ul class="sld-row">(.*?)</ul>', page, re.S)]
+
+
 def test_a_board_is_its_incomer_and_its_ways_as_meter_cards(site: Path) -> None:
     lv01 = _boards(site)["swb_lv01"]
     cards = _cards(lv01)
     assert cards[0] == '<div data-meter-card="1" data-label="Incomer" data-rating="1500" data-variant="incomer"></div>'
     assert cards[1] == '<div data-meter-card="2" data-label="Chiller 1" data-rating="400" data-ct="800/5"></div>'
     assert [re.search(r'"(\d+)"', c).group(1) for c in cards[1:]] == ["2", "3", "4", "5", "8", "9", "10"]
-    # Three to a busbar row: the 4th and 7th ways start a row.
-    ways = re.findall(r'<li class="sld-way">(<span class="sld-wrap"></span>)?\s*<div data-meter-card="(\d+)"', lv01)
-    assert [meter for wrap, meter in ways if wrap] == ["5", "10"]
-    assert "--sld-columns: 3;" in lv01
+    # At most three to a busbar row, as even as seven ways allow, on one level.
+    assert [[meter for _, meter in row] for row in _rows(lv01)] == [["2", "3", "4"], ["5", "8", "9"], ["10"]]
+    assert {cls for row in _rows(lv01) for cls, _ in row} == {"sld-way"}
+    assert '<div class="sld-ways">' in lv01
     assert "data-position" not in lv01 and not list(build.SITE_DIR.glob("img/swb_*.svg"))
+
+
+def test_rows_are_balanced(site: Path) -> None:
+    # Seven ways, at most six to a row: four and three, not six and one.
+    lv01 = _boards(site, columns="columns: 6")["swb_lv01"]
+    assert [[meter for _, meter in row] for row in _rows(lv01)] == [["2", "3", "4", "5"], ["8", "9", "10"]]
+
+
+def test_a_long_row_staggers_its_cards_over_two_levels(site: Path) -> None:
+    # By default up to twelve ways share a busbar row; past six, every second
+    # way hangs a level lower.
+    lv01 = _boards(site, columns="")["swb_lv01"]
+    rows = _rows(lv01)
+    assert [[meter for _, meter in row] for row in rows] == [["2", "3", "4", "5", "8", "9", "10"]]
+    assert [cls for cls, _ in rows[0]] == ["sld-way", "sld-way sld-way-low"] * 3 + ["sld-way"]
+    assert '<div class="sld-ways sld-staggered">' in lv01
 
 
 def test_boards_and_risers_link_from_the_hierarchy(site: Path) -> None:

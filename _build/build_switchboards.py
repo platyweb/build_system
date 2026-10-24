@@ -4,8 +4,10 @@ Generate switchboard pages from the meters file + site/data/switchboards.yaml.
 
 A board is defined by an incomer meter id; its "ways" are every meter whose
 parent_id == incomer_id. Each board's page (<key>.htm) is its single-line
-diagram: the incomer on top feeding the busbar, the ways below it, `columns`
-to a busbar row. Every meter is one data-meter-card placeholder, which
+diagram: the incomer on top feeding the busbar, the ways below it, at most
+`columns` to a busbar row, the rows balanced. A row of more than LEVEL_ROW
+ways staggers: its cards alternate between two levels, so twice as many
+fit on the same busbar. Every meter is one data-meter-card placeholder, which
 meter-templates.js builds into a card from METER_REGISTRY (live demand,
 a segmented gauge against the way's rating, its CT); the busbar and the
 lines are CSS (switchboard-widget.css). Nothing is positioned by hand.
@@ -16,7 +18,7 @@ lines are CSS (switchboard-widget.css). Nothing is positioned by hand.
         heading:    "LV-01 Switchboard"
         incomer:    {rating: 1500, ct: "2000/5"}
         ways:       {41: {rating: 400, ct: "800/5"}}   # by meter id; default_rating otherwise
-        columns:    5                  # ways to a busbar row (default 5)
+        columns:    12                 # the most ways on a busbar row (default 12)
         bus_tie:    {side: right, to: swb_lv02, label: "↔ LV-02", normally: open, meter: 45}
 
 A bus tie is a coupler between two boards' busbars, declared on one of them
@@ -41,7 +43,8 @@ import build_risers
 import site_data  # the configured site: its paths (site_data.SITE_DIR, …) are read at call time
 
 TAG_PREFIX_RE = re.compile(r"^LV\d+\s*-\s*")  # "LV03 - " etc. — redundant, the board itself says which LV
-COLUMNS = 5              # ways to a busbar row, unless a board says
+COLUMNS = 12             # the most ways on a busbar row, unless a board says
+LEVEL_ROW = 6            # a busbar row of more ways than this staggers its cards over two levels
 INCOMER_RATING = 1500    # an incomer's gauge full scale (kW), unless `incomer: {rating}` says
 # Settings the SVG diagrams had, which the diagrams no longer use (--check notes them).
 RETIRED = ("layout",)
@@ -99,9 +102,14 @@ def compute_board(key, board, defaults, by_id, children, boards, ties, board_of,
     way_cfg = board.get("ways") or {}
     ways = [card(m, way_cfg.get(m["id"], {}), default_rating)
             for m in sorted(children.get(inc_id, []), key=lambda m: m["id"])]
-    columns = max(1, min(len(ways), int(board.get("columns", defaults.get("columns", COLUMNS)))))
+    # As few rows as `columns` allows, as even as they can be: 14 ways at
+    # most 12 to a row are two rows of 7, not 12 and 2.
+    columns = max(1, int(board.get("columns", defaults.get("columns", COLUMNS))))
+    n_rows = -(-len(ways) // columns)
+    per_row = -(-len(ways) // n_rows) if ways else 1
+    rows = [ways[i:i + per_row] for i in range(0, len(ways), per_row)]
     for i, way in enumerate(ways):
-        way["wraps"] = i > 0 and i % columns == 0
+        way["wraps"] = i > 0 and i % per_row == 0    # read by a site's own copy of an older template
         way["link"] = None
         other = board_of.get(way["meter_id"])
         if other and other != key:
@@ -142,7 +150,9 @@ def compute_board(key, board, defaults, by_id, children, boards, ties, board_of,
         "incomer":         incomer,
         "fed_from":        fed_from,
         "ways":            ways,
-        "columns":         columns,
+        "rows":            rows,
+        "staggered":       per_row > LEVEL_ROW,
+        "columns":         per_row,                  # read by a site's own copy of an older template
         "couplers":        couplers,
     }
 
