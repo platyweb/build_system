@@ -7,7 +7,7 @@ bd546fd847b1720ca9b95531522fecb5adf43656b7b6f087e3def8cc4da319e2  northgate-hous
 73d778e0f8dc542ebb26d827cd4be23baef777472a563832ebf30988dc532738  northgate-house/css/project/2.0/meters-hierarchy.css
 7bbf6b062d1abd61e55eec42144ca089e17c490641dacacdd149e6d4b5ff5b5a  northgate-house/css/project/2.0/sankey.css
 8843d5d703a05d5d71513e8b70bfd404404622e0c5ab6e89947acf44731d5782  northgate-house/css/project/2.0/style.css
-dfcb5098867a13a3ebbd7a48173593bd503920e13f0dc4b88676344e72f9299e  northgate-house/css/project/2.0/switchboard-widget.css
+3823d43accb79b65fa9793b8b32bc63e9966db5b6b0eb26a617d652206f29040  northgate-house/css/project/2.0/switchboard-widget.css
 6039430172382c1f06334c0980c4f5ad768a36b1b1dead268106e008cd25dde6  northgate-house/css/project/2.0/tenant-accordion.css
 97c459e00c231cb242de5c1d59d86c1143b16fc6e4e950b0d851c1663bfcc191  northgate-house/docs/fern-co-submetering.pdf
 b39a84ab549272b816e5e2f08971753d50e4fc7b0501ffd3a986dee0e847f1e1  northgate-house/floor_L00.htm
@@ -75,7 +75,7 @@ ba5839e0df2b2a26b71a41a4e5a164d4e89c813ba443f3c1b6c2dae4560103fc  northgate-hous
 f97de373c46992b5e3cd8c9291339d57812980ed0e5656325b4dbef281b2e0e3  northgate-house/js/project/2.0/floor-tabs.js
 93edf44345ddb6feb3ffa2102d3794ae613eb9def4ec8a7aeb98e463791f133a  northgate-house/js/project/2.0/live-points.js
 34ba7a776d1bab8cb80005755c0f062aef5bf98890f7fb2212a8a78435dc24ea  northgate-house/js/project/2.0/meter-hierarchy.js
-6324f88b891e1c8250b0b21d83c16c32acb01fe280706bbc6faa18e0e58dbc6c  northgate-house/js/project/2.0/meter-templates.js
+bb3bc2e3b6286c01546aa59b2e892be5449171f438415adf6d099c2cb54c4fe8  northgate-house/js/project/2.0/meter-templates.js
 8ae10ecb936b512246a53847454582faffaf817bc9dcfd1cb23a9aeef288da50  northgate-house/js/project/2.0/position-handler.js
 14cc89a6e1abd788ff5e52a857681a496b11ecced2ac71f752b0219c54c84f7b  northgate-house/js/project/2.0/range-widget.js
 3b190e75435adb4a945c036d3258399c3152727e327093b0f983720bdb4e6a49  northgate-house/js/project/2.0/report-template.js
@@ -83,7 +83,7 @@ f7d83279007d2f678ce9eeae36aa9b566fb262eeda911659f0b42c67ea7b5573  northgate-hous
 11afe9ae7c8cd1c521e0cfc44d00f310dc497e55b27869484471a621faa17b5d  northgate-house/js/project/2.0/sidebar-template.js
 6b9917bb233be977e47f2b3508ab3f981aa176a5433b1a6af1f2e26e2cab846c  northgate-house/js/project/2.0/sidebar.js
 6d6cc526334a36013600465612a20f4fc93ffa6406ba884fd6243b1b124ff85c  northgate-house/js/project/2.0/spectrum-widget.js
-5e3cc282fb8b8a039d2b3f617134c183b9e11ac469f38ae7e5c698b1618af16b  northgate-house/js/project/2.0/switchboard-gauge.js
+addbc657def167c02f09564d23b4f0828c1e2b059e49b6a0ea9bc80dfbbd2b6e  northgate-house/js/project/2.0/switchboard-gauge.js
 0050262b4609d3f18c4675b50313655293c50bc0fb3beb4329efa521a9e8a11e  northgate-house/js/project/2.0/tenant-accordion.js
 ba1079df97bcf599eb363f233210ade08b73cd4c7c4d9ad9684457a1da1538a6  northgate-house/meters_hierarchy.htm
 48a05f0ce6aa7833a8df0149cd4fe956391afc328ffd785c736f816a62ad04ad  northgate-house/plant_schematic.htm

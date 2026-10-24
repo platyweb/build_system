@@ -458,10 +458,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ─── Auto-resolve data-meter-card elements ───────────────────────────────────
 // A meter's card on the switchboard and riser diagrams: its title, live
-// demand and a segmented gauge against its rating, glowing green or red with
-// the meter's comms status (switchboard-gauge.js paints both), linking to the
-// meter's display. The diagram's page lays the cards out; the card itself
-// carries no position.
+// demand, and a segmented gauge with the load as a share of its rating,
+// glowing green or red with the meter's comms status (switchboard-gauge.js
+// paints the gauge, the share and the glow), linking to the meter's display.
+// The diagram's page lays the cards out; the card itself carries no position.
 //
 // Usage:
 //   <div data-meter-card="12" data-label="Chiller 1" data-rating="150" data-ct="800/5"></div>
@@ -474,13 +474,13 @@ document.addEventListener('DOMContentLoaded', function() {
 // Generates:
 //   <a href="/meters/MeterDisplay.html?meter.id=12" target="_blank" rel="noopener noreferrer" class="swb-link">
 //       <div class="swb-box">
-//           <div class="swb-head"><span class="swb-dot"></span><span class="swb-title" title="Chiller 1">Chiller 1</span>
+//           <div class="swb-head"><span class="swb-title" title="Chiller 1">Chiller 1</span>
 //               <span id="meter-card-12-status" class="swb-comms" data-bacnet="..." data-format="status" ...></span></div>
 //           <div class="swb-valrow">
 //               <span id="meter-card-12-demand" class="swb-value" data-bacnet="..." data-format="power" data-refresh="10">Loading...</span>
 //               <span class="swb-ct">CT 800/5</span>
 //           </div>
-//           <div class="swb-gauge" data-max="150"></div>
+//           <div class="swb-load"><div class="swb-gauge" data-max="150"></div><span class="swb-pct"></span></div>
 //       </div>
 //   </a>
 // Runs immediately, like data-floor-meter: the script tag is at the bottom of
@@ -524,7 +524,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var head = document.createElement('div');
         head.className = 'swb-head';
-        head.appendChild(text('span', 'swb-dot', ''));
         var title = text('span', 'swb-title', label);
         title.title = label;
         head.appendChild(title);
@@ -547,13 +546,17 @@ document.addEventListener('DOMContentLoaded', function() {
         row.appendChild(value);
         if (ct) row.appendChild(text('span', 'swb-ct', 'CT ' + ct));
 
+        var load = document.createElement('div');
+        load.className = 'swb-load';
         var gauge = document.createElement('div');
         gauge.className = 'swb-gauge';
         gauge.setAttribute('data-max', el.getAttribute('data-rating') || '0');
+        load.appendChild(gauge);
+        load.appendChild(text('span', 'swb-pct', ''));
 
         box.appendChild(head);
         box.appendChild(row);
-        box.appendChild(gauge);
+        box.appendChild(load);
         link.appendChild(box);
         el.parentNode.replaceChild(link, el);
     });

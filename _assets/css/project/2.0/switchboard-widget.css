@@ -1,9 +1,10 @@
 /* ============================================================================
    SWITCHBOARD AND RISER DIAGRAMS
    A meter on a diagram is a .swb-box card (meter-templates.js builds it from
-   a data-meter-card placeholder): status dot + title, live value + CT, and a
-   segmented gauge. The page lays the cards out; the busbar and every line
-   are borders and pseudo-elements here, so nothing is positioned by hand.
+   a data-meter-card placeholder): title, live value + CT, and a segmented
+   gauge with the load as a share of the meter's rating. The page lays the
+   cards out on a dot-grid canvas; the busbar and every line are borders and
+   pseudo-elements here, so nothing is positioned by hand.
    ============================================================================ */
 
 .sld,
@@ -11,31 +12,78 @@
     --sld-bus: #3f4750;              /* dark grey; white in dark mode */
     --sld-bus-w: 6px;                /* busbar */
     --sld-line-w: 3px;               /* a way's or tap's connection */
-    --sld-card-w: 190px;
-    --sld-card-h: 64px;
+    --sld-card-w: 188px;
+    --sld-card-h: 74px;
+    --sld-incomer-w: 224px;          /* the diagram's source card */
+    --sld-incomer-h: 84px;
     --sld-gap: 24px;                 /* between two cards side by side */
     --sld-drop: 40px;                /* busbar → a way's card */
-    --sld-row-gap: 44px;             /* between busbar rows: room for a way's link */
-    padding: 24px 28px 44px;
+    --sld-row-gap: 48px;             /* between busbar rows: room for a way's link */
+    --sld-grid: rgba(12, 30, 53, 0.10);   /* the canvas's dot grid */
+    --sld-slab: rgba(12, 30, 53, 0.16);   /* a riser's floor slabs */
+    --sld-ok: #27ae60;               /* load under 70% of the rating */
+    --sld-warn: #f39c12;             /* 70–85% */
+    --sld-alarm: #e74c3c;            /* 85% and over */
+    padding: 20px 28px 44px;
     overflow-x: auto;
+    border-radius: 6px;
+    background-image: radial-gradient(circle, var(--sld-grid) 1px, transparent 1.5px);
+    background-size: 20px 20px;
 }
 
 [data-bs-theme="dark"] .sld,
-[data-bs-theme="dark"] .riser { --sld-bus: #f2f4f7; }
+[data-bs-theme="dark"] .riser {
+    --sld-bus: #f2f4f7;
+    --sld-grid: rgba(255, 255, 255, 0.08);
+    --sld-slab: rgba(255, 255, 255, 0.16);
+}
 
-.swb-link { display: block; color: inherit; text-decoration: none; }
+/* The page's flex columns may shrink below a wide diagram, which then
+   scrolls in its card instead of widening the page. */
+.layout:has(.sld, .riser),
+.content:has(.sld, .riser),
+.container:has(.sld, .riser) { min-width: 0; }
+
+/* The key: the load colours, and the comms glow. */
+.sld-legend { margin-bottom: 20px; }
+.sld-key { display: inline-flex; align-items: center; gap: 6px; }
+.sld-key::before {
+    content: "";
+    width: 18px;
+    height: 7px;
+    border-radius: 2px;
+}
+.sld-key-ok::before    { background: var(--sld-ok); }
+.sld-key-warn::before  { background: var(--sld-warn); }
+.sld-key-alarm::before { background: var(--sld-alarm); }
+.sld-key-online::before,
+.sld-key-offline::before {
+    width: 14px;
+    height: 10px;
+    margin-left: 4px;
+    border-radius: 3px;
+    background: var(--color-bg-white, #ffffff);
+}
+.sld-key-online::before  { box-shadow: 0 0 0 1px rgba(39, 174, 96, 0.6), 0 0 6px 1px rgba(39, 174, 96, 0.5); }
+.sld-key-offline::before { box-shadow: 0 0 0 1px rgba(231, 76, 60, 0.7), 0 0 6px 1px rgba(231, 76, 60, 0.6); }
+
+.swb-link { display: block; color: inherit; text-decoration: none; border-radius: 8px; }
 .sld .swb-box,
 .riser .swb-box { width: var(--sld-card-w); height: var(--sld-card-h); }
+.sld .swb-incomer,
+.riser .swb-incomer { width: var(--sld-incomer-w); height: var(--sld-incomer-h); }
 
 /* A breaker on a connection: a box with a diagonal. */
 .sld-way::after,
-.riser-floor::after {
+.riser-floor::after,
+.sld-coupler-switch {
     content: "";
     position: absolute;
     width: 14px;
     height: 14px;
     box-sizing: border-box;
     border: 2px solid var(--sld-bus);
+    border-radius: 3px;
     background: linear-gradient(to top right, transparent calc(50% - 1px), var(--sld-bus) calc(50% - 1px),
                                 var(--sld-bus) calc(50% + 1px), transparent calc(50% + 1px)),
                 var(--color-bg-white, #ffffff);
@@ -43,7 +91,9 @@
 
 /* ── Switchboard: the incomer on top, the ways below the busbar ──────────── */
 .sld-diagram {
-    display: inline-grid;
+    display: grid;
+    width: fit-content;
+    margin: 0 auto;                  /* centred; flush left once it scrolls */
     grid-template-columns: auto auto auto;
     grid-template-areas: ".        source  ."
                          "tie-left ways    tie-right";
@@ -107,31 +157,22 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-top: calc(var(--sld-bus-w) / 2 - 13px);   /* the link pill's middle on the busbar */
+    margin-top: calc(var(--sld-bus-w) / 2 - 12px);   /* the link pill's middle on the busbar */
 }
 .sld-coupler-left  { grid-area: tie-left;  align-items: flex-end;   padding-right: 64px; }
 .sld-coupler-right { grid-area: tie-right; align-items: flex-start; padding-left: 64px; }
 .sld-coupler::before {               /* the busbar's run to the link */
     content: "";
     position: absolute;
-    top: 13px;
+    top: 12px;
     width: 64px;
     border-top: var(--sld-line-w) dashed var(--sld-bus);
+    transform: translateY(-50%);
 }
 .sld-coupler-closed::before { border-top-style: solid; }
 .sld-coupler-left::before  { right: 0; }
 .sld-coupler-right::before { left: 0; }
-.sld-coupler-switch {                /* the coupler's breaker, mid-run */
-    position: absolute;
-    top: 6px;
-    width: 14px;
-    height: 14px;
-    box-sizing: border-box;
-    border: 2px solid var(--sld-bus);
-    background: linear-gradient(to top right, transparent calc(50% - 1px), var(--sld-bus) calc(50% - 1px),
-                                var(--sld-bus) calc(50% + 1px), transparent calc(50% + 1px)),
-                var(--color-bg-white, #ffffff);
-}
+.sld-coupler-switch { top: 5px; }    /* the coupler's breaker, mid-run */
 .sld-coupler-left  .sld-coupler-switch { right: 25px; }
 .sld-coupler-right .sld-coupler-switch { left: 25px; }
 .sld-coupler-note {
@@ -139,7 +180,8 @@
     top: 24px;
     font-size: 10px;
     font-weight: 700;
-    color: var(--color-text, #8a8f98);
+    letter-spacing: 0.04em;
+    color: var(--color-text-light, #7d84ab);
 }
 .sld-coupler-left  .sld-coupler-note { right: 22px; }
 .sld-coupler-right .sld-coupler-note { left: 22px; }
@@ -149,125 +191,184 @@
    height); the board feeding this one, beside the incomer. */
 .sld-way > .swb-tie {
     position: absolute;
-    top: calc(var(--sld-drop) + var(--sld-card-h) + 6px);
+    top: calc(var(--sld-drop) + var(--sld-card-h) + 8px);
     left: 50%;
     transform: translateX(-50%);
 }
-.sld-source > .swb-tie { position: absolute; left: calc(50% + var(--sld-card-w) / 2 + 18px); top: 20px; }
+.sld-source > .swb-tie {
+    position: absolute;
+    left: calc(50% + var(--sld-incomer-w) / 2 + 18px);
+    top: calc(var(--sld-incomer-h) / 2 - 12px);
+}
 
-/* ── Riser: a vertical busbar, a row per floor, the riser's meter below ──── */
-.riser { --riser-x: 120px; }         /* where the busbar runs */
+/* ── Riser: a section through the building. The floor names left of a
+   vertical busbar, a row per floor between its slabs holding the floor's
+   taps, and the riser's own meter at the foot. ───────────────────────────── */
+.riser { --riser-label-w: 150px; }   /* the floor names; the busbar runs at its edge */
+.riser-diagram { width: fit-content; margin: 0 auto; }
 .riser-floors {
-    margin: 0 0 0 var(--riser-x);
-    padding: 8px 0;
+    position: relative;
+    margin: 0;
+    padding: 0;
     list-style: none;
+}
+.riser-floors::before {              /* the busbar, past every floor, over the slabs */
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--riser-label-w);
+    z-index: 1;
     border-left: var(--sld-bus-w) solid var(--sld-bus);
 }
 .riser-floor {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 18px;
-    padding: 10px 0 10px 64px;
+    padding: 14px 0;
 }
+.riser-floor + .riser-floor { border-top: 1px dashed var(--sld-slab); }
 .riser-floor::before {               /* the floor's tap-off from the busbar */
     content: "";
     position: absolute;
     top: 50%;
-    left: 0;
-    width: 52px;
+    left: calc(var(--riser-label-w) + var(--sld-bus-w));
+    width: 64px;
     border-top: var(--sld-line-w) solid var(--sld-bus);
+    transform: translateY(-50%);
 }
-.riser-floor::after { top: calc(50% - 6px); left: 20px; }
+.riser-floor::after { top: calc(50% - 7px); left: calc(var(--riser-label-w) + var(--sld-bus-w) + 22px); }
 .riser-floor-label {
-    flex: 0 0 120px;
+    flex: 0 0 var(--riser-label-w);
+    box-sizing: border-box;
+    padding-right: 18px;
+    text-align: right;
     font-weight: 700;
-    color: var(--color-dark, #0a3d62);
+    font-size: 13px;
+    line-height: 1.25;
+    color: var(--color-dark, #0c1e35);
 }
-.riser-taps { display: flex; flex-wrap: wrap; gap: 12px var(--sld-gap); }
+.riser-taps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px var(--sld-gap);
+    margin-left: calc(var(--sld-bus-w) + 64px);
+}
 .riser-source {
     position: relative;
     display: flex;
     align-items: center;
     gap: 18px;
-    padding-top: 30px;
-    margin-left: calc(var(--riser-x) + var(--sld-bus-w) / 2 - var(--sld-card-w) / 2);
+    padding-top: 32px;
+    margin-left: calc(var(--riser-label-w) + var(--sld-bus-w) / 2 - var(--sld-incomer-w) / 2);
 }
 .riser-source::before {              /* the busbar down to the riser's meter */
     content: "";
     position: absolute;
     top: 0;
-    left: calc(var(--sld-card-w) / 2 - var(--sld-bus-w) / 2);
-    height: 30px;
+    left: calc(var(--sld-incomer-w) / 2 - var(--sld-bus-w) / 2);
+    height: 32px;
     border-left: var(--sld-bus-w) solid var(--sld-bus);
 }
 
 /* ── The meter card ───────────────────────────────────────────────────────── */
 .swb-box {
+    --swb-accent: #9aa0a6;           /* the load's colour: grey until the first reading */
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 3px;
-    padding: 4px 8px;
-    border: 1.5px solid var(--color-border, #2c3e50);
-    border-radius: 9px;
+    gap: 5px;
+    padding: 6px 10px 7px 11px;
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-left: 4px solid var(--swb-accent);
+    border-radius: 8px;
     background: var(--color-bg-white, #ffffff);
-    color: var(--color-dark, #0a3d62);
+    color: var(--color-dark, #0c1e35);
     font-weight: 400;
-    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.12));
+    box-shadow: 0 1px 2px rgba(12, 30, 53, 0.06), 0 4px 12px rgba(12, 30, 53, 0.08);
+    transition: transform 0.15s ease;
 }
+.swb-link:hover .swb-box { transform: translateY(-2px); }
+/* load status: switchboard-gauge.js sets it on .swb-box */
+.swb-box.status-ok    { --swb-accent: var(--sld-ok); }
+.swb-box.status-warn  { --swb-accent: var(--sld-warn); }
+.swb-box.status-alarm { --swb-accent: var(--sld-alarm); }
 
-.swb-head { display: flex; align-items: center; gap: 5px; }
+.swb-head { display: flex; align-items: center; min-width: 0; }
 .swb-title {
-    font-weight: 700;
+    font-weight: 600;
     font-size: 11px;
-    color: var(--color-dark, #0a3d62);
+    color: var(--color-text, #3f4750);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.swb-valrow { display: flex; align-items: baseline; gap: 2px; }
-.swb-value { font-weight: 700; font-size: 18px; line-height: 1; color: var(--color-dark, #0a3d62); }
-.swb-ct    { margin-left: auto; align-self: center; font-size: 9px; color: var(--color-text, #8a8f98); }
-
-/* segmented gauge — a flex row of equal blocks; switchboard-gauge.js colors them */
-.swb-gauge { display: flex; gap: 2px; height: 11px; }
-.swb-gauge .seg { flex: 1 1 0; border-radius: 2px; background: rgba(0, 0, 0, 0.10); }
-[data-bs-theme="dark"] .swb-gauge .seg { background: rgba(255, 255, 255, 0.12); }
-
-/* status dot — colored by load level (set on .swb-box by switchboard-gauge.js) */
-.swb-dot {
-    width: 9px; height: 9px; border-radius: 50%;
-    flex: 0 0 auto;
-    background: #9aa0a6;              /* grey until first reading */
+.swb-valrow { display: flex; align-items: baseline; gap: 6px; }
+.swb-value {
+    font-weight: 700;
+    font-size: 19px;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-dark, #0c1e35);
+    white-space: nowrap;
 }
-.swb-box.status-ok    .swb-dot { background: #27ae60; }
-.swb-box.status-warn  .swb-dot { background: #f39c12; }
-.swb-box.status-alarm .swb-dot { background: #e74c3c; }
-.swb-box.status-warn  { border-color: #f39c12; }
-.swb-box.status-alarm { border-color: #e74c3c; }
+.swb-ct {
+    margin-left: auto;
+    align-self: center;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(12, 30, 53, 0.06);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--color-text-light, #7d84ab);
+    white-space: nowrap;
+}
+[data-bs-theme="dark"] .swb-ct { background: rgba(255, 255, 255, 0.08); }
+
+/* the load: a segmented gauge (a flex row of equal blocks, which
+   switchboard-gauge.js colours) and the share of the rating it shows */
+.swb-load { display: flex; align-items: center; gap: 8px; }
+.swb-gauge { flex: 1 1 auto; display: flex; gap: 2px; height: 7px; }
+.swb-gauge .seg { flex: 1 1 0; border-radius: 2px; background: rgba(12, 30, 53, 0.09); }
+[data-bs-theme="dark"] .swb-gauge .seg { background: rgba(255, 255, 255, 0.12); }
+.swb-pct {
+    flex: 0 0 28px;
+    text-align: right;
+    font-size: 10px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text, #3f4750);
+}
 
 /* comms: a glow from the meter's status point (switchboard-gauge.js sets the class) */
 .swb-comms { display: none; }
-.swb-box.comms-online  { box-shadow: 0 0 0 1px rgba(39, 174, 96, 0.35), 0 0 12px 2px rgba(39, 174, 96, 0.55); }
-.swb-box.comms-offline { box-shadow: 0 0 0 1px rgba(231, 76, 60, 0.35), 0 0 12px 2px rgba(231, 76, 60, 0.55); }
+.swb-box.comms-online  { box-shadow: 0 0 0 1px rgba(39, 174, 96, 0.30), 0 0 10px 1px rgba(39, 174, 96, 0.28); }
+.swb-box.comms-offline { box-shadow: 0 0 0 1.5px rgba(231, 76, 60, 0.60), 0 0 14px 3px rgba(231, 76, 60, 0.45); }
 
-/* the incomer reads as the board's "source" — a touch heavier */
-.swb-incomer { border-width: 2px; border-color: var(--color-primary, #6d28d9); }
+/* the incomer reads as the board's "source": bigger, framed in the brand colour */
+.swb-incomer {
+    border-color: var(--color-primary, #27b4e8);
+    border-left-color: var(--swb-accent);
+    background: linear-gradient(rgba(39, 180, 232, 0.10), rgba(39, 180, 232, 0) 70%), var(--color-bg-white, #ffffff);
+}
+.swb-incomer .swb-title { font-size: 12px; }
+.swb-incomer .swb-value { font-size: 23px; }
 
 /* a link to another diagram: the board a bus tie joins, the one a riser is fed from */
 .swb-tie {
     display: inline-block;
     white-space: nowrap;
     text-decoration: none;
-    padding: 3px 10px;
-    border: 1.5px solid var(--color-primary, #6d28d9);
+    padding: 3px 11px;
+    border: 1px solid var(--color-primary, #27b4e8);
     border-radius: 999px;
     background: var(--color-bg-white, #ffffff);
-    color: var(--color-primary, #6d28d9);
-    font-weight: 700;
-    font-size: 12px;
+    color: var(--color-primary-dark, #1f9acc);
+    font-weight: 600;
+    font-size: 11px;
+    box-shadow: 0 1px 3px rgba(12, 30, 53, 0.10);
 }
-.swb-tie:hover { background: var(--color-primary, #6d28d9); color: #fff; }
+.swb-tie:hover { background: var(--color-primary, #27b4e8); color: #fff; }

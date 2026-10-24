@@ -11,9 +11,9 @@ data is only what that CSV gives (see [site1](#site1)).
 modules, how-tos, `--check`, regression and the upgrade workflow. This
 handoff keeps the history and the open items.
 The owner commits by hand; everything since their last commit is uncommitted.
-Last verified state (2026-10-23):
+Last verified state (2026-10-24):
 - `python _build/regress.py check`: every golden identical (site1 and three
-  examples); re-baselines 7 and 10–24 are accepted;
+  examples); re-baselines 7 and 10–26 are accepted;
 - `pytest`: all pass. `test_engine_neutral` names the owner's four
   old-layout examples as its one exception (`KNOWN_CLIENT_LINES`);
 - `build.py --check`: site1 passes with 4 warnings: its missing floorplans
@@ -544,6 +544,28 @@ includes the CSS and fonts, so re-baseline 7 is now the two examples' only.
       riser link (`riser_4_p1.htm` → `riser_4.htm`); the four SVGs are gone;
       the north board gains the coupler mirrored from the south board's tie
       and a link on its riser way.
+26. **Switchboard and riser diagrams restyled, owner-requested and approved,
+    accepted 2026-10-24.** Release note: every site's
+    `switchboard-widget.css`, `meter-templates.js` and `switchboard-gauge.js`
+    change, and so does every board and riser page. A card shows its load as
+    an accent stripe down its left edge (grey until the first reading, then
+    green, amber or red, replacing the status dot and the warn/alarm border)
+    and as a share of its rating beside a thinner gauge (the real share, past
+    100% too); its CT is a chip, and the green comms glow is subtler (red
+    unchanged). The incomer's card is larger and tinted. The diagrams sit on
+    a dot-grid canvas, centred, under a key of the load colours and the comms
+    glow (`diagram_legend` in `macros.j2`, Bootstrap utilities). A riser is
+    drawn as a section through the building: floor names left of the busbar,
+    taps right of it, dashed floor slabs between. On diagram pages the
+    layout's flex columns may shrink (`:has(.sld, .riser)`), so a wide board
+    scrolls in its card instead of widening the page. Line colours are
+    unchanged. Verified, old engine vs new on all four sites:
+    - only those three runtime files change on every site; `meter-templates.js`
+      only inside its `data-meter-card` block, which no other page uses;
+    - campus's three diagram pages change only by the key and, on the riser,
+      the `riser-diagram` wrapper and the re-indentation inside it;
+    - screenshots of campus's boards and riser in both themes, at 1100, 1700
+      and 1920 px, with mock live values.
 
 The example goldens changed only when the examples themselves changed; that's
 logged in each example's `golden/CHANGELOG`.

@@ -1,14 +1,16 @@
 {% extends "base.html.j2" %}
-{%- from 'partials/macros.j2' import meter_card -%}
+{%- from 'partials/macros.j2' import meter_card, diagram_legend -%}
 {#- ────────────────────────────────────────────────────────────────────────
     riser.html.j2 — a riser's diagram, the vertical counterpart of
     switchboard.html.j2, built by _build/build_risers.py from the meters
     file and data/risers.yaml.
 
-    The busbar rises from the riser's own meter at the bottom past every
-    floor it feeds, top floor first; on each floor, the meters the riser
-    feeds there (its taps). Every meter is a meter_card placeholder that
-    meter-templates.js fills; the busbar and the lines are CSS.
+    A section through the building: the busbar rises from the riser's own
+    meter at the bottom past every floor it feeds, top floor first, each
+    floor's name left of it and the meters the riser feeds there (its taps)
+    right of it. Every meter is a meter_card placeholder that
+    meter-templates.js fills; the busbar, the lines and the floor slabs are
+    CSS. The key above the diagram reads the cards' colours.
 
       floors   : [{label, taps: [{meter_id, label, rating, ct}]}], top → bottom
       riser    : {meter_id, label, rating, ct}
@@ -19,23 +21,26 @@
 {% block content %}
                 <div class="switchboard-card-no-animation primary">
                     <div class="riser">
-                        <ol class="riser-floors">
+{{ diagram_legend(24) }}
+                        <div class="riser-diagram">
+                            <ol class="riser-floors">
 {%- for f in floors %}
-                            <li class="riser-floor">
-                                <div class="riser-floor-label">{{ f.label }}</div>
-                                <div class="riser-taps">
+                                <li class="riser-floor">
+                                    <div class="riser-floor-label">{{ f.label }}</div>
+                                    <div class="riser-taps">
 {%- for t in f.taps %}
-{{ meter_card(t, '', 36) }}
+{{ meter_card(t, '', 40) }}
 {%- endfor %}
-                                </div>
-                            </li>
+                                    </div>
+                                </li>
 {%- endfor %}
-                        </ol>
-                        <div class="riser-source">
-{{ meter_card(riser, 'incomer', 28) }}
+                            </ol>
+                            <div class="riser-source">
+{{ meter_card(riser, 'incomer', 32) }}
 {%- if fed_from %}
-                            <a class="swb-tie sld-tie" href="{{ fed_from.href }}">Fed from {{ fed_from.label }}</a>
+                                <a class="swb-tie sld-tie" href="{{ fed_from.href }}">Fed from {{ fed_from.label }}</a>
 {%- endif %}
+                            </div>
                         </div>
                     </div>
                 </div>

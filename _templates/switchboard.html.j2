@@ -1,5 +1,5 @@
 {% extends "base.html.j2" %}
-{%- from 'partials/macros.j2' import meter_card -%}
+{%- from 'partials/macros.j2' import meter_card, diagram_legend -%}
 {#- ────────────────────────────────────────────────────────────────────────
     switchboard.html.j2 — a switchboard's single-line diagram, built by
     _build/build_switchboards.py from the meters file and
@@ -10,7 +10,8 @@
     later row tied back to the first down the left. A bus coupler runs the
     busbar on, through its breaker, to the board it ties to. Every meter is
     a meter_card placeholder that meter-templates.js fills; the busbar and
-    the lines are CSS (switchboard-widget.css).
+    the lines are CSS (switchboard-widget.css). The key above the diagram
+    reads the cards' colours.
 
       incomer  : {meter_id, label, rating, ct}
       fed_from : {href, label} | none, the board feeding this one
@@ -24,6 +25,7 @@
 {% block content %}
                 <div class="switchboard-card-no-animation primary">
                     <div class="sld">
+{{ diagram_legend(24) }}
                         <div class="sld-diagram" style="--sld-columns: {{ columns }};">
                             <div class="sld-source">
 {{ meter_card(incomer, 'incomer', 32) }}

@@ -11,11 +11,12 @@
 //
 // Per box:
 //   <div class="swb-gauge" data-max="250"></div>   ← full-scale (kW) for 100%
+//   <span class="swb-pct"></span>                  ← the load as a share of it
 //   <span class="swb-value" ...>123 kW</span>       ← live text from live-points
 //
 // Threshold colors match d3/segmented-horizontal: grey <10, green 10–70,
 // yellow 70–85, red 85–100. Load status (ok/warn/alarm) is derived from the
-// percentage and applied as a class on the .swb-box (drives dot + border).
+// percentage and applied as a class on the .swb-box (drives its accent stripe).
 //
 // A box's hidden .swb-comms element carries the meter's status point
 // (live-points.js writes "online" or "offline" into it): comms-online or
@@ -65,6 +66,7 @@
 
     function makeRenderer(box, gauge, segs, valueEl) {
         var max = parseFloat(gauge.getAttribute('data-max')) || 0;
+        var pctEl = box ? box.querySelector('.swb-pct') : null;
         return function render() {
             var val = parseValue(valueEl ? valueEl.textContent : '');
             var hasVal = isFinite(val) && max > 0;
@@ -74,6 +76,10 @@
                 // an unlit segment takes the stylesheet's color, per theme
                 segs[i].style.background = i < lit ? segColor(((i + 0.5) / SEGMENTS) * 100) : '';
             }
+            // the share as it is, past 100% too; the gauge stops at full
+            var share = hasVal ? Math.max(0, Math.round((val / max) * 100)) + '%' : '';
+            if (pctEl) pctEl.textContent = share;
+            gauge.title = hasVal ? share + ' of the ' + max + ' kW rating' : '';
             box.classList.remove('status-ok', 'status-warn', 'status-alarm');
             if (hasVal) box.classList.add('status-' + statusFromPct(pct));
         };

@@ -357,6 +357,19 @@
 {%- endmacro %}
 
 
+{# ── diagram_legend: the key above a switchboard or riser diagram ──────── #}
+{# The cards' load colours (switchboard-gauge.js's thresholds) and comms    #}
+{# glow.                                                                    #}
+{%- macro diagram_legend(indent=0) %}{% set pad = ' ' * indent %}{{ pad }}<div class="sld-legend d-flex flex-wrap justify-content-end column-gap-3 row-gap-1 small text-body-secondary">
+{{ pad }}    <span class="sld-key sld-key-ok">Under 70% of rating</span>
+{{ pad }}    <span class="sld-key sld-key-warn">70–85%</span>
+{{ pad }}    <span class="sld-key sld-key-alarm">85% and over</span>
+{{ pad }}    <span class="sld-key sld-key-online">Comms online</span>
+{{ pad }}    <span class="sld-key sld-key-offline">Comms offline</span>
+{{ pad }}</div>
+{%- endmacro %}
+
+
 {# ── floorplan_viewer: centre image in the layout ──────────────────────── #}
 {%- macro floorplan_viewer(image) %}                            <!-- CENTER COLUMN: Floorplan Image -->
                             <div class="floorplan-viewer floorplan-viewer-constrained">
